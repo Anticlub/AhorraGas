@@ -6,6 +6,7 @@ import android.os.Bundle;
 
 import android.location.Location;
 
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -20,6 +21,7 @@ import com.example.ahorragas.location.LocationHelper;
 
 public class MainActivity extends AppCompatActivity {
 
+    private Button btnLocation;
     private TextView tvLocation, tvStatus;
     private LocationHelper locationHelper;
     private ActivityResultLauncher<String[]> locationPermissionLauncher;
@@ -38,6 +40,12 @@ public class MainActivity extends AppCompatActivity {
 
         tvLocation = findViewById(R.id.tvLocation);
         tvStatus = findViewById(R.id.tvStatus);
+
+        btnLocation = findViewById(R.id.btnLocation);
+
+        btnLocation.setOnClickListener(v -> {
+            ensureLocationPermission();
+        });
 
         locationHelper = new LocationHelper(this);
 
