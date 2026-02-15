@@ -54,6 +54,8 @@ public class LocationHelper {
         void onError(LocationError error);
     }
 
+    // Si la última ubicación tiene más de 2 minutos, la consideramos desactualizada // pensar q tiempo es el ideal
+    private static final long MAX_LAST_LOCATION_AGE_MS = 2 * 60 * 1000;
     private final Activity activity;
     private final FusedLocationProviderClient fusedLocation;
 
@@ -137,8 +139,17 @@ public class LocationHelper {
 
         fusedLocation.getLastLocation()
                 .addOnSuccessListener(activity, location -> {
-                    if (location != null) callback.onSuccess(location);
-                    else requestOneShotUpdate(callback);
+                    if (location != null) {
+                        long ageMs = System.currentTimeMillis() - location.getTime();
+
+                        if (ageMs <= MAX_LAST_LOCATION_AGE_MS) {
+                            callback.onSuccess(location);
+                        } else {
+                            requestOneShotUpdate(callback);
+                        }
+                    } else {
+                        requestOneShotUpdate(callback);
+                    }
                 })
                 .addOnFailureListener(activity,
                         e -> callback.onError(LocationError.TECHNICAL_ERROR));
