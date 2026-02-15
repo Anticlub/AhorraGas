@@ -22,4 +22,11 @@
         android:layout_marginTop="12dp"
         android:text="Ubicación: —" />
 
+    <Button
+        android:id="@+id/btnLocation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Obtener ubicación"
+        android:layout_marginTop="12dp"/>
+
 </LinearLayout>
