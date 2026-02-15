@@ -35,16 +35,28 @@ import com.google.android.gms.location.Priority;
  */
 public class LocationHelper {
 
+
+    /**
+     * Tipos de error posibles al obtener la ubicación.
+     */
+    public enum LocationError {
+        NO_PERMISSION,
+        GPS_DISABLED,
+        TIMEOUT,
+        TECHNICAL_ERROR
+    }
+
     /**
      * Callback para comunicar resultados a la UI.
      */
     public interface ResultCallback {
         void onSuccess(Location location);
-        void onError(String message);
+        void onError(LocationError error);
     }
 
     private final Activity activity;
     private final FusedLocationProviderClient fusedLocation;
+
 
     /**
      * Constructor.
@@ -114,12 +126,12 @@ public class LocationHelper {
     @SuppressLint("MissingPermission")
     public void getUserLocation(ResultCallback callback) {
         if (!isLocationEnabled()) {
-            callback.onError("Ubicación del sistema desactivada. Actívala en Ajustes.");
+            callback.onError(LocationError.GPS_DISABLED);
             return;
         }
 
         if (!hasLocationPermission()) {
-            callback.onError("Sin permiso de ubicación.");
+            callback.onError(LocationError.NO_PERMISSION);
             return;
         }
 
@@ -129,7 +141,7 @@ public class LocationHelper {
                     else requestOneShotUpdate(callback);
                 })
                 .addOnFailureListener(activity,
-                        e -> callback.onError("Error leyendo ubicación: " + e.getMessage()));
+                        e -> callback.onError(LocationError.TECHNICAL_ERROR));
     }
 
 
@@ -166,7 +178,7 @@ public class LocationHelper {
 
                 Location loc = locationResult.getLastLocation();
                 if (loc != null) callback.onSuccess(loc);
-                else callback.onError("No se pudo obtener ubicación. Prueba en exterior.");
+                else callback.onError(LocationError.TECHNICAL_ERROR);
             }
         };
 
@@ -174,7 +186,7 @@ public class LocationHelper {
                 .addOnFailureListener(e -> {
                     if (finished[0]) return;
                     finished[0] = true;
-                    callback.onError("Error solicitando actualización: " + e.getMessage());
+                    callback.onError(LocationError.TECHNICAL_ERROR);
                 });
 
         // si en 12s no llega nada, cortamos
@@ -183,7 +195,7 @@ public class LocationHelper {
             finished[0] = true;
 
             fusedLocation.removeLocationUpdates(oneShotCallback);
-            callback.onError("Tiempo de espera agotado. No se pudo obtener ubicación. Prueba en exterior o con Wi-Fi/precisión activados.");
+            callback.onError(LocationError.TIMEOUT);
             }, 12_000);
     }
 }

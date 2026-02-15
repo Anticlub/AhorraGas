@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
                             tvStatus.setText("Permiso denegado permanentemente. Actívalo en Ajustes.");
                             locationHelper.openAppSettings();
                         } else {
-                            tvStatus.setText("Permiso denegado. Sin ubicación no se pueden mostrar cercanas.");
+                            tvStatus.setText("Permiso denegado. Sin ubicación no se pueden mostrar gasolineras cerca de ti, tienes que usar el localizador y poner un lugares.");
                         }
 
                         tvLocation.setText("Ubicación: —");
@@ -100,11 +100,27 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onError(String message) {
-                renderLocationError(message);
+            public void onError(LocationHelper.LocationError error) {
+                // DEBUG: muestra el error exacto
+                renderLocationError("ERROR: " + error.name());
 
-                if (message != null && message.toLowerCase().contains("desactivada")) {
-                    locationHelper.openLocationSettings();
+                switch (error) {
+                    case NO_PERMISSION:
+                        renderLocationError("ERROR: NO_PERMISSION (no hay permisos)");
+                        break;
+
+                    case GPS_DISABLED:
+                        renderLocationError("ERROR: GPS_DISABLED (ubicación del sistema apagada)");
+                        locationHelper.openLocationSettings();
+                        break;
+
+                    case TIMEOUT:
+                        renderLocationError("ERROR: TIMEOUT (no se obtuvo ubicación a tiempo)");
+                        break;
+
+                    case TECHNICAL_ERROR:
+                        renderLocationError("ERROR: TECHNICAL_ERROR (fallo de Google Location Services)");
+                        break;
                 }
             }
         });
