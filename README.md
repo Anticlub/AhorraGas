@@ -1,3 +1,6 @@
+En la clase Gasolinera el atributo distanceMeters es calculado, no viene del JSON. Es la distancia entre la gasolinera y la ubicacion actual. Se obtiene con un metodo de GasolineraSorter, que devuelve un List
+
+
 Obtener tipos de combustible (GET): https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/Listados/ProductosPetroliferos/
 
 Obtener Comunidades Autónomas (GET):
