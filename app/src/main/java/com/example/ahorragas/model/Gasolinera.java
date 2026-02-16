@@ -5,7 +5,7 @@ public class Gasolinera {
     private String marca;
     private String direccion;
     private String municipio;
-    private Double lat, lon, precio;
+    private Double lat, lon, precio, distanceMeters;
 
     // CLASE BASE GASOLINERA (COMPARAR CON JSON DE API PARA VER SI NECESITA O LE SOBRAN ATRIBUTOS)
     public Gasolinera() {
@@ -76,4 +76,8 @@ public class Gasolinera {
     public void setPrecio(Double precio) {
         this.precio = precio;
     }
+
+    public Double getDistanceMeters() { return distanceMeters; }
+
+    public void setDistanceMeters(Double distanceMeters) { this.distanceMeters = distanceMeters; }
 }
