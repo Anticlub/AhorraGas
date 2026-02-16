@@ -2,6 +2,7 @@ package com.example.ahorragas;
 
 import android.Manifest;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import android.location.Location;
@@ -46,6 +47,11 @@ public class MainActivity extends AppCompatActivity {
         btnLocation.setOnClickListener(v -> {
             ensureLocationPermission();
         });
+
+        Button btnOpenTest = findViewById(R.id.btnOpenTest);
+        btnOpenTest.setOnClickListener(v ->
+                startActivity(new Intent(this, TestDistanceActivity.class))
+        );
 
         locationHelper = new LocationHelper(this);
 

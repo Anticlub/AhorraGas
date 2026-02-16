@@ -1,0 +1,39 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <Button
+        android:id="@+id/btnRun"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ejecutar test (Semana 3)" />
+    <Button
+        android:id="@+id/btnTop5"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Top 5 más cercanas"/>
+
+    <Button
+        android:id="@+id/btn2km"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Dentro de 2 km"
+        android:layout_marginTop="8dp"/>
+
+    <Button
+        android:id="@+id/btn5kmMax10"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Dentro de 5 km (máx 10)"
+        android:layout_marginTop="8dp"/>
+
+    <TextView
+        android:id="@+id/tvOut"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textSize="14sp"/>
+</LinearLayout>
