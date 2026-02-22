@@ -15,6 +15,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.ahorragas.data.CachedRemoteApiDataSource;
 import com.example.ahorragas.data.GasolineraRepository;
 import com.example.ahorragas.data.LocalJsonDataSource;
 import com.example.ahorragas.location.LocationHelper;
@@ -29,6 +30,8 @@ public class MainActivity extends AppCompatActivity {
 
     private LocationHelper locationHelper;
     private ActivityResultLauncher<String[]> locationPermissionLauncher;
+
+    private GasolineraRepository repo;
 
     // Semana 7: estado en memoria
     private List<Gasolinera> gasolineras;
@@ -60,6 +63,11 @@ public class MainActivity extends AppCompatActivity {
 
         locationHelper = new LocationHelper(this);
 
+        repo = new GasolineraRepository(
+                new CachedRemoteApiDataSource(this),
+                new LocalJsonDataSource(this)
+        );
+
         locationPermissionLauncher =
                 registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                     boolean fine = Boolean.TRUE.equals(result.get(Manifest.permission.ACCESS_FINE_LOCATION));
@@ -85,10 +93,10 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-        // Semana 7: carga datos en background al arrancar
+        // Carga datos en background al arrancar
         loadGasolinerasAsync();
 
-        // Pide ubicación al arrancar (si hay permiso)
+        // Si quieres pedir ubicación al arrancar, déjalo. Si no, quítalo.
         ensureLocationPermission();
     }
 
@@ -116,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
             public void onSuccess(Location location) {
                 userLocation = location;
                 renderLocation(location);
-                tvStatus.setText("Localización ok");
+                tvStatus.setText("Localización OK ✅");
                 checkIfReady();
             }
 
@@ -133,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ==============================
-    // CARGA DE GASOLINERAS (SEMANA 7)
+    // CARGA DE GASOLINERAS
     // ==============================
 
     private void loadGasolinerasAsync() {
@@ -141,9 +149,6 @@ public class MainActivity extends AppCompatActivity {
 
         new Thread(() -> {
             try {
-                GasolineraRepository repo =
-                        new GasolineraRepository(new LocalJsonDataSource(this));
-
                 List<Gasolinera> list = repo.getGasolineras();
 
                 runOnUiThread(() -> {
@@ -167,7 +172,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkIfReady() {
         if (gasolineras != null && userLocation != null) {
-            // Aquí enganchará Raúl (mapa) y tu lógica (radio / N / colores)
             tvStatus.setText("Listo ✅ Datos + ubicación disponibles");
         }
     }
