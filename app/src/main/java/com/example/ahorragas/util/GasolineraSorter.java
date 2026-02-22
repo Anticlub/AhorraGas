@@ -1,6 +1,8 @@
 package com.example.ahorragas.util;
 
 import com.example.ahorragas.model.Gasolinera;
+import com.example.ahorragas.model.PriceLevel;
+import com.example.ahorragas.model.PriceRange;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -117,5 +119,63 @@ public final class GasolineraSorter {
         return getWithinRadius(gasolineras, userLat, userLon,
                 radiusMeters,
                 maxResults);
+    }
+
+    /**
+     * Calcula el rango de precios (min y max) ignorando precios nulos o <= 0.
+     */
+    public static PriceRange calculatePriceRange(List<Gasolinera> gasolineras) {
+        if (gasolineras == null || gasolineras.isEmpty()) {
+            return new PriceRange(null, null, 0);
+        }
+
+        Double min = null;
+        Double max = null;
+        int count = 0;
+
+        for (Gasolinera g : gasolineras) {
+            Double price = g.getPrecio();
+            if (price == null || price <= 0) continue;
+
+            if (min == null || price < min) min = price;
+            if (max == null || price > max) max = price;
+
+            count++;
+        }
+
+        return new PriceRange(min, max, count);
+    }
+
+    /**
+     * Devuelve el nivel relativo de precio (CHEAP / MID / EXPENSIVE)
+     * dentro del rango visible.
+     */
+    public static PriceLevel getPriceLevel(Double price, PriceRange range) {
+
+        if (price == null || range == null || range.isEmpty()) {
+            return PriceLevel.MID;
+        }
+
+        Double min = range.getMin();
+        Double max = range.getMax();
+
+        if (min == null || max == null) {
+            return PriceLevel.MID;
+        }
+
+        // Si todos los precios son iguales
+        if (max.equals(min)) {
+            return PriceLevel.MID;
+        }
+
+        double normalized = (price - min) / (max - min);
+
+        if (normalized <= 0.33) {
+            return PriceLevel.CHEAP;
+        } else if (normalized <= 0.66) {
+            return PriceLevel.MID;
+        } else {
+            return PriceLevel.EXPENSIVE;
+        }
     }
 }

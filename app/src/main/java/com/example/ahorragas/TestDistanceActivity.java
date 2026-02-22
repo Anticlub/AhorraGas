@@ -3,13 +3,17 @@ package com.example.ahorragas;
 import android.location.Location;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.model.Gasolinera;
+import com.example.ahorragas.model.PriceLevel;
+import com.example.ahorragas.model.PriceRange;
 import com.example.ahorragas.util.GasolineraSorter;
+import com.example.ahorragas.util.RadiusUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,139 +30,88 @@ public class TestDistanceActivity extends AppCompatActivity {
         setContentView(R.layout.activity_test_distance);
 
         tvOut = findViewById(R.id.tvOut);
+        EditText etKm = findViewById(R.id.etKm);
         Button btnRun = findViewById(R.id.btnRun);
-        Button btnTop5 = findViewById(R.id.btnTop5);
-        Button btn2km = findViewById(R.id.btn2km);
-        Button btn5kmMax10 = findViewById(R.id.btn5kmMax10);
-
-        List<Gasolinera> gasolineras = createAlcalaMock();
-
-        btnTop5.setOnClickListener(v ->
-                testTop(gasolineras, 5)
-        );
-
-        btn2km.setOnClickListener(v ->
-                testRadius(gasolineras, 20000)
-        );
-
-        btn5kmMax10.setOnClickListener(v ->
-                testRadiusLimit(gasolineras, 50000, 10)
-        );
 
         locationHelper = new LocationHelper(this);
 
-        btnRun.setOnClickListener(v -> runTest());
-    }
-    private void testTop(List<Gasolinera> data, int n) {
-        locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
-            @Override
-            public void onSuccess(Location location) {
-                List<Gasolinera> result =
-                        GasolineraSorter.getTopClosest(data,
-                                location.getLatitude(),
-                                location.getLongitude(),
-                                n);
+        List<Gasolinera> gasolineras = createAlcalaMock();
 
-                showResult("Top " + n, result);
+        btnRun.setOnClickListener(v -> {
+            String txt = etKm.getText().toString().trim();
+            int km;
+
+            try {
+                km = Integer.parseInt(txt);
+            } catch (Exception e) {
+                tvOut.setText("Introduce un número válido (1–50).");
+                return;
             }
 
-            @Override
-            public void onError(LocationHelper.LocationError error) {
-                tvOut.setText("Error ubicación: " + error.name());
-            }
+            double meters = RadiusUtils.kmToMetersClamped(km);
+
+            tvOut.setText("Obteniendo ubicación…");
+
+            locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
+                @Override
+                public void onSuccess(Location location) {
+
+                    List<Gasolinera> result = GasolineraSorter.getWithinRadius(
+                            gasolineras,
+                            location.getLatitude(),
+                            location.getLongitude(),
+                            meters,
+                            150
+                    );
+                    PriceRange range = GasolineraSorter.calculatePriceRange(result);
+
+                    showResult("Radio " + km + " km", result, range);
+                }
+
+                @Override
+                public void onError(LocationHelper.LocationError error) {
+                    tvOut.setText("Error ubicación: " + error.name());
+                }
+            });
         });
     }
 
-    private void testRadius(List<Gasolinera> data, double meters) {
-        locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
-            @Override
-            public void onSuccess(Location location) {
-                List<Gasolinera> result =
-                        GasolineraSorter.getWithinRadius(data,
-                                location.getLatitude(),
-                                location.getLongitude(),
-                                meters);
+    private void showResult(String title,
+                            List<Gasolinera> list,
+                            PriceRange range) {
 
-                showResult("Dentro de " + (meters/1000) + " km", result);
-            }
-
-            @Override
-            public void onError(LocationHelper.LocationError error) {
-                tvOut.setText("Error ubicación: " + error.name());
-            }
-        });
-    }
-
-    private void testRadiusLimit(List<Gasolinera> data, double meters, int max) {
-        locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
-            @Override
-            public void onSuccess(Location location) {
-                List<Gasolinera> result =
-                        GasolineraSorter.getWithinRadius(data,
-                                location.getLatitude(),
-                                location.getLongitude(),
-                                meters,
-                                max);
-
-                showResult("Dentro de " + (meters/1000) + " km (máx " + max + ")", result);
-            }
-
-            @Override
-            public void onError(LocationHelper.LocationError error) {
-                tvOut.setText("Error ubicación: " + error.name());
-            }
-        });
-    }
-
-    private void showResult(String title, List<Gasolinera> list) {
         StringBuilder sb = new StringBuilder();
-        sb.append(title).append("\nTotal: ").append(list.size()).append("\n\n");
+        sb.append(title)
+                .append("\nTotal: ")
+                .append(list.size())
+                .append("\n");
+
+        if (range != null && !range.isEmpty()) {
+            sb.append("Precio min: ")
+                    .append(range.getMin())
+                    .append(" | max: ")
+                    .append(range.getMax())
+                    .append("\n\n");
+        } else {
+            sb.append("Sin datos de precio\n\n");
+        }
 
         for (Gasolinera g : list) {
+
+            PriceLevel level =
+                    GasolineraSorter.getPriceLevel(g.getPrecio(), range);
+
             sb.append(g.getMarca())
                     .append(" | ")
-                    .append(String.format("%.0f m", g.getDistanceMeters()))
+                    .append(formatMeters(g.getDistanceMeters()))
+                    .append(" | ")
+                    .append(g.getPrecio())
+                    .append(" | ")
+                    .append(level.name())
                     .append("\n");
         }
 
         tvOut.setText(sb.toString());
-    }
-
-    private void runTest() {
-        tvOut.setText("Obteniendo ubicación…");
-
-        locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
-            @Override
-            public void onSuccess(Location location) {
-                double userLat = location.getLatitude();
-                double userLon = location.getLongitude();
-
-                List<Gasolinera> data = createMockGasolineras();
-
-                // Prueba: top 5 más cercanas
-                List<Gasolinera> top = GasolineraSorter.getTopClosest(data, userLat, userLon, 5);
-
-                StringBuilder sb = new StringBuilder();
-                sb.append("Usuario: ")
-                        .append(userLat).append(", ").append(userLon)
-                        .append("\n\nTop 5 cercanas:\n");
-
-                for (Gasolinera g : top) {
-                    sb.append("- ")
-                            .append(g.getMarca()).append(" | ")
-                            .append(g.getMunicipio()).append(" | ")
-                            .append(formatMeters(g.getDistanceMeters()))
-                            .append("\n");
-                }
-
-                tvOut.setText(sb.toString());
-            }
-
-            @Override
-            public void onError(LocationHelper.LocationError error) {
-                tvOut.setText("Error ubicación: " + error.name());
-            }
-        });
     }
 
     private String formatMeters(Double meters) {
@@ -169,28 +122,9 @@ public class TestDistanceActivity extends AppCompatActivity {
         return String.format(Locale.getDefault(), "%.0f m", meters);
     }
 
-    private List<Gasolinera> createMockGasolineras() {
-        List<Gasolinera> list = new ArrayList<>();
-
-        // Algunas válidas (Madrid y alrededores) - ajusta si quieres
-        list.add(new Gasolinera(1, "Repsol", "Madrid", "Centro", 40.4168, -3.7038, 1.60));
-        list.add(new Gasolinera(2, "Cepsa", "Getafe", "Calle B", 40.3083, -3.7327, 1.55));
-        list.add(new Gasolinera(3, "BP", "Alcalá", "Calle C", 40.4819, -3.3641, 1.58));
-        list.add(new Gasolinera(4, "Shell", "Leganés", "Calle D", 40.3272, -3.7635, 1.57));
-
-        // Inválidas para probar filtro
-        list.add(new Gasolinera(999, "INVÁLIDA 0,0", "—", "—", 0.0, 0.0, 9.99));
-        list.add(new Gasolinera(998, "INVÁLIDA lat", "—", "—", 200.0, 10.0, 9.99));
-        list.add(new Gasolinera(997, "INVÁLIDA null", "—", "—", null, null, 9.99));
-
-        return list;
-    }
-
     private List<Gasolinera> createAlcalaMock() {
         List<Gasolinera> list = new ArrayList<>();
 
-        list.add(new Gasolinera(14075, "GASEXPRESS", "Alcalá de Henares", "CARRETERA DAGANZO KM. 3", 40.492861, -3.381167, 1.239));
-        list.add(new Gasolinera(13592, "AVIA", "Alcalá de Henares", "CALLE MEJICO, 17", 40.498250, -3.390139, 1.339));
         list.add(new Gasolinera(15959, "LAVAPLUS", "Alcalá de Henares", "CARRERA DE AJALVIR, 3", 40.490167, -3.383806, 1.239));
         list.add(new Gasolinera(14833, "ENERGY", "Alcalá de Henares", "CALLE PERU, 31", 40.508333, -3.396917, 1.339));
         list.add(new Gasolinera(12721, "GALP", "Alcalá de Henares", "AVDA MADRID ESQ CARLOS III", 40.476667, -3.393972, 1.299));
