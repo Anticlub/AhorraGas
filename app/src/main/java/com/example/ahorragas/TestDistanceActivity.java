@@ -10,6 +10,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.model.Gasolinera;
+import com.example.ahorragas.model.PriceLevel;
+import com.example.ahorragas.model.PriceRange;
 import com.example.ahorragas.util.GasolineraSorter;
 import com.example.ahorragas.util.RadiusUtils;
 
@@ -61,8 +63,9 @@ public class TestDistanceActivity extends AppCompatActivity {
                             meters,
                             150
                     );
+                    PriceRange range = GasolineraSorter.calculatePriceRange(result);
 
-                    showResult("Radio " + km + " km", result);
+                    showResult("Radio " + km + " km", result, range);
                 }
 
                 @Override
@@ -73,17 +76,38 @@ public class TestDistanceActivity extends AppCompatActivity {
         });
     }
 
-    private void showResult(String title, List<Gasolinera> list) {
+    private void showResult(String title,
+                            List<Gasolinera> list,
+                            PriceRange range) {
+
         StringBuilder sb = new StringBuilder();
         sb.append(title)
                 .append("\nTotal: ")
                 .append(list.size())
-                .append("\n\n");
+                .append("\n");
+
+        if (range != null && !range.isEmpty()) {
+            sb.append("Precio min: ")
+                    .append(range.getMin())
+                    .append(" | max: ")
+                    .append(range.getMax())
+                    .append("\n\n");
+        } else {
+            sb.append("Sin datos de precio\n\n");
+        }
 
         for (Gasolinera g : list) {
+
+            PriceLevel level =
+                    GasolineraSorter.getPriceLevel(g.getPrecio(), range);
+
             sb.append(g.getMarca())
                     .append(" | ")
                     .append(formatMeters(g.getDistanceMeters()))
+                    .append(" | ")
+                    .append(g.getPrecio())
+                    .append(" | ")
+                    .append(level.name())
                     .append("\n");
         }
 
