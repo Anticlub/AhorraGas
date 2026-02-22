@@ -153,7 +153,23 @@ public class MainActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
                     gasolineras = list;
-                    tvDataStatus.setText("Gasolineras cargadas: " + list.size());
+
+                    // Origen de datos
+                    String originText;
+                    switch (repo.getLastOrigin()) {
+                        case CACHE:
+                            originText = "cache (archivo)";
+                            break;
+                        case REMOTE:
+                            originText = "remoto (API)";
+                            break;
+                        case LOCAL_FALLBACK:
+                        default:
+                            originText = "local (fallback)";
+                            break;
+                    }
+
+                    tvDataStatus.setText("Gasolineras: " + list.size() + " · origen: " + originText);
                     checkIfReady();
                 });
 
