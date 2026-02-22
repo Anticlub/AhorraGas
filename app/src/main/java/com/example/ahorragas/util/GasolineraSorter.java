@@ -1,6 +1,7 @@
 package com.example.ahorragas.util;
 
 import com.example.ahorragas.model.Gasolinera;
+import com.example.ahorragas.model.PriceLevel;
 import com.example.ahorragas.model.PriceRange;
 
 import java.util.ArrayList;
@@ -143,5 +144,38 @@ public final class GasolineraSorter {
         }
 
         return new PriceRange(min, max, count);
+    }
+
+    /**
+     * Devuelve el nivel relativo de precio (CHEAP / MID / EXPENSIVE)
+     * dentro del rango visible.
+     */
+    public static PriceLevel getPriceLevel(Double price, PriceRange range) {
+
+        if (price == null || range == null || range.isEmpty()) {
+            return PriceLevel.MID;
+        }
+
+        Double min = range.getMin();
+        Double max = range.getMax();
+
+        if (min == null || max == null) {
+            return PriceLevel.MID;
+        }
+
+        // Si todos los precios son iguales
+        if (max.equals(min)) {
+            return PriceLevel.MID;
+        }
+
+        double normalized = (price - min) / (max - min);
+
+        if (normalized <= 0.33) {
+            return PriceLevel.CHEAP;
+        } else if (normalized <= 0.66) {
+            return PriceLevel.MID;
+        } else {
+            return PriceLevel.EXPENSIVE;
+        }
     }
 }
