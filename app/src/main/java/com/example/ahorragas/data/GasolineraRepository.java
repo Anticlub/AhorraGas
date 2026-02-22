@@ -6,13 +6,32 @@ import java.util.List;
 
 public class GasolineraRepository {
 
-    private final GasolineraDataSource dataSource;
+    private final GasolineraDataSource primary;
+    private final GasolineraDataSource fallback;
 
-    public GasolineraRepository(GasolineraDataSource dataSource) {
-        this.dataSource = dataSource;
+    // Cache en memoria (solo mientras la app está abierta)
+    private List<Gasolinera> memoryCache;
+
+    public GasolineraRepository(GasolineraDataSource primary, GasolineraDataSource fallback) {
+        this.primary = primary;
+        this.fallback = fallback;
     }
 
-    public List<Gasolinera> getGasolineras() throws Exception {
-        return dataSource.loadGasolineras();
+    public synchronized List<Gasolinera> getGasolineras() throws Exception {
+
+        if (memoryCache != null) return memoryCache;
+
+        try {
+            memoryCache = primary.loadGasolineras();
+        } catch (Exception e) {
+            memoryCache = fallback.loadGasolineras();
+        }
+
+        return memoryCache;
+    }
+
+    // Por si en el futuro quieres forzar recarga
+    public synchronized void clearMemoryCache() {
+        memoryCache = null;
     }
 }

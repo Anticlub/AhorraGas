@@ -8,8 +8,10 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.ahorragas.data.CachedRemoteApiDataSource;
 import com.example.ahorragas.data.GasolineraRepository;
 import com.example.ahorragas.data.LocalJsonDataSource;
+import com.example.ahorragas.data.RemoteApiDataSource;
 import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceLevel;
@@ -25,6 +27,8 @@ public class TestDistanceActivity extends AppCompatActivity {
 
     private TextView tvOut;
     private LocationHelper locationHelper;
+    private GasolineraRepository repo;
+    private List<Gasolinera> gasolinerasEnMemoria;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,8 +41,12 @@ public class TestDistanceActivity extends AppCompatActivity {
 
         locationHelper = new LocationHelper(this);
 
+        repo = new GasolineraRepository(
+                new CachedRemoteApiDataSource(this),
+                new LocalJsonDataSource(this)
+        );
 
-        List<Gasolinera> gasolineras = createAlcalaMock();
+        //List<Gasolinera> gasolineras = createAlcalaMock();
 
         btnRun.setOnClickListener(v -> {
             String txt = etKm.getText().toString().trim();
@@ -52,33 +60,53 @@ public class TestDistanceActivity extends AppCompatActivity {
             }
 
             double meters = RadiusUtils.kmToMetersClamped(km);
+            tvOut.setText("Cargando gasolineras y ubicación…");
 
-            tvOut.setText("Obteniendo ubicación…");
+            // 1) Si ya están en memoria -> solo ubicación + filtro
+            if (gasolinerasEnMemoria != null) {
+                ejecutarFiltroConRadio(gasolinerasEnMemoria, km, meters);
+                return;
+            }
 
-            locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
-                @Override
-                public void onSuccess(Location location) {
+            // 2) Si no están -> cargar en background, luego ubicación + filtro
+            new Thread(() -> {
+                try {
+                    List<Gasolinera> list = repo.getGasolineras();
+                    gasolinerasEnMemoria = list;
 
-                    List<Gasolinera> result = GasolineraSorter.getWithinRadius(
-                            gasolineras,
-                            location.getLatitude(),
-                            location.getLongitude(),
-                            meters,
-                            150
-                    );
-                    PriceRange range = GasolineraSorter.calculatePriceRange(result);
+                    runOnUiThread(() -> ejecutarFiltroConRadio(list, km, meters));
 
-                    showResult("Radio " + km + " km", result, range);
+                } catch (Exception e) {
+                    runOnUiThread(() -> tvOut.setText("Error cargando gasolineras: " + e.getMessage()));
                 }
-
-                @Override
-                public void onError(LocationHelper.LocationError error) {
-                    tvOut.setText("Error ubicación: " + error.name());
-                }
-            });
+            }).start();
         });
     }
+    private void ejecutarFiltroConRadio(List<Gasolinera> gasolineras, int km, double meters) {
+        tvOut.setText("Obteniendo ubicación…");
 
+        locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
+            @Override
+            public void onSuccess(Location location) {
+
+                List<Gasolinera> result = GasolineraSorter.getWithinRadius(
+                        gasolineras,
+                        location.getLatitude(),
+                        location.getLongitude(),
+                        meters,
+                        150
+                );
+
+                PriceRange range = GasolineraSorter.calculatePriceRange(result);
+                showResult("Radio " + km + " km", result, range);
+            }
+
+            @Override
+            public void onError(LocationHelper.LocationError error) {
+                tvOut.setText("Error ubicación: " + error.name());
+            }
+        });
+    }
     private void showResult(String title,
                             List<Gasolinera> list,
                             PriceRange range) {
