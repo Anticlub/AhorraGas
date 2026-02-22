@@ -1,6 +1,7 @@
 package com.example.ahorragas.util;
 
 import com.example.ahorragas.model.Gasolinera;
+import com.example.ahorragas.model.PriceRange;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -117,5 +118,30 @@ public final class GasolineraSorter {
         return getWithinRadius(gasolineras, userLat, userLon,
                 radiusMeters,
                 maxResults);
+    }
+
+    /**
+     * Calcula el rango de precios (min y max) ignorando precios nulos o <= 0.
+     */
+    public static PriceRange calculatePriceRange(List<Gasolinera> gasolineras) {
+        if (gasolineras == null || gasolineras.isEmpty()) {
+            return new PriceRange(null, null, 0);
+        }
+
+        Double min = null;
+        Double max = null;
+        int count = 0;
+
+        for (Gasolinera g : gasolineras) {
+            Double price = g.getPrecio();
+            if (price == null || price <= 0) continue;
+
+            if (min == null || price < min) min = price;
+            if (max == null || price > max) max = price;
+
+            count++;
+        }
+
+        return new PriceRange(min, max, count);
     }
 }
