@@ -8,6 +8,8 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.ahorragas.data.GasolineraRepository;
+import com.example.ahorragas.data.LocalJsonDataSource;
 import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceLevel;
@@ -34,6 +36,7 @@ public class TestDistanceActivity extends AppCompatActivity {
         Button btnRun = findViewById(R.id.btnRun);
 
         locationHelper = new LocationHelper(this);
+
 
         List<Gasolinera> gasolineras = createAlcalaMock();
 

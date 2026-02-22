@@ -1,12 +1,9 @@
 package com.example.ahorragas;
 
 import android.Manifest;
-
 import android.content.Intent;
-import android.os.Bundle;
-
 import android.location.Location;
-
+import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -18,14 +15,24 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.ahorragas.data.GasolineraRepository;
+import com.example.ahorragas.data.LocalJsonDataSource;
 import com.example.ahorragas.location.LocationHelper;
+import com.example.ahorragas.model.Gasolinera;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private Button btnLocation;
-    private TextView tvLocation, tvStatus;
+    private TextView tvLocation, tvStatus, tvDataStatus;
+
     private LocationHelper locationHelper;
     private ActivityResultLauncher<String[]> locationPermissionLauncher;
+
+    // Semana 7: estado en memoria
+    private List<Gasolinera> gasolineras;
+    private Location userLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,12 +48,10 @@ public class MainActivity extends AppCompatActivity {
 
         tvLocation = findViewById(R.id.tvLocation);
         tvStatus = findViewById(R.id.tvStatus);
+        tvDataStatus = findViewById(R.id.tvDataStatus);
 
         btnLocation = findViewById(R.id.btnLocation);
-
-        btnLocation.setOnClickListener(v -> {
-            ensureLocationPermission();
-        });
+        btnLocation.setOnClickListener(v -> ensureLocationPermission());
 
         Button btnOpenTest = findViewById(R.id.btnOpenTest);
         btnOpenTest.setOnClickListener(v ->
@@ -73,19 +78,26 @@ public class MainActivity extends AppCompatActivity {
                             tvStatus.setText("Permiso denegado permanentemente. Actívalo en Ajustes.");
                             locationHelper.openAppSettings();
                         } else {
-                            tvStatus.setText("Permiso denegado. Sin ubicación no se pueden mostrar gasolineras cerca de ti, tienes que usar el localizador y poner un lugares.");
+                            tvStatus.setText("Permiso denegado. Sin ubicación no se pueden mostrar gasolineras cercanas.");
                         }
 
                         tvLocation.setText("Ubicación: —");
                     }
                 });
 
+        // Semana 7: carga datos en background al arrancar
+        loadGasolinerasAsync();
+
+        // Pide ubicación al arrancar (si hay permiso)
         ensureLocationPermission();
     }
 
+    // ==============================
+    // PERMISOS / UBICACIÓN
+    // ==============================
+
     private void ensureLocationPermission() {
         if (locationHelper.hasLocationPermission()) {
-            tvStatus.setText("Permiso de ubicación OK ✅");
             requestUserLocation();
         } else {
             tvStatus.setText("Solicitando permiso de ubicación…");
@@ -102,47 +114,61 @@ public class MainActivity extends AppCompatActivity {
         locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
             @Override
             public void onSuccess(Location location) {
+                userLocation = location;
                 renderLocation(location);
+                tvStatus.setText("Localización ok");
+                checkIfReady();
             }
 
             @Override
             public void onError(LocationHelper.LocationError error) {
-                // DEBUG: muestra el error exacto
-                renderLocationError("ERROR: " + error.name());
-
-                switch (error) {
-                    case NO_PERMISSION:
-                        renderLocationError("ERROR: NO_PERMISSION (no hay permisos)");
-                        break;
-
-                    case GPS_DISABLED:
-                        renderLocationError("ERROR: GPS_DISABLED (ubicación del sistema apagada)");
-                        locationHelper.openLocationSettings();
-                        break;
-
-                    case TIMEOUT:
-                        renderLocationError("ERROR: TIMEOUT (no se obtuvo ubicación a tiempo)");
-                        break;
-
-                    case TECHNICAL_ERROR:
-                        renderLocationError("ERROR: TECHNICAL_ERROR (fallo de Google Location Services)");
-                        break;
-                }
+                tvStatus.setText("Error ubicación: " + error.name());
+                tvLocation.setText("Ubicación: —");
             }
         });
     }
 
-
-    // esto es para pintar la ubicacion por pantalla, luego se usara la ubicacion para el mapa no para pintar las coordenadas
     private void renderLocation(Location location) {
-        tvStatus.setText("Ubicación OK ✅");
         tvLocation.setText("Ubicación: " + location.getLatitude() + ", " + location.getLongitude());
     }
 
-    private void renderLocationError(String message) {
-        tvStatus.setText(message);
-        tvLocation.setText("Ubicación: —");
+    // ==============================
+    // CARGA DE GASOLINERAS (SEMANA 7)
+    // ==============================
+
+    private void loadGasolinerasAsync() {
+        tvDataStatus.setText("Cargando gasolineras…");
+
+        new Thread(() -> {
+            try {
+                GasolineraRepository repo =
+                        new GasolineraRepository(new LocalJsonDataSource(this));
+
+                List<Gasolinera> list = repo.getGasolineras();
+
+                runOnUiThread(() -> {
+                    gasolineras = list;
+                    tvDataStatus.setText("Gasolineras cargadas: " + list.size());
+                    checkIfReady();
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() ->
+                        tvDataStatus.setText("Error cargando gasolineras")
+                );
+            }
+        }).start();
     }
 
+    // ==============================
+    // CUANDO TODO ESTÁ LISTO
+    // ==============================
 
+    private void checkIfReady() {
+        if (gasolineras != null && userLocation != null) {
+            // Aquí enganchará Raúl (mapa) y tu lógica (radio / N / colores)
+            tvStatus.setText("Listo ✅ Datos + ubicación disponibles");
+        }
+    }
 }
