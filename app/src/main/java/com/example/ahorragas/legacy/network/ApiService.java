@@ -1,4 +1,4 @@
-package com.example.ahorragas.network;
+package com.example.ahorragas.legacy.network;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
