@@ -9,6 +9,13 @@ import android.location.Location;
 
 import android.widget.Button;
 import android.widget.TextView;
+import android.util.Log;
+
+import com.example.ahorragas.data.StationsRepository;
+import com.example.ahorragas.data.RepoError;
+import com.example.ahorragas.model.Station;
+
+import java.util.List;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
@@ -46,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
 
         btnLocation.setOnClickListener(v -> {
             ensureLocationPermission();
+            testRepositoryPaso5();
         });
 
         Button btnOpenTest = findViewById(R.id.btnOpenTest);
@@ -132,7 +140,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
     // esto es para pintar la ubicacion por pantalla, luego se usara la ubicacion para el mapa no para pintar las coordenadas
     private void renderLocation(Location location) {
         tvStatus.setText("Ubicación OK ✅");
@@ -143,6 +150,50 @@ public class MainActivity extends AppCompatActivity {
         tvStatus.setText(message);
         tvLocation.setText("Ubicación: —");
     }
+    private void testRepositoryPaso5() {
 
+        StationsRepository repo = new StationsRepository();
 
+        // Puedes cambiar 4280 por 999999 para probar vacío
+        repo.getStations(4280, 4, new StationsRepository.ResultCallback<List<Station>>() {
+
+            @Override
+            public void onSuccess(List<Station> data) {
+                tvStatus.setText("REPO OK: " + data.size() + " estaciones");
+                Log.d("REPO_TEST", "OK estaciones=" + data.size());
+            }
+
+            @Override
+            public void onError(RepoError error) {
+
+                switch (error.getType()) {
+
+                    case NETWORK:
+                        tvStatus.setText("REPO: Sin internet");
+                        break;
+
+                    case TIMEOUT:
+                        tvStatus.setText("REPO: Timeout");
+                        break;
+
+                    case HTTP:
+                        tvStatus.setText("REPO: Error HTTP " + error.getHttpCode());
+                        break;
+
+                    case EMPTY_RESPONSE:
+                        tvStatus.setText("REPO: Respuesta vacía");
+                        break;
+
+                    case PARSE:
+                        tvStatus.setText("REPO: Error parseando datos");
+                        break;
+                }
+
+                Log.e("REPO_TEST",
+                        "Error tipo=" + error.getType() +
+                                " msg=" + error.getMessage(),
+                        error);
+            }
+        });
+    }
 }
