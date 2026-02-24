@@ -17,7 +17,6 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.ahorragas.data.CachedRemoteApiDataSource;
 import com.example.ahorragas.data.GasolineraRepository;
-import com.example.ahorragas.data.LocalJsonDataSource;
 import com.example.ahorragas.data.RepoError;
 import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.model.Gasolinera;
@@ -67,8 +66,7 @@ public class MainActivity extends AppCompatActivity {
         locationHelper = new LocationHelper(this);
 
         repo = new GasolineraRepository(
-                new CachedRemoteApiDataSource(this),
-                new LocalJsonDataSource(this)
+                new CachedRemoteApiDataSource(this)
         );
 
         locationPermissionLauncher =
