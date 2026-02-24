@@ -1,6 +1,8 @@
 package com.example.ahorragas.util;
 
 import com.example.ahorragas.model.Gasolinera;
+import com.example.ahorragas.model.PriceLevel;
+import com.example.ahorragas.model.PriceRange;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -9,6 +11,10 @@ import java.util.List;
 public final class GasolineraSorter {
 
     private GasolineraSorter() {}
+
+    // Valores por defecto para mapa (ajustables)
+    private static final int DEFAULT_MAP_MAX_RESULTS = 150;
+    private static final double DEFAULT_MAP_RADIUS_METERS = 10_000; // 10 km
 
     /**
      * Filtra gasolineras con coords inválidas, calcula distanceMeters y ordena por cercanía.
@@ -88,5 +94,88 @@ public final class GasolineraSorter {
         if (maxResults <= 0) return new ArrayList<>();
         if (list.size() <= maxResults) return list;
         return new ArrayList<>(list.subList(0, maxResults));
+    }
+
+    /**
+     * Selección recomendada para pintar en el mapa:
+     * - filtra coordenadas inválidas
+     * - calcula distanceMeters
+     * - ordena por cercanía
+     * - limita por radio y por máximo de resultados
+     */
+    public static List<Gasolinera> getForMap(List<Gasolinera> gasolineras,
+                                             double userLat,
+                                             double userLon) {
+        return getWithinRadius(gasolineras, userLat, userLon,
+                DEFAULT_MAP_RADIUS_METERS,
+                DEFAULT_MAP_MAX_RESULTS);
+    }
+
+    public static List<Gasolinera> getForMap(List<Gasolinera> gasolineras,
+                                             double userLat,
+                                             double userLon,
+                                             double radiusMeters,
+                                             int maxResults) {
+        return getWithinRadius(gasolineras, userLat, userLon,
+                radiusMeters,
+                maxResults);
+    }
+
+    /**
+     * Calcula el rango de precios (min y max) ignorando precios nulos o <= 0.
+     */
+    public static PriceRange calculatePriceRange(List<Gasolinera> gasolineras) {
+        if (gasolineras == null || gasolineras.isEmpty()) {
+            return new PriceRange(null, null, 0);
+        }
+
+        Double min = null;
+        Double max = null;
+        int count = 0;
+
+        for (Gasolinera g : gasolineras) {
+            Double price = g.getPrecio();
+            if (price == null || price <= 0) continue;
+
+            if (min == null || price < min) min = price;
+            if (max == null || price > max) max = price;
+
+            count++;
+        }
+
+        return new PriceRange(min, max, count);
+    }
+
+    /**
+     * Devuelve el nivel relativo de precio (CHEAP / MID / EXPENSIVE)
+     * dentro del rango visible.
+     */
+    public static PriceLevel getPriceLevel(Double price, PriceRange range) {
+
+        if (price == null || range == null || range.isEmpty()) {
+            return PriceLevel.MID;
+        }
+
+        Double min = range.getMin();
+        Double max = range.getMax();
+
+        if (min == null || max == null) {
+            return PriceLevel.MID;
+        }
+
+        // Si todos los precios son iguales
+        if (max.equals(min)) {
+            return PriceLevel.MID;
+        }
+
+        double normalized = (price - min) / (max - min);
+
+        if (normalized <= 0.33) {
+            return PriceLevel.CHEAP;
+        } else if (normalized <= 0.66) {
+            return PriceLevel.MID;
+        } else {
+            return PriceLevel.EXPENSIVE;
+        }
     }
 }

@@ -1,15 +1,52 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# Built application files
+*.apk
+*.ap_
+*.aab
+
+# Files for the Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+build/
+
+# Gradle files
+.gradle/
+**/build/
+
+# Local configuration file (sdk path, etc)
 local.properties
+
+# Log Files
+*.log
+
+# Android Studio specific
+.idea/
+*.iml
+*.iws
+
+# Keystore files (VERY IMPORTANT not to upload)
+*.jks
+*.keystore
+
+# External native build folder
+.externalNativeBuild/
+.cxx/
+
+# Google Services (if you don't want to expose keys)
+google-services.json
+
+# Captures (Android Studio screenshots folder)
+captures/
+
+# Navigation editor temp files
+.navigation/
+
+# OS generated files
+.DS_Store
+Thumbs.db
