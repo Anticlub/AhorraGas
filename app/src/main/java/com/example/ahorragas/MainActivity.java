@@ -18,6 +18,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.ahorragas.data.CachedRemoteApiDataSource;
 import com.example.ahorragas.data.GasolineraRepository;
 import com.example.ahorragas.data.LocalJsonDataSource;
+import com.example.ahorragas.data.RepoError;
 import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.model.Gasolinera;
 
@@ -176,10 +177,36 @@ public class MainActivity extends AppCompatActivity {
                     checkIfReady();
                 });
 
+            } catch (RepoError e) {
+                e.printStackTrace();
+
+                runOnUiThread(() -> {
+                    String msg;
+                    switch (e.getType()) {
+                        case NETWORK:
+                            msg = "Error: sin conexión";
+                            break;
+                        case TIMEOUT:
+                            msg = "Error: tiempo de espera agotado";
+                            break;
+                        case HTTP:
+                            msg = "Error HTTP: " + e.getHttpCode();
+                            break;
+                        case EMPTY_RESPONSE:
+                            msg = "Error: respuesta vacía";
+                            break;
+                        case PARSE:
+                        default:
+                            msg = "Error procesando datos";
+                            break;
+                    }
+                    tvDataStatus.setText("Error cargando gasolineras · " + msg);
+                });
+
             } catch (Exception e) {
                 e.printStackTrace();
                 runOnUiThread(() ->
-                        tvDataStatus.setText("Error cargando gasolineras")
+                        tvDataStatus.setText("Error inesperado cargando gasolineras")
                 );
             }
         }).start();

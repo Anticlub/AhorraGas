@@ -1,6 +1,7 @@
 package com.example.ahorragas.network;
 
-import com.example.ahorragas.model.Station;
+import com.example.ahorragas.legacy.Station;
+import com.example.ahorragas.util.NumberUtils;
 
 public class StationMapper {
 
