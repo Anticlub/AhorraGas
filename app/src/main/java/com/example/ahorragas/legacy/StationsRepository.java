@@ -1,6 +1,7 @@
-package com.example.ahorragas.data;
+package com.example.ahorragas.legacy;
 
-import com.example.ahorragas.model.Station;
+import com.example.ahorragas.data.RepoError;
+import com.example.ahorragas.data.RepoLogger;
 import com.example.ahorragas.network.ApiClient;
 import com.example.ahorragas.network.GasStation;
 import com.example.ahorragas.network.GasStationsResponse;
