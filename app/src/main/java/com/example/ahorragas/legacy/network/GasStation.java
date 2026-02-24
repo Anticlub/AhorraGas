@@ -1,4 +1,4 @@
-package com.example.ahorragas.network;
+package com.example.ahorragas.legacy.network;
 
 import com.google.gson.annotations.SerializedName;
 
