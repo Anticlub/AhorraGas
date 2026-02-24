@@ -1,4 +1,4 @@
-package com.example.ahorragas.model;
+package com.example.ahorragas.legacy;
 
 public class Station {
 

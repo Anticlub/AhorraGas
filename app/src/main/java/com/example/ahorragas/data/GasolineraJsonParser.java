@@ -1,6 +1,8 @@
 package com.example.ahorragas.data;
 
 import com.example.ahorragas.model.Gasolinera;
+import com.example.ahorragas.util.GeoValidation;
+import com.example.ahorragas.util.NumberUtils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -27,24 +29,21 @@ public final class GasolineraJsonParser {
             String municipio = o.optString("Municipio", "");
             String direccion = o.optString("Dirección", "");
 
-            Double lat = safeDouble(o.optString("Latitud", null));
-            Double lon = safeDouble(o.optString("Longitud (WGS84)", null));
+            Double lat = NumberUtils.parseSpanishDouble(o.optString("Latitud", null));
+            Double lon = NumberUtils.parseSpanishDouble(o.optString("Longitud (WGS84)", null));
 
-            Double precio = safeDouble(o.optString(fuelKey, null)); // <- clave dinámica
+            if (!GeoValidation.isValidLatLon(lat, lon)) {
+                continue; // descartamos registros con coords malas (0,0, fuera de rango, etc.)
+            }
 
-            result.add(new Gasolinera(id, marca, municipio, direccion, lat, lon, precio));
+            Double precio = NumberUtils.parseSpanishDouble(o.optString(fuelKey, null));
+
+            result.add(new Gasolinera(id, marca, municipio, direccion, lat, lon, precio));;
         }
 
         return result;
     }
 
-    private static Double safeDouble(String s) {
-        if (s == null) return null;
-        s = s.trim();
-        if (s.isEmpty()) return null;
-        s = s.replace(",", ".");
-        try { return Double.parseDouble(s); } catch (Exception e) { return null; }
-    }
 
     private static int safeInt(String s) {
         if (s == null) return 0;
