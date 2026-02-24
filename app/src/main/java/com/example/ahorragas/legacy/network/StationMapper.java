@@ -1,4 +1,4 @@
-package com.example.ahorragas.network;
+package com.example.ahorragas.legacy.network;
 
 import com.example.ahorragas.legacy.Station;
 import com.example.ahorragas.util.NumberUtils;

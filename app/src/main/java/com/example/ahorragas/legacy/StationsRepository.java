@@ -2,10 +2,10 @@ package com.example.ahorragas.legacy;
 
 import com.example.ahorragas.data.RepoError;
 import com.example.ahorragas.data.RepoLogger;
-import com.example.ahorragas.network.ApiClient;
-import com.example.ahorragas.network.GasStation;
-import com.example.ahorragas.network.GasStationsResponse;
-import com.example.ahorragas.network.StationMapper;
+import com.example.ahorragas.legacy.network.ApiClient;
+import com.example.ahorragas.legacy.network.GasStation;
+import com.example.ahorragas.legacy.network.GasStationsResponse;
+import com.example.ahorragas.legacy.network.StationMapper;
 
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
