@@ -21,8 +21,7 @@ public class RemoteApiDataSource implements GasolineraDataSource {
         String json = downloadJson();
 
         try {
-            // De momento fuel fijo, luego lo hacemos dinámico
-            return GasolineraJsonParser.parse(json, "Precio Gasoleo A");
+            return GasolineraJsonParser.parse(json);
         } catch (Exception e) {
             throw new RepoError(
                     RepoError.Type.PARSE,
@@ -48,7 +47,6 @@ public class RemoteApiDataSource implements GasolineraDataSource {
             if (code >= 200 && code < 300) {
                 is = connection.getInputStream();
             } else {
-                // Intentar leer el cuerpo de error si existe
                 is = connection.getErrorStream();
                 String errorBody = (is != null) ? readStream(is) : "";
                 throw new RepoError(RepoError.Type.HTTP, code,
@@ -98,7 +96,6 @@ public class RemoteApiDataSource implements GasolineraDataSource {
     }
 
     private String safeShort(String s) {
-        // Evita logs/errores gigantes (por si viene HTML)
         s = s.replace("\n", " ").replace("\r", " ").trim();
         if (s.length() > 200) return s.substring(0, 200) + "…";
         return s;

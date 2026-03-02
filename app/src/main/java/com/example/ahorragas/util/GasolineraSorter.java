@@ -1,5 +1,6 @@
 package com.example.ahorragas.util;
 
+import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceLevel;
 import com.example.ahorragas.model.PriceRange;
@@ -12,15 +13,9 @@ public final class GasolineraSorter {
 
     private GasolineraSorter() {}
 
-    // Valores por defecto para mapa (ajustables)
     private static final int DEFAULT_MAP_MAX_RESULTS = 150;
     private static final double DEFAULT_MAP_RADIUS_METERS = 10_000; // 10 km
 
-    /**
-     * Filtra gasolineras con coords inválidas, calcula distanceMeters y ordena por cercanía.
-     * Devuelve una lista NUEVA (no modifica el orden de la lista original),
-     * pero sí setea distanceMeters en cada Gasolinera válida.
-     */
     public static List<Gasolinera> filterComputeAndSort(List<Gasolinera> gasolineras,
                                                         double userLat,
                                                         double userLon) {
@@ -42,9 +37,6 @@ public final class GasolineraSorter {
         return result;
     }
 
-    /**
-     * Devuelve las N gasolineras más cercanas al usuario.
-     */
     public static List<Gasolinera> getTopClosest(List<Gasolinera> gasolineras,
                                                  double userLat, double userLon,
                                                  int maxResults) {
@@ -53,9 +45,6 @@ public final class GasolineraSorter {
         return limit(sorted, maxResults);
     }
 
-    /**
-     * Devuelve gasolineras dentro de un radio (en metros), ordenadas por cercanía.
-     */
     public static List<Gasolinera> getWithinRadius(List<Gasolinera> gasolineras,
                                                    double userLat, double userLon,
                                                    double radiusMeters) {
@@ -70,16 +59,12 @@ public final class GasolineraSorter {
             if (d != null && d <= radiusMeters) {
                 result.add(g);
             } else if (d != null && d > radiusMeters) {
-                // Como está ordenado, al pasar el radio podemos cortar
                 break;
             }
         }
         return result;
     }
 
-    /**
-     * Radio + límite (útil para mapa: evita saturación en ciudades).
-     */
     public static List<Gasolinera> getWithinRadius(List<Gasolinera> gasolineras,
                                                    double userLat, double userLon,
                                                    double radiusMeters,
@@ -89,20 +74,12 @@ public final class GasolineraSorter {
         return limit(inRadius, maxResults);
     }
 
-    // Limita el máximo de elemento de una lista
     private static List<Gasolinera> limit(List<Gasolinera> list, int maxResults) {
         if (maxResults <= 0) return new ArrayList<>();
         if (list.size() <= maxResults) return list;
         return new ArrayList<>(list.subList(0, maxResults));
     }
 
-    /**
-     * Selección recomendada para pintar en el mapa:
-     * - filtra coordenadas inválidas
-     * - calcula distanceMeters
-     * - ordena por cercanía
-     * - limita por radio y por máximo de resultados
-     */
     public static List<Gasolinera> getForMap(List<Gasolinera> gasolineras,
                                              double userLat,
                                              double userLon) {
@@ -122,9 +99,10 @@ public final class GasolineraSorter {
     }
 
     /**
-     * Calcula el rango de precios (min y max) ignorando precios nulos o <= 0.
+     * ✅ Nuevo: rango de precios para un combustible concreto.
+     * Ignora precios nulos o <= 0.
      */
-    public static PriceRange calculatePriceRange(List<Gasolinera> gasolineras) {
+    public static PriceRange calculatePriceRange(List<Gasolinera> gasolineras, FuelType fuel) {
         if (gasolineras == null || gasolineras.isEmpty()) {
             return new PriceRange(null, null, 0);
         }
@@ -134,7 +112,7 @@ public final class GasolineraSorter {
         int count = 0;
 
         for (Gasolinera g : gasolineras) {
-            Double price = g.getPrecio();
+            Double price = (fuel == null) ? g.getPrecio() : g.getPrecio(fuel);
             if (price == null || price <= 0) continue;
 
             if (min == null || price < min) min = price;
@@ -147,9 +125,12 @@ public final class GasolineraSorter {
     }
 
     /**
-     * Devuelve el nivel relativo de precio (CHEAP / MID / EXPENSIVE)
-     * dentro del rango visible.
+     * ✅ Compatibilidad: el método antiguo sigue funcionando (Gasóleo A por defecto).
      */
+    public static PriceRange calculatePriceRange(List<Gasolinera> gasolineras) {
+        return calculatePriceRange(gasolineras, FuelType.GASOLEO_A);
+    }
+
     public static PriceLevel getPriceLevel(Double price, PriceRange range) {
 
         if (price == null || range == null || range.isEmpty()) {
@@ -163,7 +144,6 @@ public final class GasolineraSorter {
             return PriceLevel.MID;
         }
 
-        // Si todos los precios son iguales
         if (max.equals(min)) {
             return PriceLevel.MID;
         }
