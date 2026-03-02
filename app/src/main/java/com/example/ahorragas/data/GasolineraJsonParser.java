@@ -1,5 +1,6 @@
 package com.example.ahorragas.data;
 
+import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.util.GeoValidation;
 import com.example.ahorragas.util.NumberUtils;
@@ -14,7 +15,7 @@ public final class GasolineraJsonParser {
 
     private GasolineraJsonParser() {}
 
-    public static List<Gasolinera> parse(String json, String fuelKey) throws Exception {
+    public static List<Gasolinera> parse(String json) throws Exception {
         JSONObject root = new JSONObject(json);
         JSONArray arr = root.optJSONArray("ListaEESSPrecio");
         if (arr == null) return new ArrayList<>();
@@ -33,17 +34,27 @@ public final class GasolineraJsonParser {
             Double lon = NumberUtils.parseSpanishDouble(o.optString("Longitud (WGS84)", null));
 
             if (!GeoValidation.isValidLatLon(lat, lon)) {
-                continue; // descartamos registros con coords malas (0,0, fuera de rango, etc.)
+                continue; // descartamos registros con coords malas
             }
 
-            Double precio = NumberUtils.parseSpanishDouble(o.optString(fuelKey, null));
+            Gasolinera g = new Gasolinera(id, marca, municipio, direccion, lat, lon, null);
 
-            result.add(new Gasolinera(id, marca, municipio, direccion, lat, lon, precio));;
+            // ✅ Parsear TODOS los combustibles
+            for (FuelType fuel : FuelType.values()) {
+                Double precio = NumberUtils.parseSpanishDouble(o.optString(fuel.apiKey(), null));
+                // Si viene 0, -1, etc., lo dejamos como null para no “ensuciar”
+                if (precio != null && precio > 0) {
+                    g.setPrecio(fuel, precio);
+                } else {
+                    g.setPrecio(fuel, null);
+                }
+            }
+
+            result.add(g);
         }
 
         return result;
     }
-
 
     private static int safeInt(String s) {
         if (s == null) return 0;

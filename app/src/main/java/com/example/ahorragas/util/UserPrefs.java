@@ -1,13 +1,16 @@
 package com.example.ahorragas.util;
 
+import com.example.ahorragas.model.FuelType;
+
 public class UserPrefs {
-    private String combustible;
+    private FuelType combustible;
     private double consumo, radio, precioObjetivo;
     private boolean notifcacionDiaria, notificacionPrecio;
 
-    //  CLASE BASE PARA DATOS DEL USUARIO (AÑADIR O ELIMINAR SI ES NECESARIO)
-    public UserPrefs(String combustible, double consumo, double radio, double precioObjetivo, boolean notifcacionDiaria, boolean notificacionPrecio) {
-        this.combustible = combustible;
+    //  CLASE BASE PARA DATOS DEL USUARIO
+    public UserPrefs(FuelType combustible, double consumo, double radio,
+                     double precioObjetivo, boolean notifcacionDiaria, boolean notificacionPrecio) {
+        this.combustible = (combustible != null) ? combustible : FuelType.GASOLEO_A;
         this.consumo = consumo;
         this.radio = radio;
         this.precioObjetivo = precioObjetivo;
@@ -15,12 +18,22 @@ public class UserPrefs {
         this.notificacionPrecio = notificacionPrecio;
     }
 
-    public String getCombustible() {
+    // ✅ Nuevo getter/setter tipado
+    public FuelType getCombustible() {
         return combustible;
     }
 
-    public void setCombustible(String combustible) {
-        this.combustible = combustible;
+    public void setCombustible(FuelType combustible) {
+        this.combustible = (combustible != null) ? combustible : FuelType.GASOLEO_A;
+    }
+
+    // ✅ Compatibilidad por si en alguna parte usabas String
+    public String getCombustibleAsString() {
+        return combustible != null ? combustible.name() : FuelType.GASOLEO_A.name();
+    }
+
+    public void setCombustibleFromString(String value) {
+        this.combustible = FuelType.fromString(value);
     }
 
     public double getConsumo() {
