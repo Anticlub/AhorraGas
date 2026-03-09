@@ -23,8 +23,8 @@ public class FileJsonCache {
     }
 
     public long readTimestamp() throws Exception {
-        String s = readAll(tsFile);
-        return Long.parseLong(s.trim());
+        String value = readAll(tsFile);
+        return Long.parseLong(value.trim());
     }
 
     public String readJson() throws Exception {
@@ -36,17 +36,28 @@ public class FileJsonCache {
         writeAll(tsFile, String.valueOf(System.currentTimeMillis()));
     }
 
-    private String readAll(File f) throws Exception {
-        try (FileInputStream fis = new FileInputStream(f)) {
-            byte[] bytes = new byte[(int) f.length()];
+    public void clear() {
+        if (jsonFile.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            jsonFile.delete();
+        }
+        if (tsFile.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            tsFile.delete();
+        }
+    }
+
+    private String readAll(File file) throws Exception {
+        try (FileInputStream fis = new FileInputStream(file)) {
+            byte[] bytes = new byte[(int) file.length()];
             int read = fis.read(bytes);
             if (read <= 0) return "";
             return new String(bytes, StandardCharsets.UTF_8);
         }
     }
 
-    private void writeAll(File f, String content) throws Exception {
-        try (FileOutputStream fos = new FileOutputStream(f, false)) {
+    private void writeAll(File file, String content) throws Exception {
+        try (FileOutputStream fos = new FileOutputStream(file, false)) {
             fos.write(content.getBytes(StandardCharsets.UTF_8));
         }
     }

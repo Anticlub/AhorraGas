@@ -8,46 +8,66 @@ import java.util.List;
 
 public class CachedRemoteApiDataSource implements GasolineraDataSource {
 
-    private static final long MAX_AGE_MS = 30L * 60L * 1000L; // 30 min
-    private DataSourceOrigin lastOrigin = null;
+    private static final long MAX_AGE_MS = 30L * 60L * 1000L;
 
-    private final Context context;
+    private DataSourceOrigin lastOrigin = null;
     private final RemoteApiDataSource remote;
     private final FileJsonCache cache;
+    private boolean forceRemoteNextLoad = false;
 
-    public DataSourceOrigin getLastOrigin() {
+    public CachedRemoteApiDataSource(Context context) {
+        Context appContext = context.getApplicationContext();
+        this.remote = new RemoteApiDataSource();
+        this.cache = new FileJsonCache(appContext, "gasolineras_cache");
+    }
+
+    public synchronized DataSourceOrigin getLastOrigin() {
         return lastOrigin;
     }
 
-    public CachedRemoteApiDataSource(Context context) {
-        this.context = context.getApplicationContext();
-        this.remote = new RemoteApiDataSource();
-        this.cache = new FileJsonCache(this.context, "gasolineras_cache");
+    public synchronized void requestForceRefresh() {
+        forceRemoteNextLoad = true;
+    }
+
+    public synchronized void clearCache() {
+        cache.clear();
+        lastOrigin = null;
+        forceRemoteNextLoad = false;
     }
 
     @Override
-    public List<Gasolinera> loadGasolineras() throws Exception {
+    public synchronized List<Gasolinera> loadGasolineras() throws Exception {
+        boolean forceRemote = forceRemoteNextLoad;
+        forceRemoteNextLoad = false;
+        
+        // Si existe caché válida, usar caché
+        if (!forceRemote && cache.hasCache()) {
+            try {
+                long age = System.currentTimeMillis() - cache.readTimestamp();
+                if (age <= MAX_AGE_MS) {
+                    lastOrigin = DataSourceOrigin.CACHE;
+                    return GasolineraJsonParser.parse(cache.readJson());
+                }
+            } catch (Exception ignored) {
 
-        // 1) Si existe cache y es reciente -> usar cache
-        if (cache.hasCache()) {
-            long ts = cache.readTimestamp();
-            long age = System.currentTimeMillis() - ts;
-
-            if (age <= MAX_AGE_MS) {
-                String json = cache.readJson();
-                lastOrigin = DataSourceOrigin.CACHE;
-                return GasolineraJsonParser.parse(json);
             }
         }
 
-        // 2) Si no hay cache válida -> descargar
-        String json = remote.downloadJson();
+        try {
+            String json = remote.downloadJson();
+            cache.write(json);
+            lastOrigin = DataSourceOrigin.REMOTE;
+            return GasolineraJsonParser.parse(json);
+        } catch (Exception remoteError) {
+            if (cache.hasCache()) {
+                try {
+                    lastOrigin = DataSourceOrigin.CACHE;
+                    return GasolineraJsonParser.parse(cache.readJson());
+                } catch (Exception ignored) {
 
-        // Guardar en cache
-        cache.write(json);
-
-        lastOrigin = DataSourceOrigin.REMOTE;
-
-        return GasolineraJsonParser.parse(json);
+                }
+            }
+            throw remoteError;
+        }
     }
 }

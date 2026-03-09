@@ -1,3 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AhorraGas</string>
+    <string name="actualizar">Actualizar</string>
+    <string name="mostrar_cerca">Mostrar cerca</string>
+    <string name="mi_ubicacion">Mi ubicación</string>
+    <string name="estaciones_cercanas">Estaciones cercanas</string>
+    <string name="abrir_test">Test</string>
+    <string name="stations_count_zero">0 estaciones</string>
+    <string name="stations_count_format">%1$d estaciones</string>
+    <string name="status_loading_data">Cargando gasolineras…</string>
+    <string name="status_refreshing_data">Actualizando gasolineras…</string>
+    <string name="status_location_pending">Ubicación: pendiente</string>
+    <string name="status_location_loading">Ubicación: obteniendo posición…</string>
+    <string name="status_location_disabled">Ubicación: GPS desactivado · mapa en España</string>
+    <string name="status_location_denied">Ubicación: permiso denegado · mapa en España</string>
+    <string name="status_location_error">Ubicación: no disponible · mapa en España</string>
+    <string name="status_location_format">Ubicación: %1$.5f, %2$.5f</string>
+    <string name="data_status_format">Origen: %1$s · %2$d totales · %3$d con %4$s · %5$s</string>
+    <string name="order_by_distance">ordenadas por distancia</string>
+    <string name="order_by_price">ordenadas por precio</string>
+    <string name="origin_remote">API remota</string>
+    <string name="origin_cache">caché local</string>
+    <string name="origin_fallback">fallback local</string>
+    <string name="origin_unknown">sin origen</string>
+    <string name="no_stations_for_fuel">No hay estaciones con precio para %1$s</string>
+    <string name="error_loading_data">Error cargando gasolineras</string>
+    <string name="location_permission_message">Sin permiso de ubicación. Se muestra España.</string>
+    <string name="location_gps_message">Activa el GPS para ordenar por cercanía.</string>
+    <string name="showing_nearest">Se muestran %1$d estaciones cercanas</string>
+    <string name="refreshing">Actualizando…</string>
 </resources>

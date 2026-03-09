@@ -1,6 +1,7 @@
 package com.example.ahorragas.model;
 
 import java.util.EnumMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class Gasolinera {
@@ -8,12 +9,14 @@ public class Gasolinera {
     private String marca;
     private String direccion;
     private String municipio;
-    private Double lat, lon, distanceMeters;
+    private String horario;
+    private Double lat;
+    private Double lon;
+    private Double distanceMeters;
+    private PriceLevel priceLevel = PriceLevel.UNKNOWN;
 
-    // ✅ Precios por combustible
     private final Map<FuelType, Double> precios = new EnumMap<>(FuelType.class);
 
-    // CLASE BASE GASOLINERA (COMPARAR CON JSON DE API PARA VER SI NECESITA O LE SOBRAN ATRIBUTOS)
     public Gasolinera() {
     }
 
@@ -25,8 +28,6 @@ public class Gasolinera {
         this.direccion = direccion;
         this.lat = lat;
         this.lon = lon;
-
-        // ✅ Compatibilidad: el "precio" antiguo lo tratamos como Gasóleo A por defecto
         setPrecio(FuelType.GASOLEO_A, precio);
     }
 
@@ -66,6 +67,14 @@ public class Gasolinera {
         this.municipio = municipio;
     }
 
+    public String getHorario() {
+        return horario;
+    }
+
+    public void setHorario(String horario) {
+        this.horario = horario;
+    }
+
     public Double getLat() {
         return lat;
     }
@@ -90,14 +99,16 @@ public class Gasolinera {
         this.distanceMeters = distanceMeters;
     }
 
-    // ======================
-    // ✅ PRECIOS POR COMBUSTIBLE
-    // ======================
+    public PriceLevel getPriceLevel() {
+        return priceLevel;
+    }
+
+    public void setPriceLevel(PriceLevel priceLevel) {
+        this.priceLevel = priceLevel != null ? priceLevel : PriceLevel.UNKNOWN;
+    }
 
     public void setPrecio(FuelType fuel, Double value) {
         if (fuel == null) return;
-
-        // Guardamos tal cual; si viene null, queda null (no rompe UI)
         precios.put(fuel, value);
     }
 
@@ -106,18 +117,56 @@ public class Gasolinera {
         return precios.get(fuel);
     }
 
-    /**
-     * ✅ Compatibilidad con tu código actual:
-     * si alguien llama getPrecio() sin fuel, devolvemos Gasóleo A.
-     */
     public Double getPrecio() {
         return getPrecio(FuelType.GASOLEO_A);
     }
 
-    /**
-     * ✅ Compatibilidad: setPrecio "antiguo" = Gasóleo A.
-     */
     public void setPrecio(Double value) {
         setPrecio(FuelType.GASOLEO_A, value);
+    }
+
+    public String getBrandInitial() {
+        String raw = marca != null ? marca.trim() : "";
+        if (raw.isEmpty()) return "?";
+
+        String cleaned = raw.replaceAll("[^\\p{L}\\p{N} ]", "").trim();
+        if (cleaned.isEmpty()) cleaned = raw;
+
+        String[] parts = cleaned.split("\\s+");
+        if (parts.length >= 2) {
+            String abbr = ("" + parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase(Locale.getDefault());
+            return abbr.length() > 2 ? abbr.substring(0, 2) : abbr;
+        }
+
+        return cleaned.substring(0, Math.min(2, cleaned.length())).toUpperCase(Locale.getDefault());
+    }
+
+    public String getDisplayAddress() {
+        String street = direccion != null ? direccion.trim() : "";
+        String city = municipio != null ? municipio.trim() : "";
+
+        if (street.isEmpty() && city.isEmpty()) return "Dirección no disponible";
+        if (street.isEmpty()) return city;
+        if (city.isEmpty()) return street;
+        return street + ", " + city;
+    }
+
+    public String getFormattedPrice(FuelType fuel) {
+        Double value = getPrecio(fuel);
+        if (value == null || value <= 0) return "N/D";
+        return String.format(Locale.getDefault(), "%.3f €", value);
+    }
+
+    public String getFormattedDistance() {
+        if (distanceMeters == null || distanceMeters <= 0) return "";
+        if (distanceMeters < 1000) {
+            return String.format(Locale.getDefault(), "%.0f m", distanceMeters);
+        }
+        return String.format(Locale.getDefault(), "%.1f km", distanceMeters / 1000.0);
+    }
+
+    public boolean hasPrice(FuelType fuel) {
+        Double value = getPrecio(fuel);
+        return value != null && value > 0;
     }
 }
