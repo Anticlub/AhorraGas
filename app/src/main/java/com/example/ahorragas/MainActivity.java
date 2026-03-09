@@ -52,6 +52,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.example.ahorragas.data.CachedRemoteApiDataSource;
+import com.example.ahorragas.data.GasolineraRepository;
+import com.example.ahorragas.data.RepoError;
+import com.example.ahorragas.location.LocationHelper;
+import com.example.ahorragas.model.Gasolinera;
+
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String PREF_SELECTED_FUEL = "pref_selected_fuel";
@@ -182,6 +190,176 @@ public class MainActivity extends AppCompatActivity {
             }
             return false;
         });
+
+        tvLocation = findViewById(R.id.tvLocation);
+        tvStatus = findViewById(R.id.tvStatus);
+        tvDataStatus = findViewById(R.id.tvDataStatus);
+
+        btnLocation = findViewById(R.id.btnLocation);
+
+        // ✅ Un único listener (sin test code)
+        btnLocation.setOnClickListener(v -> ensureLocationPermission());
+
+        Button btnOpenTest = findViewById(R.id.btnOpenTest);
+        btnOpenTest.setOnClickListener(v ->
+                startActivity(new Intent(this, TestDistanceActivity.class))
+        );
+
+        locationHelper = new LocationHelper(this);
+
+        repo = new GasolineraRepository(
+                new CachedRemoteApiDataSource(this)
+        );
+
+        locationPermissionLauncher =
+                registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                    boolean fine = Boolean.TRUE.equals(result.get(Manifest.permission.ACCESS_FINE_LOCATION));
+                    boolean coarse = Boolean.TRUE.equals(result.get(Manifest.permission.ACCESS_COARSE_LOCATION));
+
+                    if (fine || coarse) {
+                        tvStatus.setText("Permiso de ubicación concedido ✅");
+                        requestUserLocation();
+                    } else {
+                        boolean canAskAgainFine =
+                                shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION);
+                        boolean canAskAgainCoarse =
+                                shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION);
+
+                        if (!canAskAgainFine && !canAskAgainCoarse) {
+                            tvStatus.setText("Permiso denegado permanentemente. Actívalo en Ajustes.");
+                            locationHelper.openAppSettings();
+                        } else {
+                            tvStatus.setText("Permiso denegado. Sin ubicación no se pueden mostrar gasolineras cercanas.");
+                        }
+
+                        tvLocation.setText("Ubicación: —");
+                    }
+                });
+
+        // Carga datos en background al arrancar
+        loadGasolinerasAsync();
+
+        // Si quieres pedir ubicación al arrancar, déjalo. Si no, quítalo.
+        ensureLocationPermission();
+    }
+
+    // ==============================
+    // PERMISOS / UBICACIÓN
+    // ==============================
+
+    private void ensureLocationPermission() {
+        if (locationHelper.hasLocationPermission()) {
+            requestUserLocation();
+        } else {
+            tvStatus.setText("Solicitando permiso de ubicación…");
+            locationPermissionLauncher.launch(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            });
+        }
+    }
+
+    private void requestUserLocation() {
+        tvStatus.setText("Obteniendo ubicación…");
+
+        locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
+            @Override
+            public void onSuccess(Location location) {
+                userLocation = location;
+                renderLocation(location);
+                tvStatus.setText("Localización OK ✅");
+                checkIfReady();
+            }
+
+            @Override
+            public void onError(LocationHelper.LocationError error) {
+                tvStatus.setText("Error ubicación: " + error.name());
+                tvLocation.setText("Ubicación: —");
+            }
+        });
+    }
+
+    // esto es para pintar la ubicacion por pantalla, luego se usara la ubicacion para el mapa no para pintar las coordenadas
+    private void renderLocation(Location location) {
+        tvLocation.setText("Ubicación: " + location.getLatitude() + ", " + location.getLongitude());
+    }
+
+    // ==============================
+    // CARGA DE GASOLINERAS
+    // ==============================
+
+    private void loadGasolinerasAsync() {
+        tvDataStatus.setText("Cargando gasolineras…");
+
+        new Thread(() -> {
+            try {
+                List<Gasolinera> list = repo.getGasolineras();
+
+                runOnUiThread(() -> {
+                    gasolineras = list;
+
+                    // Origen de datos
+                    String originText;
+                    switch (repo.getLastOrigin()) {
+                        case CACHE:
+                            originText = "cache (archivo)";
+                            break;
+                        case REMOTE:
+                            originText = "remoto (API)";
+                            break;
+                        case LOCAL_FALLBACK:
+                        default:
+                            originText = "local (fallback)";
+                            break;
+                    }
+
+                    tvDataStatus.setText("Gasolineras: " + list.size() + " · origen: " + originText);
+                    checkIfReady();
+                });
+
+            } catch (RepoError e) {
+                e.printStackTrace();
+
+                runOnUiThread(() -> {
+                    String msg;
+                    switch (e.getType()) {
+                        case NETWORK:
+                            msg = "Error: sin conexión";
+                            break;
+                        case TIMEOUT:
+                            msg = "Error: tiempo de espera agotado";
+                            break;
+                        case HTTP:
+                            msg = "Error HTTP: " + e.getHttpCode();
+                            break;
+                        case EMPTY_RESPONSE:
+                            msg = "Error: respuesta vacía";
+                            break;
+                        case PARSE:
+                        default:
+                            msg = "Error procesando datos";
+                            break;
+                    }
+                    tvDataStatus.setText("Error cargando gasolineras · " + msg);
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() ->
+                        tvDataStatus.setText("Error inesperado cargando gasolineras")
+                );
+            }
+        }).start();
+    }
+
+    // ==============================
+    // CUANDO TODO ESTÁ LISTO
+    // ==============================
+
+    private void checkIfReady() {
+        if (gasolineras != null && userLocation != null) {
+            tvStatus.setText("Listo ✅ Datos + ubicación disponibles");
+        }
     }
 
     private void setupRecyclerView() {
