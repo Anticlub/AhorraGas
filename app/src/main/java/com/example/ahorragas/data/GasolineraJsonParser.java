@@ -13,53 +13,58 @@ import java.util.List;
 
 public final class GasolineraJsonParser {
 
-    private GasolineraJsonParser() {}
+    private GasolineraJsonParser() {
+    }
 
     public static List<Gasolinera> parse(String json) throws Exception {
         JSONObject root = new JSONObject(json);
-        JSONArray arr = root.optJSONArray("ListaEESSPrecio");
-        if (arr == null) return new ArrayList<>();
+        JSONArray array = root.optJSONArray("ListaEESSPrecio");
+        if (array == null) return new ArrayList<>();
 
-        List<Gasolinera> result = new ArrayList<>(arr.length());
+        List<Gasolinera> result = new ArrayList<>(array.length());
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject item = array.getJSONObject(i);
 
-        for (int i = 0; i < arr.length(); i++) {
-            JSONObject o = arr.getJSONObject(i);
+            int id = safeInt(item.optString("IDEESS"));
+            String marca = item.optString("Rótulo", "");
+            String municipio = item.optString("Municipio", "");
+            String direccion = item.optString("Dirección", "");
+            String horario = item.optString("Horario", "");
 
-            int id = safeInt(o.optString("IDEESS"));
-            String marca = o.optString("Rótulo", "");
-            String municipio = o.optString("Municipio", "");
-            String direccion = o.optString("Dirección", "");
+            Double lat = NumberUtils.parseSpanishDouble(item.optString("Latitud", null));
+            Double lon = NumberUtils.parseSpanishDouble(item.optString("Longitud (WGS84)", null));
 
-            Double lat = NumberUtils.parseSpanishDouble(o.optString("Latitud", null));
-            Double lon = NumberUtils.parseSpanishDouble(o.optString("Longitud (WGS84)", null));
-
+            // Descartamos registros con coordenadas inválidas
             if (!GeoValidation.isValidLatLon(lat, lon)) {
-                continue; // descartamos registros con coords malas
+                continue;
             }
 
-            Gasolinera g = new Gasolinera(id, marca, municipio, direccion, lat, lon, null);
+            Gasolinera gasolinera = new Gasolinera(id, marca, municipio, direccion, lat, lon, null);
+            gasolinera.setHorario(horario);
 
-            // ✅ Parsear TODOS los combustibles
             for (FuelType fuel : FuelType.values()) {
-                Double precio = NumberUtils.parseSpanishDouble(o.optString(fuel.apiKey(), null));
-                // Si viene 0, -1, etc., lo dejamos como null para no “ensuciar”
-                if (precio != null && precio > 0) {
-                    g.setPrecio(fuel, precio);
+                Double price = NumberUtils.parseSpanishDouble(item.optString(fuel.apiKey(), null));
+                if (price != null && price > 0) {
+                    gasolinera.setPrecio(fuel, price);
                 } else {
-                    g.setPrecio(fuel, null);
+                    gasolinera.setPrecio(fuel, null);
                 }
             }
 
-            result.add(g);
+            result.add(gasolinera);
         }
 
         return result;
     }
 
-    private static int safeInt(String s) {
-        if (s == null) return 0;
-        s = s.trim();
-        if (s.isEmpty()) return 0;
-        try { return Integer.parseInt(s); } catch (Exception e) { return 0; }
+    private static int safeInt(String value) {
+        if (value == null) return 0;
+        String clean = value.trim();
+        if (clean.isEmpty()) return 0;
+        try {
+            return Integer.parseInt(clean);
+        } catch (Exception e) {
+            return 0;
+        }
     }
 }

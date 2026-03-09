@@ -1,27 +1,30 @@
 package com.example.ahorragas.model;
 
 /**
- * Tipos de combustible soportados en la app.
- * Cada uno mapea a la clave exacta que viene en el JSON del ministerio.
+ * Tipos de combustible soportados por la app.
+ * Cada uno mapea a la clave exacta del JSON del Ministerio.
  */
 public enum FuelType {
-    GASOLEO_A("Precio Gasoleo A"),
-    GASOLINA_95_E5("Precio Gasolina 95 E5"),
-    GASOLINA_98_E5("Precio Gasolina 98 E5");
+    GASOLEO_A("Precio Gasoleo A", "Gasóleo A"),
+    GASOLINA_95_E5("Precio Gasolina 95 E5", "Gasolina 95"),
+    GASOLINA_98_E5("Precio Gasolina 98 E5", "Gasolina 98");
 
     private final String apiKey;
+    private final String displayName;
 
-    FuelType(String apiKey) {
+    FuelType(String apiKey, String displayName) {
         this.apiKey = apiKey;
+        this.displayName = displayName;
     }
 
     public String apiKey() {
         return apiKey;
     }
 
-    /**
-     * Convierte un String guardado (por ejemplo en prefs) a FuelType con fallback.
-     */
+    public String displayName() {
+        return displayName;
+    }
+
     public static FuelType fromString(String value) {
         if (value == null) return GASOLEO_A;
         try {
@@ -29,5 +32,10 @@ public enum FuelType {
         } catch (Exception ignore) {
             return GASOLEO_A;
         }
+    }
+
+    @Override
+    public String toString() {
+        return displayName;
     }
 }

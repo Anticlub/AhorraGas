@@ -1,10 +1,11 @@
 package com.example.ahorragas.model;
 
 /**
- * Nivel relativo de precio dentro del rango visible.
+ * Nivel relativo de precio dentro del conjunto visible.
  */
 public enum PriceLevel {
-    CHEAP,   // barato
-    MID,     // medio
-    EXPENSIVE // caro
+    CHEAP,
+    MID,
+    EXPENSIVE,
+    UNKNOWN
 }
