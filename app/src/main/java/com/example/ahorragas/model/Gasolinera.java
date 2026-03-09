@@ -31,6 +31,10 @@ public class Gasolinera {
         setPrecio(FuelType.GASOLEO_A, precio);
     }
 
+    // ======================
+    // GETTERS / SETTERS BASE
+    // ======================
+
     public int getId() {
         return id;
     }

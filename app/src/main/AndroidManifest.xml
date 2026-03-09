@@ -26,6 +26,9 @@
             android:exported="false" />
 
         <activity
+            android:name=".TestDistanceActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:screenOrientation="portrait">
