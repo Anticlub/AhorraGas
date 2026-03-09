@@ -39,7 +39,8 @@ public class CachedRemoteApiDataSource implements GasolineraDataSource {
     public synchronized List<Gasolinera> loadGasolineras() throws Exception {
         boolean forceRemote = forceRemoteNextLoad;
         forceRemoteNextLoad = false;
-
+        
+        // Si existe caché válida, usar caché
         if (!forceRemote && cache.hasCache()) {
             try {
                 long age = System.currentTimeMillis() - cache.readTimestamp();
@@ -48,7 +49,7 @@ public class CachedRemoteApiDataSource implements GasolineraDataSource {
                     return GasolineraJsonParser.parse(cache.readJson());
                 }
             } catch (Exception ignored) {
-                // Si la caché está corrupta, intentamos remoto.
+
             }
         }
 
@@ -63,7 +64,7 @@ public class CachedRemoteApiDataSource implements GasolineraDataSource {
                     lastOrigin = DataSourceOrigin.CACHE;
                     return GasolineraJsonParser.parse(cache.readJson());
                 } catch (Exception ignored) {
-                    // Si también falla la caché, propagamos el error remoto original.
+
                 }
             }
             throw remoteError;

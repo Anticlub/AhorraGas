@@ -34,6 +34,7 @@ public final class GasolineraJsonParser {
             Double lat = NumberUtils.parseSpanishDouble(item.optString("Latitud", null));
             Double lon = NumberUtils.parseSpanishDouble(item.optString("Longitud (WGS84)", null));
 
+            // Descartamos registros con coordenadas inválidas
             if (!GeoValidation.isValidLatLon(lat, lon)) {
                 continue;
             }
