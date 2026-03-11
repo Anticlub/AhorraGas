@@ -674,7 +674,7 @@ public class MainActivity extends AppCompatActivity {
                 .append(gasolinera.getDisplayAddress());
 
         String horario = gasolinera.getFormattedHorario();
-        if (!horario.isEmpty()) {
+        if (!horario.equals("Horario no disponible")) {
             sb.append("\n").append(horario);
         }
 
