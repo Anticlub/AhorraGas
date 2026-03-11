@@ -31,6 +31,10 @@ public final class GasolineraJsonParser {
             String direccion = item.optString("Dirección", "");
             String horario = item.optString("Horario", "");
 
+            if (horario != null) {
+                horario = horario.trim();
+            }
+
             Double lat = NumberUtils.parseSpanishDouble(item.optString("Latitud", null));
             Double lon = NumberUtils.parseSpanishDouble(item.optString("Longitud (WGS84)", null));
 
