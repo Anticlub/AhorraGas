@@ -72,7 +72,14 @@ public class Gasolinera {
     }
 
     public void setHorario(String horario) {
-        this.horario = horario;
+        this.horario = horario == null ? null : horario.trim();
+    }
+
+    public String getFormattedHorario() {
+        if (horario == null || horario.trim().isEmpty()) {
+            return "Horario no disponible";
+        }
+        return horario.trim();
     }
 
     public Double getLat() {
