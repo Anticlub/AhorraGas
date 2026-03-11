@@ -52,14 +52,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.example.ahorragas.data.CachedRemoteApiDataSource;
-import com.example.ahorragas.data.GasolineraRepository;
-import com.example.ahorragas.data.RepoError;
-import com.example.ahorragas.location.LocationHelper;
-import com.example.ahorragas.model.Gasolinera;
-
-import java.util.List;
-
 public class MainActivity extends AppCompatActivity {
 
     private static final String PREF_SELECTED_FUEL = "pref_selected_fuel";
@@ -98,8 +90,12 @@ public class MainActivity extends AppCompatActivity {
             registerForActivityResult(
                     new ActivityResultContracts.RequestMultiplePermissions(),
                     result -> {
-                        boolean fineGranted = Boolean.TRUE.equals(result.get(Manifest.permission.ACCESS_FINE_LOCATION));
-                        boolean coarseGranted = Boolean.TRUE.equals(result.get(Manifest.permission.ACCESS_COARSE_LOCATION));
+                        boolean fineGranted = Boolean.TRUE.equals(
+                                result.get(Manifest.permission.ACCESS_FINE_LOCATION)
+                        );
+                        boolean coarseGranted = Boolean.TRUE.equals(
+                                result.get(Manifest.permission.ACCESS_COARSE_LOCATION)
+                        );
 
                         if (fineGranted || coarseGranted) {
                             requestUserLocation();
@@ -107,7 +103,11 @@ public class MainActivity extends AppCompatActivity {
                             showSpainFallback();
                             updateLocationStatus(getString(R.string.status_location_denied));
                             btnMostrarCerca.setEnabled(false);
-                            Toast.makeText(this, R.string.location_permission_message, Toast.LENGTH_LONG).show();
+                            Toast.makeText(
+                                    this,
+                                    R.string.location_permission_message,
+                                    Toast.LENGTH_LONG
+                            ).show();
                             renderMetaStatus();
                         }
                     });
@@ -127,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
         dataSource = new CachedRemoteApiDataSource(this);
         repository = new GasolineraRepository(dataSource);
         locationHelper = new LocationHelper(this);
+
         selectedFuel = FuelType.fromString(
                 PreferenceManager.getDefaultSharedPreferences(this)
                         .getString(PREF_SELECTED_FUEL, FuelType.GASOLEO_A.name())
@@ -149,6 +150,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         mapView.onResume();
+
         if (locationOverlay != null && locationHelper.hasLocationPermission()) {
             locationOverlay.enableMyLocation();
         }
@@ -158,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         mapView.onPause();
+
         if (locationOverlay != null) {
             locationOverlay.disableMyLocation();
             locationOverlay.disableFollowLocation();
@@ -190,205 +193,48 @@ public class MainActivity extends AppCompatActivity {
             }
             return false;
         });
-
-        tvLocation = findViewById(R.id.tvLocation);
-        tvStatus = findViewById(R.id.tvStatus);
-        tvDataStatus = findViewById(R.id.tvDataStatus);
-
-        btnLocation = findViewById(R.id.btnLocation);
-
-        // ✅ Un único listener (sin test code)
-        btnLocation.setOnClickListener(v -> ensureLocationPermission());
-
-        Button btnOpenTest = findViewById(R.id.btnOpenTest);
-        btnOpenTest.setOnClickListener(v ->
-                startActivity(new Intent(this, TestDistanceActivity.class))
-        );
-
-        locationHelper = new LocationHelper(this);
-
-        repo = new GasolineraRepository(
-                new CachedRemoteApiDataSource(this)
-        );
-
-        locationPermissionLauncher =
-                registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
-                    boolean fine = Boolean.TRUE.equals(result.get(Manifest.permission.ACCESS_FINE_LOCATION));
-                    boolean coarse = Boolean.TRUE.equals(result.get(Manifest.permission.ACCESS_COARSE_LOCATION));
-
-                    if (fine || coarse) {
-                        tvStatus.setText("Permiso de ubicación concedido ✅");
-                        requestUserLocation();
-                    } else {
-                        boolean canAskAgainFine =
-                                shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION);
-                        boolean canAskAgainCoarse =
-                                shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION);
-
-                        if (!canAskAgainFine && !canAskAgainCoarse) {
-                            tvStatus.setText("Permiso denegado permanentemente. Actívalo en Ajustes.");
-                            locationHelper.openAppSettings();
-                        } else {
-                            tvStatus.setText("Permiso denegado. Sin ubicación no se pueden mostrar gasolineras cercanas.");
-                        }
-
-                        tvLocation.setText("Ubicación: —");
-                    }
-                });
-
-        // Carga datos en background al arrancar
-        loadGasolinerasAsync();
-
-        // Si quieres pedir ubicación al arrancar, déjalo. Si no, quítalo.
-        ensureLocationPermission();
-    }
-
-    // ==============================
-    // PERMISOS / UBICACIÓN
-    // ==============================
-
-    private void ensureLocationPermission() {
-        if (locationHelper.hasLocationPermission()) {
-            requestUserLocation();
-        } else {
-            tvStatus.setText("Solicitando permiso de ubicación…");
-            locationPermissionLauncher.launch(new String[]{
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-            });
-        }
-    }
-
-    private void requestUserLocation() {
-        tvStatus.setText("Obteniendo ubicación…");
-
-        locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
-            @Override
-            public void onSuccess(Location location) {
-                userLocation = location;
-                renderLocation(location);
-                tvStatus.setText("Localización OK ✅");
-                checkIfReady();
-            }
-
-            @Override
-            public void onError(LocationHelper.LocationError error) {
-                tvStatus.setText("Error ubicación: " + error.name());
-                tvLocation.setText("Ubicación: —");
-            }
-        });
-    }
-
-    // esto es para pintar la ubicacion por pantalla, luego se usara la ubicacion para el mapa no para pintar las coordenadas
-    private void renderLocation(Location location) {
-        tvLocation.setText("Ubicación: " + location.getLatitude() + ", " + location.getLongitude());
-    }
-
-    // ==============================
-    // CARGA DE GASOLINERAS
-    // ==============================
-
-    private void loadGasolinerasAsync() {
-        tvDataStatus.setText("Cargando gasolineras…");
-
-        new Thread(() -> {
-            try {
-                List<Gasolinera> list = repo.getGasolineras();
-
-                runOnUiThread(() -> {
-                    gasolineras = list;
-
-                    // Origen de datos
-                    String originText;
-                    switch (repo.getLastOrigin()) {
-                        case CACHE:
-                            originText = "cache (archivo)";
-                            break;
-                        case REMOTE:
-                            originText = "remoto (API)";
-                            break;
-                        case LOCAL_FALLBACK:
-                        default:
-                            originText = "local (fallback)";
-                            break;
-                    }
-
-                    tvDataStatus.setText("Gasolineras: " + list.size() + " · origen: " + originText);
-                    checkIfReady();
-                });
-
-            } catch (RepoError e) {
-                e.printStackTrace();
-
-                runOnUiThread(() -> {
-                    String msg;
-                    switch (e.getType()) {
-                        case NETWORK:
-                            msg = "Error: sin conexión";
-                            break;
-                        case TIMEOUT:
-                            msg = "Error: tiempo de espera agotado";
-                            break;
-                        case HTTP:
-                            msg = "Error HTTP: " + e.getHttpCode();
-                            break;
-                        case EMPTY_RESPONSE:
-                            msg = "Error: respuesta vacía";
-                            break;
-                        case PARSE:
-                        default:
-                            msg = "Error procesando datos";
-                            break;
-                    }
-                    tvDataStatus.setText("Error cargando gasolineras · " + msg);
-                });
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                runOnUiThread(() ->
-                        tvDataStatus.setText("Error inesperado cargando gasolineras")
-                );
-            }
-        }).start();
-    }
-
-    // ==============================
-    // CUANDO TODO ESTÁ LISTO
-    // ==============================
-
-    private void checkIfReady() {
-        if (gasolineras != null && userLocation != null) {
-            tvStatus.setText("Listo ✅ Datos + ubicación disponibles");
-        }
     }
 
     private void setupRecyclerView() {
-        adapter = new GasolineraAdapter(new ArrayList<>(), selectedFuel, this::animateMapToGasolinera);
+        adapter = new GasolineraAdapter(
+                new ArrayList<>(),
+                selectedFuel,
+                this::animateMapToGasolinera
+        );
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
     }
 
     private void setupSpinner() {
         FuelType[] fuels = FuelType.values();
-        ArrayAdapter<FuelType> fuelAdapter = new ArrayAdapter<>(this, R.layout.spinner_item_white, fuels);
+        ArrayAdapter<FuelType> fuelAdapter =
+                new ArrayAdapter<>(this, R.layout.spinner_item_white, fuels);
         fuelAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item_white);
         spinnerFuel.setAdapter(fuelAdapter);
         spinnerFuel.setSelection(indexOfFuel(fuels, selectedFuel), false);
+
         spinnerFuel.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(
+                    AdapterView<?> parent,
+                    View view,
+                    int position,
+                    long id
+            ) {
                 selectedFuel = fuels[position];
+
                 PreferenceManager.getDefaultSharedPreferences(MainActivity.this)
                         .edit()
                         .putString(PREF_SELECTED_FUEL, selectedFuel.name())
                         .apply();
+
                 MarkerBitmapFactory.clearCache();
                 updateDisplayForFuel(selectedFuel);
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                // No-op.
+                // No-op
             }
         });
     }
@@ -410,11 +256,17 @@ public class MainActivity extends AppCompatActivity {
             }
 
             showStationsOnMap(MAX_MAP_MARKERS);
+
             int shown = Math.min(MAX_MAP_MARKERS, visibleGasolineras.size());
             if (!visibleGasolineras.isEmpty()) {
                 focusOnGasolinera(visibleGasolineras.get(0));
             }
-            Toast.makeText(this, getString(R.string.showing_nearest, shown), Toast.LENGTH_SHORT).show();
+
+            Toast.makeText(
+                    this,
+                    getString(R.string.showing_nearest, shown),
+                    Toast.LENGTH_SHORT
+            ).show();
         });
 
         btnOpenTest.setOnClickListener(v ->
@@ -426,7 +278,11 @@ public class MainActivity extends AppCompatActivity {
                 if (locationOverlay != null) {
                     locationOverlay.enableFollowLocation();
                 }
-                GeoPoint point = new GeoPoint(userLocation.getLatitude(), userLocation.getLongitude());
+
+                GeoPoint point = new GeoPoint(
+                        userLocation.getLatitude(),
+                        userLocation.getLongitude()
+                );
                 mapView.getController().animateTo(point);
                 mapView.getController().setZoom(ZOOM_USER);
             } else {
@@ -457,6 +313,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         updateLocationStatus(getString(R.string.status_location_loading));
+
         locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
             @Override
             public void onSuccess(Location location) {
@@ -468,7 +325,11 @@ public class MainActivity extends AppCompatActivity {
                 showSpainFallback();
                 btnMostrarCerca.setEnabled(false);
                 updateLocationStatus(buildLocationErrorMessage(error));
-                Toast.makeText(MainActivity.this, buildLocationToast(error), Toast.LENGTH_LONG).show();
+                Toast.makeText(
+                        MainActivity.this,
+                        buildLocationToast(error),
+                        Toast.LENGTH_LONG
+                ).show();
                 updateDisplayForFuel(selectedFuel);
             }
         });
@@ -487,6 +348,7 @@ public class MainActivity extends AppCompatActivity {
                 location.getLatitude(),
                 location.getLongitude()
         ));
+
         updateDisplayForFuel(selectedFuel);
     }
 
@@ -495,41 +357,66 @@ public class MainActivity extends AppCompatActivity {
         btnActualizar.setEnabled(false);
         btnOpenTest.setEnabled(false);
         btnMostrarCerca.setEnabled(false);
-        tvDataStatus.setText(repository.getLastOrigin() == null
-                ? getString(R.string.status_loading_data)
-                : getString(R.string.status_refreshing_data));
+
+        tvDataStatus.setText(
+                repository.getLastOrigin() == null
+                        ? getString(R.string.status_loading_data)
+                        : getString(R.string.status_refreshing_data)
+        );
 
         new Thread(() -> {
             try {
                 List<Gasolinera> loaded = repository.getGasolineras();
+
                 runOnUiThread(() -> {
                     allGasolineras.clear();
                     allGasolineras.addAll(loaded);
+
                     progressBar.setVisibility(View.GONE);
                     btnActualizar.setEnabled(true);
                     btnOpenTest.setEnabled(true);
+
                     updateDisplayForFuel(selectedFuel);
                 });
+
             } catch (RepoError error) {
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
                     btnActualizar.setEnabled(true);
                     btnOpenTest.setEnabled(true);
-                    tvDataStatus.setText(getString(R.string.error_loading_data) + ": " + buildRepoErrorMessage(error));
+
+                    tvDataStatus.setText(
+                            getString(R.string.error_loading_data) + ": " + buildRepoErrorMessage(error)
+                    );
+
                     if (allGasolineras.isEmpty()) {
                         clearMapMarkers();
                         adapter.updateData(Collections.emptyList(), selectedFuel);
                         tvStationsCount.setText(getString(R.string.stations_count_format, 0));
                     }
-                    Toast.makeText(MainActivity.this, buildRepoErrorMessage(error), Toast.LENGTH_LONG).show();
+
+                    Toast.makeText(
+                            MainActivity.this,
+                            buildRepoErrorMessage(error),
+                            Toast.LENGTH_LONG
+                    ).show();
                 });
+
             } catch (Exception error) {
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
                     btnActualizar.setEnabled(true);
                     btnOpenTest.setEnabled(true);
-                    tvDataStatus.setText(getString(R.string.error_loading_data) + ": " + error.getMessage());
-                    Toast.makeText(MainActivity.this, getString(R.string.error_loading_data), Toast.LENGTH_LONG).show();
+
+                    tvDataStatus.setText(
+                            getString(R.string.error_loading_data) + ": " + error.getMessage()
+                    );
+
+                    Toast.makeText(
+                            MainActivity.this,
+                            getString(R.string.error_loading_data),
+                            Toast.LENGTH_LONG
+                    ).show();
                 });
             }
         }).start();
@@ -541,7 +428,12 @@ public class MainActivity extends AppCompatActivity {
 
         PriceRange range = GasolineraSorter.calculatePriceRange(visibleGasolineras, selectedFuel);
         for (Gasolinera gasolinera : visibleGasolineras) {
-            gasolinera.setPriceLevel(GasolineraSorter.getPriceLevel(gasolinera.getPrecio(selectedFuel), range));
+            gasolinera.setPriceLevel(
+                    GasolineraSorter.getPriceLevel(
+                            gasolinera.getPrecio(selectedFuel),
+                            range
+                    )
+            );
         }
 
         adapter.updateData(visibleGasolineras, selectedFuel);
@@ -556,9 +448,11 @@ public class MainActivity extends AppCompatActivity {
 
         if (visibleGasolineras.isEmpty()) {
             clearMapMarkers();
-            Toast.makeText(this,
+            Toast.makeText(
+                    this,
                     getString(R.string.no_stations_for_fuel, selectedFuel.displayName()),
-                    Toast.LENGTH_SHORT).show();
+                    Toast.LENGTH_SHORT
+            ).show();
         } else {
             showStationsOnMap(MAX_MAP_MARKERS);
         }
@@ -568,6 +462,7 @@ public class MainActivity extends AppCompatActivity {
 
     private List<Gasolinera> buildVisibleGasolineras(FuelType fuel) {
         List<Gasolinera> filtered = GasolineraSorter.filterByFuel(allGasolineras, fuel);
+
         if (userLocation != null) {
             return GasolineraSorter.filterComputeAndSort(
                     filtered,
@@ -579,9 +474,19 @@ public class MainActivity extends AppCompatActivity {
         for (Gasolinera gasolinera : filtered) {
             gasolinera.setDistanceMeters(null);
         }
-        filtered.sort(Comparator
-                .comparing((Gasolinera g) -> g.getPrecio(fuel), Comparator.nullsLast(Double::compareTo))
-                .thenComparing(g -> safeText(g.getMarca()), String.CASE_INSENSITIVE_ORDER));
+
+        filtered.sort(
+                Comparator
+                        .comparing(
+                                (Gasolinera g) -> g.getPrecio(fuel),
+                                Comparator.nullsLast(Double::compareTo)
+                        )
+                        .thenComparing(
+                                g -> safeText(g.getMarca()),
+                                String.CASE_INSENSITIVE_ORDER
+                        )
+        );
+
         return filtered;
     }
 
@@ -590,6 +495,7 @@ public class MainActivity extends AppCompatActivity {
         String orderText = userLocation != null
                 ? getString(R.string.order_by_distance)
                 : getString(R.string.order_by_price);
+
         tvDataStatus.setText(getString(
                 R.string.data_status_format,
                 originText,
@@ -602,25 +508,34 @@ public class MainActivity extends AppCompatActivity {
 
     private void showStationsOnMap(int count) {
         clearMapMarkers();
+
         int toShow = Math.min(count, visibleGasolineras.size());
         for (int i = 0; i < toShow; i++) {
             addMarker(visibleGasolineras.get(i));
         }
+
         mapView.invalidate();
     }
 
     private void addMarker(Gasolinera gasolinera) {
-        if (gasolinera.getLat() == null || gasolinera.getLon() == null) return;
+        if (gasolinera.getLat() == null || gasolinera.getLon() == null) {
+            return;
+        }
 
         Marker marker = new Marker(mapView);
         marker.setPosition(new GeoPoint(gasolinera.getLat(), gasolinera.getLon()));
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        marker.setTitle(safeText(gasolinera.getMarca()).isEmpty() ? "Sin marca" : gasolinera.getMarca());
+        marker.setTitle(
+                safeText(gasolinera.getMarca()).isEmpty()
+                        ? "Sin marca"
+                        : gasolinera.getMarca()
+        );
         marker.setSnippet(buildMarkerSnippet(gasolinera));
         marker.setIcon(new android.graphics.drawable.BitmapDrawable(
                 getResources(),
                 MarkerBitmapFactory.createMarker(this, gasolinera, selectedFuel)
         ));
+
         marker.setOnMarkerClickListener((clickedMarker, ignoredMapView) -> {
             clickedMarker.showInfoWindow();
             scrollListToGasolinera(gasolinera);
@@ -633,26 +548,35 @@ public class MainActivity extends AppCompatActivity {
 
     private void clearMapMarkers() {
         List<Overlay> toRemove = new ArrayList<>();
+
         for (Overlay overlay : mapView.getOverlays()) {
             if (overlay instanceof Marker) {
                 toRemove.add(overlay);
             }
         }
+
         mapView.getOverlays().removeAll(toRemove);
         markerMap.clear();
     }
 
     private void animateMapToGasolinera(Gasolinera gasolinera) {
         focusOnGasolinera(gasolinera);
+
         Marker marker = markerMap.get(gasolinera.getId());
         if (marker != null) {
-            new Handler(Looper.getMainLooper()).postDelayed(marker::showInfoWindow, INFO_DELAY_MS);
+            new Handler(Looper.getMainLooper())
+                    .postDelayed(marker::showInfoWindow, INFO_DELAY_MS);
         }
     }
 
     private void focusOnGasolinera(Gasolinera gasolinera) {
-        if (gasolinera.getLat() == null || gasolinera.getLon() == null) return;
-        mapView.getController().animateTo(new GeoPoint(gasolinera.getLat(), gasolinera.getLon()));
+        if (gasolinera.getLat() == null || gasolinera.getLon() == null) {
+            return;
+        }
+
+        mapView.getController().animateTo(
+                new GeoPoint(gasolinera.getLat(), gasolinera.getLon())
+        );
         mapView.getController().setZoom(ZOOM_STATION);
     }
 
@@ -664,7 +588,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addMyLocationOverlay() {
-        if (locationOverlay != null || !locationHelper.hasLocationPermission()) return;
+        if (locationOverlay != null || !locationHelper.hasLocationPermission()) {
+            return;
+        }
 
         locationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), mapView);
         locationOverlay.enableMyLocation();
@@ -725,7 +651,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String getOriginLabel(DataSourceOrigin origin) {
-        if (origin == null) return getString(R.string.origin_unknown);
+        if (origin == null) {
+            return getString(R.string.origin_unknown);
+        }
 
         switch (origin) {
             case REMOTE:
@@ -740,6 +668,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String buildMarkerSnippet(Gasolinera gasolinera) {
         StringBuilder sb = new StringBuilder();
+
         sb.append(gasolinera.getFormattedPrice(selectedFuel))
                 .append(" · ")
                 .append(gasolinera.getDisplayAddress());
@@ -748,12 +677,15 @@ public class MainActivity extends AppCompatActivity {
         if (!horario.isEmpty()) {
             sb.append("\n").append(horario);
         }
+
         return sb.toString();
     }
 
     private int indexOfFuel(FuelType[] fuels, FuelType target) {
         for (int i = 0; i < fuels.length; i++) {
-            if (fuels[i] == target) return i;
+            if (fuels[i] == target) {
+                return i;
+            }
         }
         return 0;
     }
