@@ -673,7 +673,7 @@ public class MainActivity extends AppCompatActivity {
                 .append(" · ")
                 .append(gasolinera.getDisplayAddress());
 
-        String horario = safeText(gasolinera.getHorario());
+        String horario = gasolinera.getFormattedHorario();
         if (!horario.isEmpty()) {
             sb.append("\n").append(horario);
         }
