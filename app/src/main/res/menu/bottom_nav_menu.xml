@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_map"
+        android:icon="@drawable/ic_map"
+        android:title="Mapa" />
+    <item
+        android:id="@+id/nav_price"
+        android:icon="@drawable/ic_price"
+        android:title="Por precio" />
+    <item
+        android:id="@+id/nav_distance"
+        android:icon="@drawable/ic_distance"
+        android:title="Por Distancia" />
+    <item
+        android:id="@+id/nav_favorites"
+        android:icon="@drawable/ic_favorites"
+        android:title="Favoritas" />
+    <item
+        android:id="@+id/nav_preferences"
+        android:icon="@drawable/ic_settings"
+        android:title="Preferencias" />
+</menu>

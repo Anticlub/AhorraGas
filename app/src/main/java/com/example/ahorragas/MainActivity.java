@@ -35,6 +35,7 @@ import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceRange;
 import com.example.ahorragas.util.GasolineraSorter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
@@ -64,15 +65,13 @@ public class MainActivity extends AppCompatActivity {
 
     private MapView mapView;
     private RecyclerView recyclerView;
-    private Spinner spinnerFuel;
-    private Button btnActualizar;
     private Button btnMostrarCerca;
-    private Button btnOpenTest;
     private FloatingActionButton fabMiUbicacion;
     private TextView tvStationsCount;
     private TextView tvDataStatus;
     private TextView tvLocation;
     private ProgressBar progressBar;
+    private BottomNavigationView bottomNav;
 
     private final List<Gasolinera> allGasolineras = new ArrayList<>();
     private List<Gasolinera> visibleGasolineras = new ArrayList<>();
@@ -136,8 +135,8 @@ public class MainActivity extends AppCompatActivity {
         initViews();
         setupMap();
         setupRecyclerView();
-        setupSpinner();
         setupButtons();
+        setupBottomNav();
 
         updateLocationStatus(getString(R.string.status_location_pending));
         tvDataStatus.setText(R.string.status_loading_data);
@@ -154,7 +153,23 @@ public class MainActivity extends AppCompatActivity {
         if (locationOverlay != null && locationHelper.hasLocationPermission()) {
             locationOverlay.enableMyLocation();
         }
+
+        if (bottomNav != null) {
+            bottomNav.setSelectedItemId(R.id.nav_map);
+        }
+
+        FuelType savedFuel = FuelType.fromString(
+                PreferenceManager.getDefaultSharedPreferences(this)
+                        .getString(PREF_SELECTED_FUEL, FuelType.GASOLEO_A.name())
+        );
+        if (savedFuel != selectedFuel) {
+            selectedFuel = savedFuel;
+            int idx = indexOfFuel(FuelType.values(), selectedFuel);
+            MarkerBitmapFactory.clearCache();
+            updateDisplayForFuel(selectedFuel);
+        }
     }
+
 
     @Override
     protected void onPause() {
@@ -170,15 +185,13 @@ public class MainActivity extends AppCompatActivity {
     private void initViews() {
         mapView = findViewById(R.id.mapView);
         recyclerView = findViewById(R.id.recyclerView);
-        spinnerFuel = findViewById(R.id.spinnerFuel);
-        btnActualizar = findViewById(R.id.btnActualizar);
         btnMostrarCerca = findViewById(R.id.btnMostrarCerca);
-        btnOpenTest = findViewById(R.id.btnOpenTest);
         fabMiUbicacion = findViewById(R.id.fabMiUbicacion);
         tvStationsCount = findViewById(R.id.tvStationsCount);
         tvDataStatus = findViewById(R.id.tvDataStatus);
         tvLocation = findViewById(R.id.tvLocation);
         progressBar = findViewById(R.id.progressBar);
+        bottomNav = findViewById(R.id.bottomNav);
     }
 
     private void setupMap() {
@@ -205,49 +218,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
     }
 
-    private void setupSpinner() {
-        FuelType[] fuels = FuelType.values();
-        ArrayAdapter<FuelType> fuelAdapter =
-                new ArrayAdapter<>(this, R.layout.spinner_item_white, fuels);
-        fuelAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item_white);
-        spinnerFuel.setAdapter(fuelAdapter);
-        spinnerFuel.setSelection(indexOfFuel(fuels, selectedFuel), false);
-
-        spinnerFuel.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(
-                    AdapterView<?> parent,
-                    View view,
-                    int position,
-                    long id
-            ) {
-                selectedFuel = fuels[position];
-
-                PreferenceManager.getDefaultSharedPreferences(MainActivity.this)
-                        .edit()
-                        .putString(PREF_SELECTED_FUEL, selectedFuel.name())
-                        .apply();
-
-                MarkerBitmapFactory.clearCache();
-                updateDisplayForFuel(selectedFuel);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // No-op
-            }
-        });
-    }
-
     private void setupButtons() {
-        btnActualizar.setOnClickListener(v -> {
-            Toast.makeText(this, R.string.refreshing, Toast.LENGTH_SHORT).show();
-            dataSource.requestForceRefresh();
-            repository.clearMemoryCache();
-            MarkerBitmapFactory.clearCache();
-            loadGasolineras();
-        });
-
         btnMostrarCerca.setOnClickListener(v -> {
             if (userLocation == null) {
                 Toast.makeText(this, R.string.location_gps_message, Toast.LENGTH_LONG).show();
@@ -269,10 +240,6 @@ public class MainActivity extends AppCompatActivity {
             ).show();
         });
 
-        btnOpenTest.setOnClickListener(v ->
-                startActivity(new Intent(this, TestDistanceActivity.class))
-        );
-
         fabMiUbicacion.setOnClickListener(v -> {
             if (userLocation != null) {
                 if (locationOverlay != null) {
@@ -290,6 +257,24 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void setupBottomNav() {
+        bottomNav.setSelectedItemId(R.id.nav_map);
+
+        bottomNav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+
+            if (id == R.id.nav_map) {
+                return true;
+            } else if (id == R.id.nav_preferences) {
+                startActivity(new Intent(this, PreferencesActivity.class));
+                return true;
+            } else {
+                return false;
+            }
+        });
+    }
+
 
     private void requestLocationPermission() {
         if (locationHelper.hasLocationPermission()) {
@@ -354,8 +339,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadGasolineras() {
         progressBar.setVisibility(View.VISIBLE);
-        btnActualizar.setEnabled(false);
-        btnOpenTest.setEnabled(false);
         btnMostrarCerca.setEnabled(false);
 
         tvDataStatus.setText(
@@ -373,8 +356,6 @@ public class MainActivity extends AppCompatActivity {
                     allGasolineras.addAll(loaded);
 
                     progressBar.setVisibility(View.GONE);
-                    btnActualizar.setEnabled(true);
-                    btnOpenTest.setEnabled(true);
 
                     updateDisplayForFuel(selectedFuel);
                 });
@@ -382,8 +363,6 @@ public class MainActivity extends AppCompatActivity {
             } catch (RepoError error) {
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
-                    btnActualizar.setEnabled(true);
-                    btnOpenTest.setEnabled(true);
 
                     tvDataStatus.setText(
                             getString(R.string.error_loading_data) + ": " + buildRepoErrorMessage(error)
@@ -405,8 +384,6 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception error) {
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
-                    btnActualizar.setEnabled(true);
-                    btnOpenTest.setEnabled(true);
 
                     tvDataStatus.setText(
                             getString(R.string.error_loading_data) + ": " + error.getMessage()
@@ -464,7 +441,7 @@ public class MainActivity extends AppCompatActivity {
         List<Gasolinera> filtered = GasolineraSorter.filterByFuel(allGasolineras, fuel);
 
         if (userLocation != null) {
-            return GasolineraSorter.filterComputeAndSort(
+            return GasolineraSorter.getForMap(
                     filtered,
                     userLocation.getLatitude(),
                     userLocation.getLongitude()
