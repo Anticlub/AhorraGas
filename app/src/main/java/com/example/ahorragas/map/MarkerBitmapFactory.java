@@ -2,11 +2,14 @@ package com.example.ahorragas.map;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.RectF;
+
 import android.util.LruCache;
 
 import com.example.ahorragas.model.FuelType;
@@ -77,7 +80,8 @@ public final class MarkerBitmapFactory {
                                       Gasolinera gasolinera,
                                       FuelType fuelType) {
         String priceText = gasolinera.getFormattedPrice(fuelType);
-        String key = gasolinera.getBrandInitial()
+        int logoResId = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
+        String key = logoResId
                 + "|" + gasolinera.getPriceLevel().name()
                 + "|" + priceText;
 
@@ -86,14 +90,15 @@ public final class MarkerBitmapFactory {
             return cached;
         }
 
-        Bitmap rendered = renderMarker(context, gasolinera, priceText);
+        Bitmap rendered = renderMarker(context, gasolinera, priceText, logoResId);
         CACHE.put(key, rendered);
         return rendered;
     }
 
     private static Bitmap renderMarker(Context context,
                                        Gasolinera gasolinera,
-                                       String priceText) {
+                                       String priceText,
+                                       int logoResId) {
         float density = context.getResources().getDisplayMetrics().density;
 
         int width = px(density, 74);
@@ -103,22 +108,24 @@ public final class MarkerBitmapFactory {
         int corner = px(density, 10);
 
         int bgColor = getPriceLevelColor(gasolinera.getPriceLevel());
-        String brandAbbr = abbrev(gasolinera.getBrandInitial());
 
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
+        // Burbuja de fondo
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(bgColor);
         RectF bubble = new RectF(0, 0, width, bubbleHeight);
         canvas.drawRoundRect(bubble, corner, corner, paint);
 
+        // Borde blanco
         paint.setStyle(Paint.Style.STROKE);
         paint.setColor(Color.WHITE);
         paint.setStrokeWidth(density * 1.8f);
         canvas.drawRoundRect(bubble, corner, corner, paint);
 
+        // Pin inferior
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(bgColor);
         float pinWidth = px(density, 9);
@@ -129,35 +136,44 @@ public final class MarkerBitmapFactory {
         pin.close();
         canvas.drawPath(pin, paint);
 
+        // Círculo blanco de fondo para el logo
         float centerX = width / 2f;
         float centerY = bubbleHeight * 0.40f;
+        int logoRadius = px(density, 13);
         paint.setColor(Color.WHITE);
-        paint.setAlpha(215);
-        canvas.drawCircle(centerX, centerY, px(density, 13), paint);
-
         paint.setAlpha(255);
-        paint.setColor(bgColor);
         paint.setStyle(Paint.Style.FILL);
-        paint.setTextSize(density * (brandAbbr.length() > 1 ? 10f : 13f));
-        paint.setFakeBoldText(true);
-        paint.setTextAlign(Paint.Align.CENTER);
-        Paint.FontMetrics fontMetrics = paint.getFontMetrics();
-        canvas.drawText(brandAbbr, centerX, centerY - (fontMetrics.ascent + fontMetrics.descent) / 2f, paint);
+        canvas.drawCircle(centerX, centerY, logoRadius, paint);
 
+        // Dibujar el logo dentro del círculo
+        drawLogo(context, canvas, logoResId, centerX, centerY, logoRadius);
+
+        // Texto del precio
         paint.setColor(Color.WHITE);
+        paint.setAlpha(255);
         paint.setFakeBoldText(false);
         paint.setTextSize(density * 8.5f);
+        paint.setTextAlign(Paint.Align.CENTER);
         canvas.drawText(priceText, centerX, bubbleHeight * 0.82f, paint);
 
         return bitmap;
     }
 
-    private static int px(float density, int dpValue) {
-        return Math.round(density * dpValue);
+    private static void drawLogo(Context context, Canvas canvas,
+                                 int logoResId, float cx, float cy, int radius) {
+        Bitmap logoBitmap = BitmapFactory.decodeResource(context.getResources(), logoResId);
+        if (logoBitmap == null) return;
+
+        int logoSize = (int) (radius * 1.6f);
+        int left = (int) (cx - logoSize / 2f);
+        int top = (int) (cy - logoSize / 2f);
+        Rect destRect = new Rect(left, top, left + logoSize, top + logoSize);
+
+        Paint logoPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+        canvas.drawBitmap(logoBitmap, null, destRect, logoPaint);
     }
 
-    private static String abbrev(String value) {
-        if (value == null || value.isEmpty()) return "?";
-        return value.length() > 2 ? value.substring(0, 2) : value;
+    private static int px(float density, int dpValue) {
+        return Math.round(density * dpValue);
     }
 }
