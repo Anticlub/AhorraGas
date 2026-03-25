@@ -1,15 +1,16 @@
 package com.example.ahorragas.adapter;
 
-import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ahorragas.R;
+import com.example.ahorragas.map.BrandLogoProvider;
 import com.example.ahorragas.map.MarkerBitmapFactory;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
@@ -68,7 +69,7 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         private final View vPriceStripe;
-        private final TextView tvBrandCircle;
+        private final ImageView ivBrandLogo;
         private final TextView tvBrandName;
         private final TextView tvAddress;
         private final TextView tvPrice;
@@ -77,7 +78,7 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
         ViewHolder(View itemView) {
             super(itemView);
             vPriceStripe = itemView.findViewById(R.id.vPriceStripe);
-            tvBrandCircle = itemView.findViewById(R.id.tvBrandCircle);
+            ivBrandLogo = itemView.findViewById(R.id.ivBrandLogo);
             tvBrandName = itemView.findViewById(R.id.tvBrandName);
             tvAddress = itemView.findViewById(R.id.tvAddress);
             tvPrice = itemView.findViewById(R.id.tvPrice);
@@ -87,12 +88,8 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
         void bind(Gasolinera gasolinera,
                   FuelType fuel,
                   OnGasolineraClickListener clickListener) {
-            int brandColor = MarkerBitmapFactory.getBrandColor(gasolinera.getMarca());
-            GradientDrawable circle = new GradientDrawable();
-            circle.setShape(GradientDrawable.OVAL);
-            circle.setColor(brandColor);
-            tvBrandCircle.setBackground(circle);
-            tvBrandCircle.setText(gasolinera.getBrandInitial());
+            int logoResId = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
+            ivBrandLogo.setImageResource(logoResId);
 
             tvBrandName.setText(gasolinera.getMarca() == null || gasolinera.getMarca().trim().isEmpty()
                     ? "Sin marca"
@@ -105,7 +102,7 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
             vPriceStripe.setBackgroundColor(priceColor);
 
             String distance = gasolinera.getFormattedDistance();
-            tvDistance.setText(distance.isEmpty() ? "" : "📍 " + distance);
+            tvDistance.setText(distance.isEmpty() ? "" : "\uD83D\uDCCD " + distance);
 
             itemView.setOnClickListener(v -> clickListener.onGasolineraClick(gasolinera));
         }
