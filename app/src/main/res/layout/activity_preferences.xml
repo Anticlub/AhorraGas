@@ -1,85 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#2C2C3A">
 
+    <!-- Columna principal -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="#1A237E"
-        android:gravity="center"
-        android:paddingHorizontal="16dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
+        <!-- Cabecera -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="#1A237E"
+            android:gravity="center"
+            android:paddingHorizontal="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Preferencias"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <!-- Label sección -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Preferencias"
-            android:textColor="#FFFFFF"
-            android:textSize="20sp"
+            android:text="Mis vehículos  (toca uno para activarlo)"
+            android:textColor="#4DB6AC"
+            android:textSize="13sp"
             android:textStyle="bold"
-            android:gravity="center" />
+            android:paddingHorizontal="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="10dp"
+            android:background="#383848" />
+
+        <!-- Lista scrollable de vehículos -->
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:id="@+id/vehicleListContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="12dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="88dp" />
+
+        </androidx.core.widget.NestedScrollView>
+
+        <!-- Bottom Navigation -->
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNavPrefs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#1A237E"
+            app:menu="@menu/bottom_nav_menu"
+            app:itemIconTint="@color/white"
+            app:itemTextColor="@color/white"
+            app:labelVisibilityMode="labeled" />
+
     </LinearLayout>
 
-    <TextView
-        android:layout_width="match_parent"
+    <!-- FAB flotante para añadir vehículo -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAddVehicle"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Mi vehículo"
-        android:textColor="#4DB6AC"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="8dp"
-        android:background="#383848" />
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="72dp"
+        android:contentDescription="Añadir vehículo"
+        app:srcCompat="@android:drawable/ic_input_add"
+        app:backgroundTint="#4DB6AC"
+        app:tint="@color/white"
+        app:fabSize="normal"
+        app:elevation="6dp" />
 
-    <LinearLayout
-        android:id="@+id/itemFuelType"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="16dp"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true">
-
-        <TextView
-            android:id="@+id/tvCurrentFuel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="›"
-            android:textColor="#888888"
-            android:textSize="22sp" />
-    </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#444455" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNavPrefs"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#1A237E"
-        app:menu="@menu/bottom_nav_menu"
-        app:itemIconTint="@color/white"
-        app:itemTextColor="@color/white"
-        app:labelVisibilityMode="labeled" />
-
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
