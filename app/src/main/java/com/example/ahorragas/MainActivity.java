@@ -1,23 +1,26 @@
 package com.example.ahorragas;
 
+import com.example.ahorragas.map.GasolineraInfoWindow;
+
 import android.Manifest;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.InputType;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -33,7 +36,9 @@ import com.example.ahorragas.map.MarkerBitmapFactory;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceRange;
+import com.example.ahorragas.model.Vehicle;
 import com.example.ahorragas.util.GasolineraSorter;
+import com.example.ahorragas.util.VehiclePrefs;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -43,6 +48,7 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
+import org.osmdroid.views.overlay.infowindow.InfoWindow;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
@@ -51,6 +57,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
@@ -158,18 +165,23 @@ public class MainActivity extends AppCompatActivity {
             bottomNav.setSelectedItemId(R.id.nav_map);
         }
 
+        // Si no hay ningún vehículo, mostrar diálogo bloqueante
+        if (!VehiclePrefs.hasVehicles(this)) {
+            showFirstVehicleDialog();
+            return;
+        }
+
+        // Sincronizar combustible con el vehículo activo
         FuelType savedFuel = FuelType.fromString(
                 PreferenceManager.getDefaultSharedPreferences(this)
                         .getString(PREF_SELECTED_FUEL, FuelType.GASOLEO_A.name())
         );
         if (savedFuel != selectedFuel) {
             selectedFuel = savedFuel;
-            int idx = indexOfFuel(FuelType.values(), selectedFuel);
             MarkerBitmapFactory.clearCache();
             updateDisplayForFuel(selectedFuel);
         }
     }
-
 
     @Override
     protected void onPause() {
@@ -181,6 +193,121 @@ public class MainActivity extends AppCompatActivity {
             locationOverlay.disableFollowLocation();
         }
     }
+
+    // ─── DIÁLOGO PRIMER VEHÍCULO ─────────────────────────────────────────────
+
+    /**
+     * Diálogo bloqueante que se muestra cuando no hay ningún vehículo guardado.
+     * No tiene botón cancelar y no se puede cerrar tocando fuera.
+     * Al guardar correctamente, sincroniza el combustible y refresca la UI.
+     */
+    private void showFirstVehicleDialog() {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(dp(20), dp(12), dp(20), dp(4));
+
+        TextView labelName = new TextView(this);
+        labelName.setText("Nombre del vehículo");
+        labelName.setTextColor(0xFF333333);
+        labelName.setTextSize(13);
+        layout.addView(labelName);
+
+        EditText etName = new EditText(this);
+        etName.setHint("Ej: Mi Coche, Furgoneta…");
+        etName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        layout.addView(etName);
+
+        TextView labelCons = new TextView(this);
+        labelCons.setText("Consumo (L/100 km)");
+        labelCons.setTextColor(0xFF333333);
+        labelCons.setTextSize(13);
+        labelCons.setPadding(0, dp(12), 0, 0);
+        layout.addView(labelCons);
+
+        EditText etCons = new EditText(this);
+        etCons.setHint("Ej: 6.5");
+        etCons.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        layout.addView(etCons);
+
+        TextView labelFuel = new TextView(this);
+        labelFuel.setText("Tipo de combustible");
+        labelFuel.setTextColor(0xFF333333);
+        labelFuel.setTextSize(13);
+        labelFuel.setPadding(0, dp(12), 0, 0);
+        layout.addView(labelFuel);
+
+        FuelType[] fuels = FuelType.values();
+        String[] fuelNames = new String[fuels.length];
+        for (int i = 0; i < fuels.length; i++) fuelNames[i] = fuels[i].displayName();
+
+        final FuelType[] selectedFuelLocal = {FuelType.GASOLEO_A};
+
+        TextView tvFuelSelector = new TextView(this);
+        tvFuelSelector.setText(selectedFuelLocal[0].displayName());
+        tvFuelSelector.setTextColor(0xFF000000);
+        tvFuelSelector.setBackgroundColor(0xFFEEEEEE);
+        tvFuelSelector.setPadding(dp(12), dp(10), dp(12), dp(10));
+        tvFuelSelector.setTextSize(14);
+        tvFuelSelector.setClickable(true);
+        tvFuelSelector.setFocusable(true);
+        tvFuelSelector.setOnClickListener(v -> {
+            int checked = 0;
+            for (int i = 0; i < fuels.length; i++) {
+                if (fuels[i] == selectedFuelLocal[0]) { checked = i; break; }
+            }
+            new AlertDialog.Builder(this)
+                    .setTitle("Combustible")
+                    .setSingleChoiceItems(fuelNames, checked, (d, which) -> {
+                        selectedFuelLocal[0] = fuels[which];
+                        tvFuelSelector.setText(selectedFuelLocal[0].displayName());
+                        d.dismiss();
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
+        });
+        layout.addView(tvFuelSelector);
+
+        // Construir diálogo — sin cancelar, sin cerrar tocando fuera
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Añade tu vehículo para empezar")
+                .setView(layout)
+                .setCancelable(false)
+                .setPositiveButton("Guardar", null) // null para manejar manualmente y evitar cierre automático
+                .create();
+
+        dialog.show();
+
+        // Sobreescribir el botón positivo para validar antes de cerrar
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String name = etName.getText().toString().trim();
+            String consStr = etCons.getText().toString().trim().replace(",", ".");
+
+            if (name.isEmpty()) {
+                Toast.makeText(this, "Escribe un nombre.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            double cons;
+            try {
+                cons = Double.parseDouble(consStr);
+                if (cons <= 0 || cons > 100) throw new NumberFormatException();
+            } catch (Exception e) {
+                Toast.makeText(this, "Consumo no válido (ej: 6.5).", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Vehicle vehicle = new Vehicle(name, selectedFuelLocal[0], cons);
+            VehiclePrefs.addVehicle(this, vehicle); // también sincroniza pref_selected_fuel
+
+            selectedFuel = selectedFuelLocal[0];
+            MarkerBitmapFactory.clearCache();
+            updateDisplayForFuel(selectedFuel);
+
+            dialog.dismiss();
+        });
+    }
+
+    // ─── VIEWS ───────────────────────────────────────────────────────────────
 
     private void initViews() {
         mapView = findViewById(R.id.mapView);
@@ -201,8 +328,11 @@ public class MainActivity extends AppCompatActivity {
         showSpainFallback();
 
         mapView.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_DOWN && locationOverlay != null) {
-                locationOverlay.disableFollowLocation();
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                InfoWindow.closeAllInfoWindowsOn(mapView);
+                if (locationOverlay != null) {
+                    locationOverlay.disableFollowLocation();
+                }
             }
             return false;
         });
@@ -245,7 +375,6 @@ public class MainActivity extends AppCompatActivity {
                 if (locationOverlay != null) {
                     locationOverlay.enableFollowLocation();
                 }
-
                 GeoPoint point = new GeoPoint(
                         userLocation.getLatitude(),
                         userLocation.getLongitude()
@@ -263,7 +392,6 @@ public class MainActivity extends AppCompatActivity {
 
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
-
             if (id == R.id.nav_map) {
                 return true;
             } else if (id == R.id.nav_preferences) {
@@ -274,7 +402,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
 
     private void requestLocationPermission() {
         if (locationHelper.hasLocationPermission()) {
@@ -354,46 +481,29 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     allGasolineras.clear();
                     allGasolineras.addAll(loaded);
-
                     progressBar.setVisibility(View.GONE);
-
                     updateDisplayForFuel(selectedFuel);
                 });
 
             } catch (RepoError error) {
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
-
                     tvDataStatus.setText(
                             getString(R.string.error_loading_data) + ": " + buildRepoErrorMessage(error)
                     );
-
                     if (allGasolineras.isEmpty()) {
                         clearMapMarkers();
                         adapter.updateData(Collections.emptyList(), selectedFuel);
                         tvStationsCount.setText(getString(R.string.stations_count_format, 0));
                     }
-
-                    Toast.makeText(
-                            MainActivity.this,
-                            buildRepoErrorMessage(error),
-                            Toast.LENGTH_LONG
-                    ).show();
+                    Toast.makeText(MainActivity.this, buildRepoErrorMessage(error), Toast.LENGTH_LONG).show();
                 });
 
             } catch (Exception error) {
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
-
-                    tvDataStatus.setText(
-                            getString(R.string.error_loading_data) + ": " + error.getMessage()
-                    );
-
-                    Toast.makeText(
-                            MainActivity.this,
-                            getString(R.string.error_loading_data),
-                            Toast.LENGTH_LONG
-                    ).show();
+                    tvDataStatus.setText(getString(R.string.error_loading_data) + ": " + error.getMessage());
+                    Toast.makeText(MainActivity.this, getString(R.string.error_loading_data), Toast.LENGTH_LONG).show();
                 });
             }
         }).start();
@@ -425,11 +535,9 @@ public class MainActivity extends AppCompatActivity {
 
         if (visibleGasolineras.isEmpty()) {
             clearMapMarkers();
-            Toast.makeText(
-                    this,
+            Toast.makeText(this,
                     getString(R.string.no_stations_for_fuel, selectedFuel.displayName()),
-                    Toast.LENGTH_SHORT
-            ).show();
+                    Toast.LENGTH_SHORT).show();
         } else {
             showStationsOnMap(MAX_MAP_MARKERS);
         }
@@ -485,35 +593,33 @@ public class MainActivity extends AppCompatActivity {
 
     private void showStationsOnMap(int count) {
         clearMapMarkers();
-
         int toShow = Math.min(count, visibleGasolineras.size());
         for (int i = 0; i < toShow; i++) {
             addMarker(visibleGasolineras.get(i));
         }
-
         mapView.invalidate();
     }
 
     private void addMarker(Gasolinera gasolinera) {
-        if (gasolinera.getLat() == null || gasolinera.getLon() == null) {
-            return;
-        }
+        if (gasolinera.getLat() == null || gasolinera.getLon() == null) return;
 
         Marker marker = new Marker(mapView);
         marker.setPosition(new GeoPoint(gasolinera.getLat(), gasolinera.getLon()));
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        marker.setTitle(
-                safeText(gasolinera.getMarca()).isEmpty()
-                        ? "Sin marca"
-                        : gasolinera.getMarca()
-        );
+
+        String marca = safeText(gasolinera.getMarca());
+        marker.setTitle(marca.isEmpty() ? "Sin marca" : marca);
         marker.setSnippet(buildMarkerSnippet(gasolinera));
+
+        marker.setInfoWindow(new GasolineraInfoWindow(mapView, gasolinera, selectedFuel));
+
         marker.setIcon(new android.graphics.drawable.BitmapDrawable(
                 getResources(),
                 MarkerBitmapFactory.createMarker(this, gasolinera, selectedFuel)
         ));
 
         marker.setOnMarkerClickListener((clickedMarker, ignoredMapView) -> {
+            InfoWindow.closeAllInfoWindowsOn(mapView);
             clickedMarker.showInfoWindow();
             scrollListToGasolinera(gasolinera);
             return true;
@@ -525,20 +631,15 @@ public class MainActivity extends AppCompatActivity {
 
     private void clearMapMarkers() {
         List<Overlay> toRemove = new ArrayList<>();
-
         for (Overlay overlay : mapView.getOverlays()) {
-            if (overlay instanceof Marker) {
-                toRemove.add(overlay);
-            }
+            if (overlay instanceof Marker) toRemove.add(overlay);
         }
-
         mapView.getOverlays().removeAll(toRemove);
         markerMap.clear();
     }
 
     private void animateMapToGasolinera(Gasolinera gasolinera) {
         focusOnGasolinera(gasolinera);
-
         Marker marker = markerMap.get(gasolinera.getId());
         if (marker != null) {
             new Handler(Looper.getMainLooper())
@@ -547,10 +648,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void focusOnGasolinera(Gasolinera gasolinera) {
-        if (gasolinera.getLat() == null || gasolinera.getLon() == null) {
-            return;
-        }
-
+        if (gasolinera.getLat() == null || gasolinera.getLon() == null) return;
         mapView.getController().animateTo(
                 new GeoPoint(gasolinera.getLat(), gasolinera.getLon())
         );
@@ -559,16 +657,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void scrollListToGasolinera(Gasolinera gasolinera) {
         int position = adapter.getPositionOf(gasolinera);
-        if (position >= 0) {
-            recyclerView.smoothScrollToPosition(position);
-        }
+        if (position >= 0) recyclerView.smoothScrollToPosition(position);
     }
 
     private void addMyLocationOverlay() {
-        if (locationOverlay != null || !locationHelper.hasLocationPermission()) {
-            return;
-        }
-
+        if (locationOverlay != null || !locationHelper.hasLocationPermission()) return;
         locationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), mapView);
         locationOverlay.enableMyLocation();
         mapView.getOverlays().add(locationOverlay);
@@ -582,92 +675,71 @@ public class MainActivity extends AppCompatActivity {
 
     private String buildRepoErrorMessage(RepoError error) {
         switch (error.getType()) {
-            case NETWORK:
-                return "Sin conexión con la API";
-            case TIMEOUT:
-                return "La API tardó demasiado en responder";
-            case HTTP:
-                return "Error HTTP " + error.getHttpCode();
-            case EMPTY_RESPONSE:
-                return "La API devolvió una respuesta vacía";
+            case NETWORK:        return "Sin conexión con la API";
+            case TIMEOUT:        return "La API tardó demasiado en responder";
+            case HTTP:           return "Error HTTP " + error.getHttpCode();
+            case EMPTY_RESPONSE: return "La API devolvió una respuesta vacía";
             case PARSE:
-            default:
-                return "No se pudieron procesar las gasolineras";
+            default:             return "No se pudieron procesar las gasolineras";
         }
     }
 
     private String buildLocationErrorMessage(LocationHelper.LocationError error) {
         switch (error) {
-            case GPS_DISABLED:
-                return getString(R.string.status_location_disabled);
-            case NO_PERMISSION:
-                return getString(R.string.status_location_denied);
+            case GPS_DISABLED:   return getString(R.string.status_location_disabled);
+            case NO_PERMISSION:  return getString(R.string.status_location_denied);
             case TIMEOUT:
             case TECHNICAL_ERROR:
-            default:
-                return getString(R.string.status_location_error);
+            default:             return getString(R.string.status_location_error);
         }
     }
 
     private String buildLocationToast(LocationHelper.LocationError error) {
         switch (error) {
-            case GPS_DISABLED:
-                return getString(R.string.location_gps_message);
-            case NO_PERMISSION:
-                return getString(R.string.location_permission_message);
-            case TIMEOUT:
-                return "No se pudo obtener la ubicación a tiempo.";
+            case GPS_DISABLED:   return getString(R.string.location_gps_message);
+            case NO_PERMISSION:  return getString(R.string.location_permission_message);
+            case TIMEOUT:        return "No se pudo obtener la ubicación a tiempo.";
             case TECHNICAL_ERROR:
-            default:
-                return "No se pudo obtener la ubicación actual.";
+            default:             return "No se pudo obtener la ubicación actual.";
         }
     }
 
-    private void updateLocationStatus(String value) {
-        tvLocation.setText(value);
-    }
+    private void updateLocationStatus(String value) { tvLocation.setText(value); }
 
     private String getOriginLabel(DataSourceOrigin origin) {
-        if (origin == null) {
-            return getString(R.string.origin_unknown);
-        }
-
+        if (origin == null) return getString(R.string.origin_unknown);
         switch (origin) {
-            case REMOTE:
-                return getString(R.string.origin_remote);
-            case CACHE:
-                return getString(R.string.origin_cache);
+            case REMOTE:         return getString(R.string.origin_remote);
+            case CACHE:          return getString(R.string.origin_cache);
             case LOCAL_FALLBACK:
-            default:
-                return getString(R.string.origin_fallback);
+            default:             return getString(R.string.origin_fallback);
         }
     }
 
     private String buildMarkerSnippet(Gasolinera gasolinera) {
         StringBuilder sb = new StringBuilder();
-
         sb.append(gasolinera.getFormattedPrice(selectedFuel))
                 .append(" · ")
                 .append(gasolinera.getDisplayAddress());
-
         String horario = gasolinera.getFormattedHorario();
         if (!horario.equals("Horario no disponible")) {
             sb.append("\n").append(horario);
         }
-
         return sb.toString();
     }
 
     private int indexOfFuel(FuelType[] fuels, FuelType target) {
         for (int i = 0; i < fuels.length; i++) {
-            if (fuels[i] == target) {
-                return i;
-            }
+            if (fuels[i] == target) return i;
         }
         return 0;
     }
 
     private String safeText(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private int dp(int dp) {
+        return Math.round(getResources().getDisplayMetrics().density * dp);
     }
 }
