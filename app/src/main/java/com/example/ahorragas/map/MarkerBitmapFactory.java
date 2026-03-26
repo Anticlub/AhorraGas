@@ -9,7 +9,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
-
 import android.util.LruCache;
 
 import com.example.ahorragas.model.FuelType;
@@ -21,8 +20,7 @@ public final class MarkerBitmapFactory {
     private static final int CACHE_SIZE = 40;
     private static final LruCache<String, Bitmap> CACHE = new LruCache<>(CACHE_SIZE);
 
-    private MarkerBitmapFactory() {
-    }
+    private MarkerBitmapFactory() {}
 
     public static void clearCache() {
         CACHE.evictAll();
@@ -30,49 +28,32 @@ public final class MarkerBitmapFactory {
 
     public static int getBrandColor(String brand) {
         if (brand == null) return Color.parseColor("#607D8B");
-
         switch (brand.toLowerCase()) {
-            case "repsol":
-                return Color.parseColor("#EF3340");
+            case "repsol":    return Color.parseColor("#EF3340");
             case "cepsa":
-            case "moeve":
-                return Color.parseColor("#FF6600");
-            case "bp":
-                return Color.parseColor("#009900");
-            case "shell":
-                return Color.parseColor("#DD1D21");
-            case "galp":
-                return Color.parseColor("#FF6B00");
-            case "petronor":
-                return Color.parseColor("#003087");
-            case "carrefour":
-                return Color.parseColor("#003CA6");
-            case "alcampo":
-                return Color.parseColor("#1976D2");
-            case "avia":
-                return Color.parseColor("#E31837");
+            case "moeve":     return Color.parseColor("#FF6600");
+            case "bp":        return Color.parseColor("#009900");
+            case "shell":     return Color.parseColor("#DD1D21");
+            case "galp":      return Color.parseColor("#FF6B00");
+            case "petronor":  return Color.parseColor("#003087");
+            case "carrefour": return Color.parseColor("#003CA6");
+            case "alcampo":   return Color.parseColor("#1976D2");
+            case "avia":      return Color.parseColor("#E31837");
             case "ballenoil":
             case "petroprix":
-            case "plenergy":
-                return Color.parseColor("#455A64");
-            default:
-                return Color.parseColor("#607D8B");
+            case "plenergy":  return Color.parseColor("#455A64");
+            default:          return Color.parseColor("#607D8B");
         }
     }
 
     public static int getPriceLevelColor(PriceLevel level) {
         if (level == null) return Color.parseColor("#757575");
-
         switch (level) {
-            case CHEAP:
-                return Color.parseColor("#388E3C");
-            case MID:
-                return Color.parseColor("#F57C00");
-            case EXPENSIVE:
-                return Color.parseColor("#D32F2F");
+            case CHEAP:     return Color.parseColor("#388E3C");
+            case MID:       return Color.parseColor("#F57C00");
+            case EXPENSIVE: return Color.parseColor("#D32F2F");
             case UNKNOWN:
-            default:
-                return Color.parseColor("#757575");
+            default:        return Color.parseColor("#757575");
         }
     }
 
@@ -80,15 +61,11 @@ public final class MarkerBitmapFactory {
                                       Gasolinera gasolinera,
                                       FuelType fuelType) {
         String priceText = gasolinera.getFormattedPrice(fuelType);
-        int logoResId = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
-        String key = logoResId
-                + "|" + gasolinera.getPriceLevel().name()
-                + "|" + priceText;
+        int logoResId    = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
+        String key       = logoResId + "|" + gasolinera.getPriceLevel().name() + "|" + priceText;
 
         Bitmap cached = CACHE.get(key);
-        if (cached != null && !cached.isRecycled()) {
-            return cached;
-        }
+        if (cached != null && !cached.isRecycled()) return cached;
 
         Bitmap rendered = renderMarker(context, gasolinera, priceText, logoResId);
         CACHE.put(key, rendered);
@@ -101,17 +78,19 @@ public final class MarkerBitmapFactory {
                                        int logoResId) {
         float density = context.getResources().getDisplayMetrics().density;
 
-        int width = px(density, 74);
-        int bubbleHeight = px(density, 56);
-        int pinHeight = px(density, 14);
-        int height = bubbleHeight + pinHeight;
-        int corner = px(density, 10);
+        // ── Reducción ~12% respecto al original ──
+        // Original: width=74, bubbleHeight=56, pinHeight=14, corner=10, logoRadius=13
+        int width        = px(density, 65);   // era 74
+        int bubbleHeight = px(density, 49);   // era 56
+        int pinHeight    = px(density, 12);   // era 14
+        int height       = bubbleHeight + pinHeight;
+        int corner       = px(density, 9);    // era 10
 
         int bgColor = getPriceLevelColor(gasolinera.getPriceLevel());
 
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        Paint paint   = new Paint(Paint.ANTI_ALIAS_FLAG);
 
         // Burbuja de fondo
         paint.setStyle(Paint.Style.FILL);
@@ -122,13 +101,13 @@ public final class MarkerBitmapFactory {
         // Borde blanco
         paint.setStyle(Paint.Style.STROKE);
         paint.setColor(Color.WHITE);
-        paint.setStrokeWidth(density * 1.8f);
+        paint.setStrokeWidth(density * 1.6f);
         canvas.drawRoundRect(bubble, corner, corner, paint);
 
         // Pin inferior
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(bgColor);
-        float pinWidth = px(density, 9);
+        float pinWidth = px(density, 8);
         Path pin = new Path();
         pin.moveTo(width / 2f - pinWidth, bubbleHeight - density);
         pin.lineTo(width / 2f + pinWidth, bubbleHeight - density);
@@ -136,25 +115,25 @@ public final class MarkerBitmapFactory {
         pin.close();
         canvas.drawPath(pin, paint);
 
-        // Círculo blanco de fondo para el logo
-        float centerX = width / 2f;
-        float centerY = bubbleHeight * 0.40f;
-        int logoRadius = px(density, 13);
+        // Círculo blanco para el logo
+        float centerX  = width / 2f;
+        float centerY  = bubbleHeight * 0.40f;
+        int logoRadius = px(density, 12);
         paint.setColor(Color.WHITE);
         paint.setAlpha(255);
         paint.setStyle(Paint.Style.FILL);
         canvas.drawCircle(centerX, centerY, logoRadius, paint);
 
-        // Dibujar el logo dentro del círculo
+        // Logo dentro del círculo
         drawLogo(context, canvas, logoResId, centerX, centerY, logoRadius);
 
         // Texto del precio
         paint.setColor(Color.WHITE);
         paint.setAlpha(255);
         paint.setFakeBoldText(false);
-        paint.setTextSize(density * 8.5f);
+        paint.setTextSize(density * 7.5f);
         paint.setTextAlign(Paint.Align.CENTER);
-        canvas.drawText(priceText, centerX, bubbleHeight * 0.82f, paint);
+        canvas.drawText(priceText, centerX, bubbleHeight * 0.83f, paint);
 
         return bitmap;
     }
@@ -164,9 +143,9 @@ public final class MarkerBitmapFactory {
         Bitmap logoBitmap = BitmapFactory.decodeResource(context.getResources(), logoResId);
         if (logoBitmap == null) return;
 
-        int logoSize = (int) (radius * 1.6f);
-        int left = (int) (cx - logoSize / 2f);
-        int top = (int) (cy - logoSize / 2f);
+        int logoSize  = (int) (radius * 1.6f);
+        int left      = (int) (cx - logoSize / 2f);
+        int top       = (int) (cy - logoSize / 2f);
         Rect destRect = new Rect(left, top, left + logoSize, top + logoSize);
 
         Paint logoPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
