@@ -34,6 +34,10 @@ public class PreferencesActivity extends AppCompatActivity {
     private SeekBar seekBarRadius;
     private TextView tvRadiusValue;
 
+    // ── Gasolineras en mapa ────────────────────────────────────────────────────
+    private SeekBar seekBarMarkers;
+    private TextView tvMarkersValue;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,10 +51,34 @@ public class PreferencesActivity extends AppCompatActivity {
         setupRadiusSelector();
         setupBottomNav();
         setupBackPress();
-
+        setupMarkersSelector();
         refreshVehicleList();
     }
 
+    private void setupMarkersSelector() {
+        seekBarMarkers = findViewById(R.id.seekBarMarkers);
+        tvMarkersValue = findViewById(R.id.tvMarkersValue);
+
+        int saved = RadiusUtils.loadMarkersCount(this);
+        seekBarMarkers.setProgress(saved - RadiusUtils.MIN_MARKERS);
+        tvMarkersValue.setText(String.valueOf(saved));
+
+        seekBarMarkers.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                tvMarkersValue.setText(String.valueOf(progress + RadiusUtils.MIN_MARKERS));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                RadiusUtils.saveMarkersCount(PreferencesActivity.this,
+                        seekBar.getProgress() + RadiusUtils.MIN_MARKERS);
+            }
+        });
+    }
     // ─── Radio de búsqueda ────────────────────────────────────────────────────
 
     /**
