@@ -30,4 +30,5 @@
     <string name="showing_nearest">Se muestran %1$d estaciones cercanas</string>
     <string name="refreshing">Actualizando…</string>
     <string name="brand_logo_desc">Logo de la marca</string>
+    <string name="showing_nearest_radius">Se muestran %1$d estaciones en %2$d km</string>
 </resources>
