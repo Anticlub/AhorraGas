@@ -5,6 +5,7 @@ import android.text.InputType;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -14,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Vehicle;
+import com.example.ahorragas.util.RadiusUtils;
 import com.example.ahorragas.util.VehiclePrefs;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -28,6 +30,10 @@ public class PreferencesActivity extends AppCompatActivity {
     private List<Vehicle> vehicles;
     private int activeIndex;
 
+    // ── Radio de búsqueda ────────────────────────────────────────────────────
+    private SeekBar seekBarRadius;
+    private TextView tvRadiusValue;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +44,65 @@ public class PreferencesActivity extends AppCompatActivity {
 
         fabAddVehicle.setOnClickListener(v -> showVehicleDialog(-1, null, false));
 
+        setupRadiusSelector();
+        setupBottomNav();
+        setupBackPress();
+
+        refreshVehicleList();
+    }
+
+    // ─── Radio de búsqueda ────────────────────────────────────────────────────
+
+    /**
+     * Inicializa el SeekBar y el TextView del radio.
+     * El SeekBar va de 0 a 49 (offset de 1) → representa 1–50 km.
+     */
+    private void setupRadiusSelector() {
+        seekBarRadius  = findViewById(R.id.seekBarRadius);
+        tvRadiusValue  = findViewById(R.id.tvRadiusValue);
+
+        int savedKm = RadiusUtils.loadRadiusKm(this);
+        applyRadius(savedKm, false);   // actualiza label sin guardar de nuevo
+
+        seekBarRadius.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int km = progress + RadiusUtils.MIN_KM;   // progress 0..49 → 1..50 km
+                updateRadiusLabel(km);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) { /* no-op */ }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                int km = seekBar.getProgress() + RadiusUtils.MIN_KM;
+                RadiusUtils.saveRadiusKm(PreferencesActivity.this, km);
+            }
+        });
+    }
+
+    /**
+     * Aplica un valor de radio al SeekBar y al label.
+     * @param km     valor en kilómetros (1–50)
+     * @param save   si true, persiste el valor en SharedPreferences
+     */
+    private void applyRadius(int km, boolean save) {
+        int clamped = Math.max(RadiusUtils.MIN_KM, Math.min(RadiusUtils.MAX_KM, km));
+        seekBarRadius.setProgress(clamped - RadiusUtils.MIN_KM);
+        updateRadiusLabel(clamped);
+        if (save) {
+            RadiusUtils.saveRadiusKm(this, clamped);
+        }
+    }
+
+    private void updateRadiusLabel(int km) {
+        tvRadiusValue.setText(String.format(Locale.getDefault(), "%d km", km));
+    }
+
+    // ─── Navegación y back press ──────────────────────────────────────────────
+
+    private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavPrefs);
         bottomNav.setSelectedItemId(R.id.nav_preferences);
         bottomNav.setOnItemSelectedListener(item -> {
@@ -55,7 +120,9 @@ public class PreferencesActivity extends AppCompatActivity {
             }
             return false;
         });
+    }
 
+    private void setupBackPress() {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -68,11 +135,9 @@ public class PreferencesActivity extends AppCompatActivity {
                 }
             }
         });
-
-        refreshVehicleList();
     }
 
-    // ─── UI ──────────────────────────────────────────────────────────────────
+    // ─── UI de vehículos ──────────────────────────────────────────────────────
 
     private void refreshVehicleList() {
         vehicles    = VehiclePrefs.loadVehicles(this);
@@ -163,7 +228,7 @@ public class PreferencesActivity extends AppCompatActivity {
         vehicleListContainer.addView(sep);
     }
 
-    // ─── DIALOGS ─────────────────────────────────────────────────────────────
+    // ─── Diálogos vehículos ───────────────────────────────────────────────────
 
     private void showVehicleDialog(int index, Vehicle existing, boolean mandatory) {
         boolean isNew = (index == -1);
@@ -333,7 +398,7 @@ public class PreferencesActivity extends AppCompatActivity {
                 .show();
     }
 
-    // ─── UTILS ───────────────────────────────────────────────────────────────
+    // ─── Utilidades UI ────────────────────────────────────────────────────────
 
     private TextView makeErrorLabel() {
         TextView tv = new TextView(this);
