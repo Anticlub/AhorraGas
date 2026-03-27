@@ -54,14 +54,19 @@ public class GasolineraInfoWindow extends MarkerInfoWindow {
         Double price          = gasolinera.getPrecio(fuelType);
 
         if (activeVehicle != null
+                && activeVehicle.hasConsumption()
                 && distanceMeters != null && distanceMeters > 0
                 && price != null && price > 0) {
             double distKm = distanceMeters / 1000.0;
-            double cost   = activeVehicle.estimateCost(distKm, price);
-            tvCost.setText(String.format(Locale.getDefault(),
-                    "⛽ %s · coste est. %.2f €",
-                    activeVehicle.getName(), cost));
-            tvCost.setVisibility(View.VISIBLE);
+            Double cost   = activeVehicle.estimateCost(distKm, price);
+            if (cost != null) {
+                tvCost.setText(String.format(Locale.getDefault(),
+                        "⛽ %s · coste est. %.2f €",
+                        activeVehicle.getName(), cost));
+                tvCost.setVisibility(View.VISIBLE);
+            } else {
+                tvCost.setVisibility(View.GONE);
+            }
         } else {
             tvCost.setVisibility(View.GONE);
         }
