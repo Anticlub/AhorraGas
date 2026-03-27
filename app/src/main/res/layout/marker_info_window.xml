@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Layout del InfoWindow personalizado.
+    Replica el aspecto del bonuspack_bubble original (fondo claro, texto oscuro)
+    y añade la estimación de coste y el botón de navegación al final.
+
+    IDs obligatorios para MarkerInfoWindow de osmdroid:
+      bubble_title, bubble_description, bubble_subdescription, bubble_image
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:minWidth="180dp"
+    android:maxWidth="260dp"
+    android:orientation="horizontal"
+    android:background="@drawable/info_window_bg"
+    android:padding="8dp">
+
+    <!-- Imagen de marca (oculta, requerida por osmdroid) -->
+    <ImageView
+        android:id="@+id/bubble_image"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
+
+    <!-- Columna de contenido -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="4dp"
+        android:orientation="vertical">
+
+        <!-- Título: nombre de la marca -->
+        <TextView
+            android:id="@+id/bubble_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FF212121"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:maxEms="16"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <!-- Descripción: precio + dirección (snippet original) -->
+        <TextView
+            android:id="@+id/bubble_description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="#FF555555"
+            android:textSize="12sp"
+            android:maxLines="3"
+            android:ellipsize="end" />
+
+        <!-- Subdescripción: horario (oculta por defecto, osmdroid la rellena si hay) -->
+        <TextView
+            android:id="@+id/bubble_subdescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:textColor="#FF888888"
+            android:textSize="11sp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:visibility="gone" />
+
+        <!-- Separador fino antes de los extras -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="4dp"
+            android:background="#22000000" />
+
+        <!-- Estimación de coste (visible solo si hay vehículo activo + distancia) -->
+        <TextView
+            android:id="@+id/iwCostEstimate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:textSize="11sp"
+            android:textColor="#FFE65100"
+            android:visibility="gone" />
+
+        <!-- Botón "Llévame hasta aquí" -->
+        <Button
+            android:id="@+id/iwBtnNavigate"
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:text="  Llévame hasta aquí"
+            android:textSize="11sp"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#FF1565C0"
+            android:paddingHorizontal="8dp" />
+
+    </LinearLayout>
+</LinearLayout>
