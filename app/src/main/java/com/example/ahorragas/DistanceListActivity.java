@@ -39,16 +39,18 @@ public class DistanceListActivity extends BaseActivity {
         repository = GasolineraRepository.getInstance(new CachedRemoteApiDataSource(this));
         locationHelper = new LocationHelper(this);
 
+        setupRecyclerView();
+        setupBottomNav();
 
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
         selectedFuel = FuelType.fromString(
                 PreferenceManager.getDefaultSharedPreferences(this)
                         .getString("pref_selected_fuel", FuelType.GASOLEO_A.name())
         );
-
-        setupRecyclerView();
         loadAndDisplay();
-        setupBottomNav();
-
     }
 
     private void setupBottomNav() {
