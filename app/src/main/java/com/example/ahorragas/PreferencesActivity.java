@@ -1,5 +1,6 @@
 package com.example.ahorragas;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
@@ -23,7 +24,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.List;
 import java.util.Locale;
 
-public class PreferencesActivity extends AppCompatActivity {
+public class PreferencesActivity extends BaseActivity {
 
     private LinearLayout vehicleListContainer;
     private FloatingActionButton fabAddVehicle;
@@ -143,7 +144,11 @@ public class PreferencesActivity extends AppCompatActivity {
                             Toast.LENGTH_SHORT).show();
                     return false;
                 }
-                finish();
+                navigateToMap();
+                return true;
+            }
+            if (id == R.id.nav_distance) {
+                navigateToDistanceList();
                 return true;
             }
             return false;

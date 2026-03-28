@@ -61,7 +61,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
 
     private static final String PREF_SELECTED_FUEL = "pref_selected_fuel";
     private static final GeoPoint SPAIN_CENTER = new GeoPoint(40.4168, -3.7038);
@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         dataSource = new CachedRemoteApiDataSource(this);
-        repository = new GasolineraRepository(dataSource);
+        repository = GasolineraRepository.getInstance(dataSource);
         locationHelper = new LocationHelper(this);
 
         selectedFuel = FuelType.fromString(
@@ -423,8 +423,11 @@ public class MainActivity extends AppCompatActivity {
             if (id == R.id.nav_map) {
                 return true;
             } else if (id == R.id.nav_preferences) {
-                startActivity(new Intent(this, PreferencesActivity.class));
+                navigateToPreferences();
                 return true;
+            } else if (id == R.id.nav_distance) {
+            navigateToDistanceList();
+            return true;
             } else {
                 return false;
             }
