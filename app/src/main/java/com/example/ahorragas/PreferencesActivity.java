@@ -24,7 +24,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.List;
 import java.util.Locale;
 
-public class PreferencesActivity extends AppCompatActivity {
+public class PreferencesActivity extends BaseActivity {
 
     private LinearLayout vehicleListContainer;
     private FloatingActionButton fabAddVehicle;
@@ -144,13 +144,11 @@ public class PreferencesActivity extends AppCompatActivity {
                             Toast.LENGTH_SHORT).show();
                     return false;
                 }
-                Intent intent = new Intent(this, MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
+                navigateToMap();
                 return true;
             }
             if (id == R.id.nav_distance) {
-                startActivity(new Intent(this, DistanceListActivity.class));
+                navigateToDistanceList();
                 return true;
             }
             return false;

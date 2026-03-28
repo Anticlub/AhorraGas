@@ -25,7 +25,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DistanceListActivity extends AppCompatActivity {
+public class DistanceListActivity extends BaseActivity {
     private GasolineraRepository repository;
     private LocationHelper locationHelper;
     private GasolineraAdapter adapter;
@@ -51,14 +51,14 @@ public class DistanceListActivity extends AppCompatActivity {
 
     }
 
-    private void setupBottomNav(){
+    private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavDistance);
         bottomNav.setSelectedItemId(R.id.nav_distance);
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_distance) return true;
             if (id == R.id.nav_map) {
-                finish();
+                navigateToMap();
                 return true;
             }
             if (id == R.id.nav_preferences) {
