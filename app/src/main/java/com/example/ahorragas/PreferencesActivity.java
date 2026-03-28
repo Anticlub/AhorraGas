@@ -144,10 +144,12 @@ public class PreferencesActivity extends AppCompatActivity {
                             Toast.LENGTH_SHORT).show();
                     return false;
                 }
-                finish();
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
                 return true;
             }
-            else if (id == R.id.nav_distance) {
+            if (id == R.id.nav_distance) {
                 startActivity(new Intent(this, DistanceListActivity.class));
                 return true;
             }
