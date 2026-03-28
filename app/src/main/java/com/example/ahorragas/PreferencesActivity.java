@@ -1,5 +1,6 @@
 package com.example.ahorragas;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
@@ -144,6 +145,10 @@ public class PreferencesActivity extends AppCompatActivity {
                     return false;
                 }
                 finish();
+                return true;
+            }
+            else if (id == R.id.nav_distance) {
+                startActivity(new Intent(this, DistanceListActivity.class));
                 return true;
             }
             return false;
