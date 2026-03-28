@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         dataSource = new CachedRemoteApiDataSource(this);
-        repository = new GasolineraRepository(dataSource);
+        repository = GasolineraRepository.getInstance(dataSource);
         locationHelper = new LocationHelper(this);
 
         selectedFuel = FuelType.fromString(
