@@ -425,6 +425,9 @@ public class MainActivity extends AppCompatActivity {
             } else if (id == R.id.nav_preferences) {
                 startActivity(new Intent(this, PreferencesActivity.class));
                 return true;
+            } else if (id == R.id.nav_distance) {
+            startActivity(new Intent(this, DistanceListActivity.class));
+            return true;
             } else {
                 return false;
             }
