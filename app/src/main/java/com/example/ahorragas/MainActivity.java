@@ -38,6 +38,7 @@ import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceRange;
 import com.example.ahorragas.model.Vehicle;
 import com.example.ahorragas.util.GasolineraSorter;
+import com.example.ahorragas.util.RadiusUtils;
 import com.example.ahorragas.util.VehiclePrefs;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -79,6 +80,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvLocation;
     private ProgressBar progressBar;
     private BottomNavigationView bottomNav;
+    private int lastRadiusKm = RadiusUtils.DEFAULT_KM;
+    private int lastMarkersCount = RadiusUtils.DEFAULT_MARKERS;
 
     private final List<Gasolinera> allGasolineras = new ArrayList<>();
     private List<Gasolinera> visibleGasolineras = new ArrayList<>();
@@ -179,6 +182,20 @@ public class MainActivity extends AppCompatActivity {
         if (savedFuel != selectedFuel) {
             selectedFuel = savedFuel;
             MarkerBitmapFactory.clearCache();
+            updateDisplayForFuel(selectedFuel);
+        }
+
+        // si el radio de preferencias es diferente se actualiza
+        int currentRadius = RadiusUtils.loadRadiusKm(this);
+        if (currentRadius != lastRadiusKm) {
+            lastRadiusKm = currentRadius;
+            updateDisplayForFuel(selectedFuel);
+        }
+
+        // si el marcador de las gasolineras cambia se actualiza
+        int currentMarkers = RadiusUtils.loadMarkersCount(this);
+        if (currentMarkers != lastMarkersCount) {
+            lastMarkersCount = currentMarkers;
             updateDisplayForFuel(selectedFuel);
         }
     }
@@ -356,16 +373,27 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            showStationsOnMap(MAX_MAP_MARKERS);
+            int radiusKm = RadiusUtils.loadRadiusKm(this);
+            double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
+            int markersCount = RadiusUtils.loadMarkersCount(this);
 
-            int shown = Math.min(MAX_MAP_MARKERS, visibleGasolineras.size());
-            if (!visibleGasolineras.isEmpty()) {
-                focusOnGasolinera(visibleGasolineras.get(0));
-            }
+            List<Gasolinera> inRadius = GasolineraSorter.getForMap(
+                    GasolineraSorter.filterByFuel(allGasolineras, selectedFuel),
+                    userLocation.getLatitude(),
+                    userLocation.getLongitude(),
+                    radiusMeters,
+                    markersCount
+            );
+
+            clearMapMarkers();
+            for (Gasolinera g : inRadius) addMarker(g);
+            mapView.invalidate();
+
+            if (!inRadius.isEmpty()) focusOnGasolinera(inRadius.get(0));
 
             Toast.makeText(
                     this,
-                    getString(R.string.showing_nearest, shown),
+                    getString(R.string.showing_nearest, inRadius.size()),
                     Toast.LENGTH_SHORT
             ).show();
         });
@@ -539,7 +567,7 @@ public class MainActivity extends AppCompatActivity {
                     getString(R.string.no_stations_for_fuel, selectedFuel.displayName()),
                     Toast.LENGTH_SHORT).show();
         } else {
-            showStationsOnMap(MAX_MAP_MARKERS);
+            showStationsOnMap(RadiusUtils.loadMarkersCount(this));
         }
 
         renderMetaStatus();
@@ -549,10 +577,14 @@ public class MainActivity extends AppCompatActivity {
         List<Gasolinera> filtered = GasolineraSorter.filterByFuel(allGasolineras, fuel);
 
         if (userLocation != null) {
+            int radiusKm = RadiusUtils.loadRadiusKm(this);
+            double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
             return GasolineraSorter.getForMap(
                     filtered,
                     userLocation.getLatitude(),
-                    userLocation.getLongitude()
+                    userLocation.getLongitude(),
+                    radiusMeters,
+                    RadiusUtils.loadMarkersCount(this)
             );
         }
 
