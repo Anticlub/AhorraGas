@@ -6,6 +6,8 @@ import java.util.List;
 
 public class GasolineraRepository {
 
+    private static GasolineraRepository instance;
+
     private final GasolineraDataSource primary;
 
     // Cache en memoria (solo mientras la app está abierta)
@@ -14,6 +16,13 @@ public class GasolineraRepository {
 
     public GasolineraRepository(GasolineraDataSource primary) {
         this.primary = primary;
+    }
+
+    public static synchronized GasolineraRepository getInstance(GasolineraDataSource primary) {
+        if (instance == null) {
+            instance = new GasolineraRepository(primary);
+        }
+        return instance;
     }
 
     public synchronized List<Gasolinera> getGasolineras() throws RepoError {
