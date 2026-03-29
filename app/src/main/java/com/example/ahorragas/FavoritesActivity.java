@@ -1,5 +1,6 @@
 package com.example.ahorragas;
 
+import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -9,9 +10,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ahorragas.adapter.GasolineraAdapter;
+import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.util.FavoritesPrefs;
+import com.example.ahorragas.util.GeoUtils;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.List;
@@ -21,6 +24,7 @@ public class FavoritesActivity extends BaseActivity {
     private GasolineraAdapter adapter;
     private FuelType selectedFuel;
     private TextView tvEmptyState;
+    private LocationHelper locationHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +33,7 @@ public class FavoritesActivity extends BaseActivity {
 
         setupRecyclerView();
         setupBottomNav();
+        locationHelper = new LocationHelper(this);
     }
 
     @Override
@@ -54,19 +59,40 @@ public class FavoritesActivity extends BaseActivity {
     }
 
     /**
-     * Carga la lista de favoritos desde SharedPreferences y actualiza el adapter.
-     * Muestra un mensaje vacío si no hay ningún favorito guardado.
+     * Carga la lista de favoritos desde SharedPreferences, calcula la distancia
+     * a cada gasolinera si la ubicación está disponible, y actualiza el adapter.
      */
     private void loadAndDisplay() {
         List<Gasolinera> favorites = FavoritesPrefs.loadAll(this);
 
         if (favorites.isEmpty()) {
             tvEmptyState.setVisibility(View.VISIBLE);
-        } else {
-            tvEmptyState.setVisibility(View.GONE);
+            adapter.updateData(favorites, selectedFuel);
+            return;
         }
 
-        adapter.updateData(favorites, selectedFuel);
+        tvEmptyState.setVisibility(View.GONE);
+
+        locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
+            @Override
+            public void onSuccess(Location location) {
+                for (Gasolinera g : favorites) {
+                    double distance = GeoUtils.distanceMeters(
+                            location.getLatitude(),
+                            location.getLongitude(),
+                            g.getLat(),
+                            g.getLon()
+                    );
+                    g.setDistanceMeters(distance);
+                }
+                runOnUiThread(() -> adapter.updateData(favorites, selectedFuel));
+            }
+
+            @Override
+            public void onError(LocationHelper.LocationError error) {
+                runOnUiThread(() -> adapter.updateData(favorites, selectedFuel));
+            }
+        });
     }
 
     private void setupBottomNav() {
