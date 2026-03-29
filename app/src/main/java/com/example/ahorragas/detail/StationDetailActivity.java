@@ -23,6 +23,8 @@ public class StationDetailActivity extends AppCompatActivity {
     public static final String EXTRA_GASOLINERA_LAT      = "extra_gasolinera_lat";
     public static final String EXTRA_GASOLINERA_LON      = "extra_gasolinera_lon";
     public static final String EXTRA_GASOLINERA_HORARIO  = "extra_gasolinera_horario";
+    public static final String EXTRA_PRICES_PREFIX = "extra_price_";
+    public static final String EXTRA_DISTANCE = "extra_distance";
 
     private static final String[] TAB_TITLES = {"General", "Ubicación", "Precios", "Histórico", "Promociones"};
 
@@ -65,6 +67,17 @@ public class StationDetailActivity extends AppCompatActivity {
 
         Gasolinera g = new Gasolinera(id, marca, municipio, direccion, lat, lon, null);
         g.setHorario(horario);
+        for (com.example.ahorragas.model.FuelType fuel : com.example.ahorragas.model.FuelType.values()) {
+            String key = EXTRA_PRICES_PREFIX + fuel.name();
+            if (extras.containsKey(key)) {
+                g.setPrecio(fuel, extras.getDouble(key));
+            }
+        }
+
+        if (extras.containsKey(EXTRA_DISTANCE)) {
+            g.setDistanceMeters(extras.getDouble(EXTRA_DISTANCE));
+        }
+
         return g;
     }
 
