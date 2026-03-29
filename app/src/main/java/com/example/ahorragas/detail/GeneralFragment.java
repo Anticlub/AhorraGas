@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -14,6 +15,7 @@ import androidx.preference.PreferenceManager;
 import com.example.ahorragas.R;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
+import com.example.ahorragas.util.FavoritesPrefs;
 
 public class GeneralFragment extends Fragment {
 
@@ -110,5 +112,22 @@ public class GeneralFragment extends Fragment {
                 ? "Distancia no disponible"
                 : g.getFormattedDistance());
         tvHorario.setText(g.getFormattedHorario());
+
+        // Botón favorito
+        Button btnFavorite = view.findViewById(R.id.btnFavorite);
+        boolean isFav = FavoritesPrefs.isFavorite(requireContext(), g.getId());
+        btnFavorite.setText(isFav ? "❤️ Quitar de favoritos" : "🤍 Añadir a favoritos");
+
+        final Gasolinera finalG = g;
+        btnFavorite.setOnClickListener(v -> {
+            boolean nowFav = FavoritesPrefs.isFavorite(requireContext(), finalG.getId());
+            if (nowFav) {
+                FavoritesPrefs.remove(requireContext(), finalG.getId());
+                btnFavorite.setText("🤍 Añadir a favoritos");
+            } else {
+                FavoritesPrefs.add(requireContext(), finalG);
+                btnFavorite.setText("❤️ Quitar de favoritos");
+            }
+        });
     }
 }
