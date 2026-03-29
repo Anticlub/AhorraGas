@@ -84,8 +84,9 @@ public class PriceListActivity extends BaseActivity {
     }
 
     /**
-     * Carga las gasolineras del repositorio, las ordena por precio ascendente
-     * y actualiza el adapter.
+     * Obtiene la ubicación del usuario, carga las gasolineras del repositorio,
+     * filtra por radio y máximo de marcadores configurados en Preferencias,
+     * las ordena por precio ascendente y actualiza el adapter.
      */
     private void loadAndDisplay() {
         locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
