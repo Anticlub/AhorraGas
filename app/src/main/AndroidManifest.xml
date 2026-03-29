@@ -21,6 +21,9 @@
         android:theme="@style/Theme.AhorraGas"
         tools:targetApi="31">
         <activity
+            android:name=".PriceListActivity"
+            android:exported="false" />
+        <activity
             android:name=".DistanceListActivity"
             android:exported="false" />
         <activity
