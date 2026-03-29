@@ -74,4 +74,19 @@
         android:textColor="@color/text_primary"
         android:textSize="14sp" />
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginVertical="12dp"
+        android:background="@color/divider" />
+
+    <!-- Favorito -->
+    <Button
+        android:id="@+id/btnFavorite"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🤍 Añadir a favoritos"
+        android:textAllCaps="false"
+        android:textSize="15sp" />
+
 </LinearLayout>
