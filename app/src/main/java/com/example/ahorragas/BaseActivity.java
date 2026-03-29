@@ -55,4 +55,9 @@ public abstract class BaseActivity extends AppCompatActivity {
         }
         startActivity(intent);
     }
+    protected void navigateToFavorites() {
+        Intent intent = new Intent(this, FavoritesActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+    }
 }
