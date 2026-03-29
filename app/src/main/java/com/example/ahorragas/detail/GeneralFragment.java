@@ -118,6 +118,22 @@ public class GeneralFragment extends Fragment {
         } else {
             tvFillCost.setText("Configura tu vehículo para calcular el coste de llenado");
         }
+        TextView tvArrivalCost = view.findViewById(R.id.tvArrivalCost);
+        if (activeVehicle != null && activeVehicle.hasConsumption()
+                && g.getDistanceMeters() != null && g.getDistanceMeters() > 0) {
+            Double price = g.getPrecio(selectedFuel);
+            if (price != null && price > 0) {
+                double distanceKm = g.getDistanceMeters() / 1000.0;
+                double coste = (distanceKm / 100.0) * activeVehicle.getConsumption() * price;
+                tvArrivalCost.setText(String.format(java.util.Locale.getDefault(), "%.2f €", coste));
+            } else {
+                tvArrivalCost.setText("Precio no disponible");
+            }
+        } else if (activeVehicle == null || !activeVehicle.hasConsumption()) {
+            tvArrivalCost.setText("Configura tu vehículo para calcular el coste");
+        } else {
+            tvArrivalCost.setText("Distancia no disponible");
+        }
         tvDistance.setText(g.getFormattedDistance().isEmpty()
                 ? "Distancia no disponible"
                 : g.getFormattedDistance());
