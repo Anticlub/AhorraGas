@@ -5,6 +5,7 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+
     <!-- Precio combustible activo -->
     <TextView
         android:layout_width="wrap_content"
@@ -29,6 +30,14 @@
         android:textColor="@color/price_cheap"
         android:textSize="28sp"
         android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvFillCost"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="@color/text_secondary"
+        android:textSize="13sp" />
 
     <View
         android:layout_width="match_parent"
