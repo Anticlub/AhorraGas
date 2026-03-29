@@ -77,7 +77,7 @@ public class DistanceListActivity extends BaseActivity {
         adapter = new GasolineraAdapter(
                 new ArrayList<>(),
                 selectedFuel,
-                gasolinera -> {} // TODO: q abra el navegador como poco
+                gasolinera -> navigateToDetail(gasolinera)
         );
         RecyclerView recyclerView = findViewById(R.id.recyclerViewDistance);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
