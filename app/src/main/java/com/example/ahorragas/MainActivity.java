@@ -417,7 +417,6 @@ public class MainActivity extends BaseActivity {
 
     private void setupBottomNav() {
         bottomNav.setSelectedItemId(R.id.nav_map);
-
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_map) {
@@ -428,6 +427,9 @@ public class MainActivity extends BaseActivity {
             } else if (id == R.id.nav_distance) {
             navigateToDistanceList();
             return true;
+            } else if (id == R.id.nav_price) {
+                navigateToPrice();
+                return true;
             } else {
                 return false;
             }
