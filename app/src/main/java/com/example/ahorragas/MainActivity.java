@@ -426,7 +426,10 @@ public class MainActivity extends BaseActivity {
             } else if (id == R.id.nav_distance) {
                 navigateToDistanceList();
                 return true;
-            } else if (id == R.id.nav_preferences) {
+            }else if (id == R.id.nav_favorites) {
+                navigateToFavorites();
+                return true;
+            }else if (id == R.id.nav_preferences) {
                 navigateToPreferences();
                 return true;
             }
