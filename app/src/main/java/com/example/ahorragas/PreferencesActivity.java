@@ -137,7 +137,7 @@ public class PreferencesActivity extends BaseActivity {
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_preferences) return true;
-            if (id == R.id.nav_map) {
+            else if (id == R.id.nav_map) {
                 if (!VehiclePrefs.hasVehicles(this)) {
                     Toast.makeText(this,
                             "Añade al menos un vehículo para continuar.",
@@ -146,9 +146,11 @@ public class PreferencesActivity extends BaseActivity {
                 }
                 navigateToMap();
                 return true;
-            }
-            if (id == R.id.nav_distance) {
+            } else if (id == R.id.nav_distance) {
                 navigateToDistanceList();
+                return true;
+            } else if (id == R.id.nav_price) {
+                navigateToPrice();
                 return true;
             }
             return false;
