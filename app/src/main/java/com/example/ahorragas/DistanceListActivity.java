@@ -65,6 +65,9 @@ public class DistanceListActivity extends BaseActivity {
             } else if (id == R.id.nav_price) {
                 navigateToPrice();
                 return true;
+            }else if (id == R.id.nav_favorites) {
+                navigateToFavorites();
+                return true;
             } else if (id == R.id.nav_preferences) {
                 navigateToPreferences();
                 return true;
