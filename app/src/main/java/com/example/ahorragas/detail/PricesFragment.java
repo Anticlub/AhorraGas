@@ -24,6 +24,7 @@ public class PricesFragment extends Fragment {
     private static final String ARG_LAT       = "arg_lat";
     private static final String ARG_LON       = "arg_lon";
     private static final String ARG_HORARIO   = "arg_horario";
+    private static final String ARG_PRICES_PREFIX = "arg_price_";
 
     /**
      * Crea una nueva instancia del fragment con los datos de la gasolinera.
@@ -41,6 +42,12 @@ public class PricesFragment extends Fragment {
         args.putDouble(ARG_LAT, gasolinera.getLat() != null ? gasolinera.getLat() : 0.0);
         args.putDouble(ARG_LON, gasolinera.getLon() != null ? gasolinera.getLon() : 0.0);
         args.putString(ARG_HORARIO, gasolinera.getHorario());
+        for (com.example.ahorragas.model.FuelType fuel : com.example.ahorragas.model.FuelType.values()) {
+            Double price = gasolinera.getPrecio(fuel);
+            if (price != null) {
+                args.putDouble(ARG_PRICES_PREFIX + fuel.name(), price);
+            }
+        }
         fragment.setArguments(args);
         return fragment;
     }
@@ -70,6 +77,13 @@ public class PricesFragment extends Fragment {
                 null
         );
         g.setHorario(args.getString(ARG_HORARIO));
+
+        for (com.example.ahorragas.model.FuelType fuel : com.example.ahorragas.model.FuelType.values()) {
+            String key = ARG_PRICES_PREFIX + fuel.name();
+            if (args.containsKey(key)) {
+                g.setPrecio(fuel, args.getDouble(key));
+            }
+        }
 
         LinearLayout container2 = view.findViewById(R.id.pricesContainer);
 
