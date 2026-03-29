@@ -15,7 +15,9 @@ import androidx.preference.PreferenceManager;
 import com.example.ahorragas.R;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
+import com.example.ahorragas.model.Vehicle;
 import com.example.ahorragas.util.FavoritesPrefs;
+import com.example.ahorragas.util.VehiclePrefs;
 
 public class GeneralFragment extends Fragment {
 
@@ -71,6 +73,7 @@ public class GeneralFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         Bundle args = getArguments();
+
         if (args == null) return;
 
         FuelType selectedFuel = FuelType.fromString(
@@ -108,6 +111,13 @@ public class GeneralFragment extends Fragment {
 
         tvFuelLabel.setText(selectedFuel.displayName());
         tvPrice.setText(g.getFormattedPrice(selectedFuel));
+        TextView tvFillCost = view.findViewById(R.id.tvFillCost);
+        Vehicle activeVehicle = VehiclePrefs.loadActiveVehicle(requireContext());
+        if (activeVehicle != null && activeVehicle.hasConsumption()) {
+            tvFillCost.setText("Añade el depósito de tu vehículo para calcular el coste de llenado");
+        } else {
+            tvFillCost.setText("Configura tu vehículo para calcular el coste de llenado");
+        }
         tvDistance.setText(g.getFormattedDistance().isEmpty()
                 ? "Distancia no disponible"
                 : g.getFormattedDistance());

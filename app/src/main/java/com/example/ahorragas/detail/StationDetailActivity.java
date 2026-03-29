@@ -8,10 +8,12 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.ahorragas.R;
+import com.example.ahorragas.map.BrandLogoProvider;
 import com.example.ahorragas.model.Gasolinera;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
+import android.widget.ImageView;
 import android.widget.TextView;
 
 public class StationDetailActivity extends AppCompatActivity {
@@ -88,6 +90,8 @@ public class StationDetailActivity extends AppCompatActivity {
         String marca = gasolinera.getMarca();
         tvBrand.setText(marca == null || marca.trim().isEmpty() ? "Sin marca" : marca);
         tvAddress.setText(gasolinera.getDisplayAddress());
+        ImageView ivLogo = findViewById(R.id.ivHeaderLogo);
+        ivLogo.setImageResource(BrandLogoProvider.getLogoResId(gasolinera.getMarca()));
     }
 
     private void setupTabs() {
