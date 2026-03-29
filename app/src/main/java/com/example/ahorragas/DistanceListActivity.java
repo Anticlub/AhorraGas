@@ -59,12 +59,14 @@ public class DistanceListActivity extends BaseActivity {
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_distance) return true;
-            if (id == R.id.nav_map) {
+            else if (id == R.id.nav_map) {
                 navigateToMap();
                 return true;
-            }
-            if (id == R.id.nav_preferences) {
-                startActivity(new Intent(this, PreferencesActivity.class));
+            } else if (id == R.id.nav_price) {
+                navigateToPrice();
+                return true;
+            } else if (id == R.id.nav_preferences) {
+                navigateToPreferences();
                 return true;
             }
             return false;
