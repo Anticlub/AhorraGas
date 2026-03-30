@@ -56,7 +56,7 @@ public class PriceListActivity extends BaseActivity {
         adapter = new GasolineraAdapter(
                 new ArrayList<>(),
                 selectedFuel,
-                gasolinera -> {} // TODO: a ver como lo hacemos, igual q en ordenados por distancia
+                gasolinera -> navigateToDetail(gasolinera)
         );
         RecyclerView recyclerView = findViewById(R.id.recyclerViewPrice);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -74,6 +74,9 @@ public class PriceListActivity extends BaseActivity {
                 return true;
             } else if (id == R.id.nav_distance) {
                 navigateToDistanceList();
+                return true;
+            } else if (id == R.id.nav_favorites) {
+                navigateToFavorites();
                 return true;
             } else if (id == R.id.nav_preferences) {
                 navigateToPreferences();

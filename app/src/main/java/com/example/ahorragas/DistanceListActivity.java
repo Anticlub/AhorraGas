@@ -65,6 +65,9 @@ public class DistanceListActivity extends BaseActivity {
             } else if (id == R.id.nav_price) {
                 navigateToPrice();
                 return true;
+            }else if (id == R.id.nav_favorites) {
+                navigateToFavorites();
+                return true;
             } else if (id == R.id.nav_preferences) {
                 navigateToPreferences();
                 return true;
@@ -77,7 +80,7 @@ public class DistanceListActivity extends BaseActivity {
         adapter = new GasolineraAdapter(
                 new ArrayList<>(),
                 selectedFuel,
-                gasolinera -> {} // TODO: q abra el navegador como poco
+                gasolinera -> navigateToDetail(gasolinera)
         );
         RecyclerView recyclerView = findViewById(R.id.recyclerViewDistance);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
