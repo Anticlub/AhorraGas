@@ -102,7 +102,9 @@ public final class FavoritesPrefs {
                 }
                 list.add(g);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            android.util.Log.e("FavoritesPrefs", "Error leyendo favoritos: " + e.getMessage(), e);
+        }
 
         return list;
     }
@@ -131,7 +133,9 @@ public final class FavoritesPrefs {
                 arr.put(obj);
             }
             prefs(ctx).edit().putString(KEY_FAVORITES, arr.toString()).apply();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            android.util.Log.e("FavoritesPrefs", "Error guardando favoritos: " + e.getMessage(), e);
+        }
     }
 
     private static SharedPreferences prefs(Context ctx) {

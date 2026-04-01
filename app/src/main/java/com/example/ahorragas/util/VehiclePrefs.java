@@ -47,7 +47,9 @@ public final class VehiclePrefs {
                 double cons = obj.optDouble("consumption", 6.0);
                 list.add(new Vehicle(name, FuelType.fromString(fuel), cons));
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            android.util.Log.e("VehiclePrefs", "Error leyendo vehículos: " + e.getMessage(), e);
+        }
 
         return list;
     }
@@ -87,7 +89,9 @@ public final class VehiclePrefs {
                 arr.put(obj);
             }
             prefs(ctx).edit().putString(KEY_VEHICLES, arr.toString()).apply();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            android.util.Log.e("VehiclePrefs", "Error guardando vehículos: " + e.getMessage(), e);
+        }
     }
 
     public static void saveActiveIndex(Context ctx, int index) {
