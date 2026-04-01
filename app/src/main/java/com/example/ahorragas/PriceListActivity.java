@@ -2,7 +2,10 @@ package com.example.ahorragas;
 
 import android.location.Location;
 import android.os.Bundle;
-import android.widget.Toast;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -30,6 +33,13 @@ public class PriceListActivity extends BaseActivity {
     private FuelType selectedFuel;
     private LocationHelper locationHelper;
 
+    private ProgressBar progressBar;
+    private RecyclerView recyclerView;
+    private TextView tvEmpty;
+    private TextView tvError;
+    private View layoutError;
+    private Button btnRetry;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,8 +48,10 @@ public class PriceListActivity extends BaseActivity {
         repository = GasolineraRepository.getInstance(new CachedRemoteApiDataSource(this));
         locationHelper = new LocationHelper(this);
 
+        bindViews();
         setupRecyclerView();
         setupBottomNav();
+        btnRetry.setOnClickListener(v -> loadAndDisplay());
     }
 
     @Override
@@ -52,13 +64,21 @@ public class PriceListActivity extends BaseActivity {
         loadAndDisplay();
     }
 
+    private void bindViews() {
+        progressBar  = findViewById(R.id.progressBarPrice);
+        recyclerView = findViewById(R.id.recyclerViewPrice);
+        tvEmpty      = findViewById(R.id.tvEmptyPrice);
+        layoutError  = findViewById(R.id.layoutErrorPrice);
+        tvError      = findViewById(R.id.tvErrorPrice);
+        btnRetry     = findViewById(R.id.btnRetryPrice);
+    }
+
     private void setupRecyclerView() {
         adapter = new GasolineraAdapter(
                 new ArrayList<>(),
                 selectedFuel,
                 gasolinera -> navigateToDetail(gasolinera)
         );
-        RecyclerView recyclerView = findViewById(R.id.recyclerViewPrice);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
     }
@@ -68,12 +88,44 @@ public class PriceListActivity extends BaseActivity {
         setupBottomNav(bottomNav, R.id.nav_price);
     }
 
+    private void showLoading() {
+        progressBar.setVisibility(View.VISIBLE);
+        recyclerView.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.GONE);
+        layoutError.setVisibility(View.GONE);
+    }
+
+    private void showData(List<Gasolinera> data) {
+        progressBar.setVisibility(View.GONE);
+        layoutError.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.VISIBLE);
+        adapter.updateData(data, selectedFuel);
+    }
+
+    private void showEmpty() {
+        progressBar.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.GONE);
+        layoutError.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.VISIBLE);
+    }
+
+    private void showError(String message) {
+        progressBar.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.GONE);
+        tvError.setText(message);
+        layoutError.setVisibility(View.VISIBLE);
+    }
+
     /**
      * Obtiene la ubicación del usuario, carga las gasolineras del repositorio,
      * filtra por radio y máximo de marcadores configurados en Preferencias,
      * las ordena por precio ascendente y actualiza el adapter.
      */
     private void loadAndDisplay() {
+        showLoading();
+
         locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
             @Override
             public void onSuccess(Location location) {
@@ -102,19 +154,25 @@ public class PriceListActivity extends BaseActivity {
                             g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
                         }
 
-                        runOnUiThread(() -> adapter.updateData(inRadius, selectedFuel));
+                        runOnUiThread(() -> {
+                            if (inRadius.isEmpty()) {
+                                showEmpty();
+                            } else {
+                                showData(inRadius);
+                            }
+                        });
 
                     } catch (Exception e) {
-                        runOnUiThread(() -> Toast.makeText(PriceListActivity.this,
-                                getString(R.string.error_cargando_gasolineras), Toast.LENGTH_SHORT).show());
+                        runOnUiThread(() ->
+                                showError(getString(R.string.error_cargando_gasolineras)));
                     }
                 }).start();
             }
 
             @Override
             public void onError(LocationHelper.LocationError error) {
-                runOnUiThread(() -> Toast.makeText(PriceListActivity.this,
-                        getString(R.string.error_ubicacion), Toast.LENGTH_SHORT).show());
+                runOnUiThread(() ->
+                        showError(getString(R.string.error_ubicacion)));
             }
         });
     }

@@ -6,7 +6,6 @@
     android:orientation="vertical"
     android:background="@color/background">
 
-    <!-- Cabecera -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"
@@ -24,7 +23,56 @@
             android:gravity="center" />
     </LinearLayout>
 
-    <!-- Lista -->
+    <ProgressBar
+        android:id="@+id/progressBarPrice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="48dp"
+        android:layout_marginBottom="48dp"
+        android:visibility="gone"
+        android:layout_weight="0"/>
+
+    <LinearLayout
+        android:id="@+id/layoutErrorPrice"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvErrorPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="15sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginBottom="16dp"
+            android:text="@string/error_red"/>
+
+        <Button
+            android:id="@+id/btnRetryPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/reintentar"
+            android:backgroundTint="@color/primary_dark"/>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvEmptyPrice"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:padding="32dp"
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary"
+        android:text="@string/empty_price_list"
+        android:visibility="gone"/>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewPrice"
         android:layout_width="match_parent"
@@ -32,9 +80,9 @@
         android:layout_weight="1"
         android:clipToPadding="false"
         android:paddingBottom="8dp"
-        android:scrollbars="vertical" />
+        android:scrollbars="vertical"
+        android:visibility="gone"/>
 
-    <!-- Navegación inferior -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavPrice"
         android:layout_width="match_parent"
