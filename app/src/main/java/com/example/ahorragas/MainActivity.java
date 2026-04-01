@@ -234,31 +234,26 @@ public class MainActivity extends BaseActivity {
         layout.setPadding(dp(20), dp(12), dp(20), dp(4));
 
         TextView labelName = new TextView(this);
-        labelName.setText("Nombre del vehículo");
-        labelName.setTextColor(0xFF333333);
+        labelName.setText(getString(R.string.dialogo_vehiculo_nombre));        labelName.setTextColor(0xFF333333);
         labelName.setTextSize(13);
         layout.addView(labelName);
 
         EditText etName = new EditText(this);
-        etName.setHint("Ej: Mi Coche, Furgoneta…");
-        etName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        etName.setHint(getString(R.string.dialogo_vehiculo_nombre_hint));        etName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
         layout.addView(etName);
 
         TextView labelCons = new TextView(this);
-        labelCons.setText("Consumo (L/100 km)");
-        labelCons.setTextColor(0xFF333333);
+        labelCons.setText(getString(R.string.dialogo_vehiculo_consumo));        labelCons.setTextColor(0xFF333333);
         labelCons.setTextSize(13);
         labelCons.setPadding(0, dp(12), 0, 0);
         layout.addView(labelCons);
 
         EditText etCons = new EditText(this);
-        etCons.setHint("Ej: 6.5");
-        etCons.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        etCons.setHint(getString(R.string.dialogo_vehiculo_consumo_hint));        etCons.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         layout.addView(etCons);
 
         TextView labelFuel = new TextView(this);
-        labelFuel.setText("Tipo de combustible");
-        labelFuel.setTextColor(0xFF333333);
+        labelFuel.setText(getString(R.string.dialogo_vehiculo_combustible));        labelFuel.setTextColor(0xFF333333);
         labelFuel.setTextSize(13);
         labelFuel.setPadding(0, dp(12), 0, 0);
         layout.addView(labelFuel);
@@ -283,24 +278,20 @@ public class MainActivity extends BaseActivity {
                 if (fuels[i] == selectedFuelLocal[0]) { checked = i; break; }
             }
             new AlertDialog.Builder(this)
-                    .setTitle("Combustible")
-                    .setSingleChoiceItems(fuelNames, checked, (d, which) -> {
+                    .setTitle(getString(R.string.dialogo_vehiculo_titulo))                    .setSingleChoiceItems(fuelNames, checked, (d, which) -> {
                         selectedFuelLocal[0] = fuels[which];
                         tvFuelSelector.setText(selectedFuelLocal[0].displayName());
                         d.dismiss();
                     })
-                    .setNegativeButton("Cancelar", null)
-                    .show();
+                    .setNegativeButton(getString(R.string.dialogo_vehiculo_cancelar), null)                    .show();
         });
         layout.addView(tvFuelSelector);
 
         // Construir diálogo — sin cancelar, sin cerrar tocando fuera
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("Añade tu vehículo para empezar")
-                .setView(layout)
+                .setTitle(getString(R.string.dialogo_vehiculo_combustible_titulo))li                .setView(layout)
                 .setCancelable(false)
-                .setPositiveButton("Guardar", null) // null para manejar manualmente y evitar cierre automático
-                .create();
+                .setPositiveButton(getString(R.string.dialogo_vehiculo_guardar), null)                .create();
 
         dialog.show();
 
@@ -641,7 +632,7 @@ public class MainActivity extends BaseActivity {
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
 
         String marca = safeText(gasolinera.getMarca());
-        marker.setTitle(marca.isEmpty() ? "Sin marca" : marca);
+        marker.setTitle(marca.isEmpty() ? getString(R.string.sin_marca) : marca);
         marker.setSnippet(buildMarkerSnippet(gasolinera));
 
         marker.setInfoWindow(new GasolineraInfoWindow(mapView, gasolinera, selectedFuel));
@@ -755,7 +746,7 @@ public class MainActivity extends BaseActivity {
                 .append(" · ")
                 .append(gasolinera.getDisplayAddress());
         String horario = gasolinera.getFormattedHorario();
-        if (!horario.equals("Horario no disponible")) {
+        if (horario != null) {
             sb.append("\n").append(horario);
         }
         return sb.toString();

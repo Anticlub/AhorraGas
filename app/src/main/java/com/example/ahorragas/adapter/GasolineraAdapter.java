@@ -91,9 +91,10 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
             int logoResId = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
             ivBrandLogo.setImageResource(logoResId);
 
-            tvBrandName.setText(gasolinera.getMarca() == null || gasolinera.getMarca().trim().isEmpty()
-                    ? "Sin marca"
-                    : gasolinera.getMarca());
+            String marca = gasolinera.getMarca();
+            tvBrandName.setText(marca == null || marca.trim().isEmpty()
+                    ? itemView.getContext().getString(R.string.sin_marca)
+                    : marca);
             tvAddress.setText(gasolinera.getDisplayAddress());
 
             tvPrice.setText(gasolinera.getFormattedPrice(fuel));

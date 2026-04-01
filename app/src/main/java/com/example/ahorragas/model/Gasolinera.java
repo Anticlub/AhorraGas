@@ -76,9 +76,7 @@ public class Gasolinera implements android.os.Parcelable {
     }
 
     public String getFormattedHorario() {
-        if (horario == null || horario.trim().isEmpty()) {
-            return "Horario no disponible";
-        }
+        if (horario == null || horario.trim().isEmpty()) return null;
         return horario.trim();
     }
 
