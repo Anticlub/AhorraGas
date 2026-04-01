@@ -53,8 +53,7 @@ public class StationDetailActivity extends AppCompatActivity {
         TextView tvAddress = findViewById(R.id.tvDetailAddress);
 
         String marca = gasolinera.getMarca();
-        tvBrand.setText(marca == null || marca.trim().isEmpty() ? "Sin marca" : marca);
-        tvAddress.setText(gasolinera.getDisplayAddress());
+        tvBrand.setText(marca == null || marca.trim().isEmpty() ? getString(R.string.sin_marca) : marca);        tvAddress.setText(gasolinera.getDisplayAddress());
         ImageView ivLogo = findViewById(R.id.ivHeaderLogo);
         ivLogo.setImageResource(BrandLogoProvider.getLogoResId(gasolinera.getMarca()));
     }
