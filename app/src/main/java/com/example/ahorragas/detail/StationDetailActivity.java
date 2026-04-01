@@ -18,17 +18,8 @@ import android.widget.TextView;
 
 public class StationDetailActivity extends AppCompatActivity {
 
-    public static final String EXTRA_GASOLINERA_ID       = "extra_gasolinera_id";
-    public static final String EXTRA_GASOLINERA_MARCA    = "extra_gasolinera_marca";
-    public static final String EXTRA_GASOLINERA_DIRECCION = "extra_gasolinera_direccion";
-    public static final String EXTRA_GASOLINERA_MUNICIPIO = "extra_gasolinera_municipio";
-    public static final String EXTRA_GASOLINERA_LAT      = "extra_gasolinera_lat";
-    public static final String EXTRA_GASOLINERA_LON      = "extra_gasolinera_lon";
-    public static final String EXTRA_GASOLINERA_HORARIO  = "extra_gasolinera_horario";
-    public static final String EXTRA_PRICES_PREFIX = "extra_price_";
-    public static final String EXTRA_DISTANCE = "extra_distance";
-
     private static final String[] TAB_TITLES = {"General", "Ubicación", "Precios", "Histórico", "Promociones"};
+    public static final String EXTRA_GASOLINERA = "extra_gasolinera";
 
     private Gasolinera gasolinera;
 
@@ -54,33 +45,7 @@ public class StationDetailActivity extends AppCompatActivity {
      * @return Gasolinera reconstruida o null si faltan datos esenciales.
      */
     private Gasolinera extractGasolineraFromIntent() {
-        Bundle extras = getIntent().getExtras();
-        if (extras == null) return null;
-
-        int id = extras.getInt(EXTRA_GASOLINERA_ID, -1);
-        if (id == -1) return null;
-
-        String marca     = extras.getString(EXTRA_GASOLINERA_MARCA, "");
-        String direccion = extras.getString(EXTRA_GASOLINERA_DIRECCION, "");
-        String municipio = extras.getString(EXTRA_GASOLINERA_MUNICIPIO, "");
-        double lat       = extras.getDouble(EXTRA_GASOLINERA_LAT, 0.0);
-        double lon       = extras.getDouble(EXTRA_GASOLINERA_LON, 0.0);
-        String horario   = extras.getString(EXTRA_GASOLINERA_HORARIO, "");
-
-        Gasolinera g = new Gasolinera(id, marca, municipio, direccion, lat, lon, null);
-        g.setHorario(horario);
-        for (com.example.ahorragas.model.FuelType fuel : com.example.ahorragas.model.FuelType.values()) {
-            String key = EXTRA_PRICES_PREFIX + fuel.name();
-            if (extras.containsKey(key)) {
-                g.setPrecio(fuel, extras.getDouble(key));
-            }
-        }
-
-        if (extras.containsKey(EXTRA_DISTANCE)) {
-            g.setDistanceMeters(extras.getDouble(EXTRA_DISTANCE));
-        }
-
-        return g;
+        return getIntent().getParcelableExtra(EXTRA_GASOLINERA);
     }
 
     private void setupHeader() {
