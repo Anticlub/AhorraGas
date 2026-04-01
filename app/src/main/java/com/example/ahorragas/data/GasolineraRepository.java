@@ -8,7 +8,7 @@ public class GasolineraRepository {
 
     private static GasolineraRepository instance;
 
-    private final GasolineraDataSource primary;
+    private GasolineraDataSource primary;
 
     // Cache en memoria (solo mientras la app está abierta)
     private List<Gasolinera> memoryCache;
@@ -21,6 +21,8 @@ public class GasolineraRepository {
     public static synchronized GasolineraRepository getInstance(GasolineraDataSource primary) {
         if (instance == null) {
             instance = new GasolineraRepository(primary);
+        } else {
+            instance.primary = primary;
         }
         return instance;
     }
