@@ -94,6 +94,10 @@ public class MainActivity extends BaseActivity {
     private CachedRemoteApiDataSource dataSource;
     private GasolineraRepository repository;
     private LocationHelper locationHelper;
+    private final java.util.concurrent.ExecutorService executor =
+            java.util.concurrent.Executors.newSingleThreadExecutor();
+    private final android.os.Handler mainHandler =
+            new android.os.Handler(android.os.Looper.getMainLooper());
 
     private final ActivityResultLauncher<String[]> permissionLauncher =
             registerForActivityResult(
@@ -209,6 +213,12 @@ public class MainActivity extends BaseActivity {
             locationOverlay.disableMyLocation();
             locationOverlay.disableFollowLocation();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        executor.shutdownNow();
     }
 
     // ─── DIÁLOGO PRIMER VEHÍCULO ─────────────────────────────────────────────
@@ -508,11 +518,12 @@ public class MainActivity extends BaseActivity {
                         : getString(R.string.status_refreshing_data)
         );
 
-        new Thread(() -> {
+        executor.execute(() -> {
             try {
                 List<Gasolinera> loaded = repository.getGasolineras();
 
-                runOnUiThread(() -> {
+                mainHandler.post(() -> {
+                    if (isDestroyed() || isFinishing()) return;
                     allGasolineras.clear();
                     allGasolineras.addAll(loaded);
                     progressBar.setVisibility(View.GONE);
@@ -520,7 +531,8 @@ public class MainActivity extends BaseActivity {
                 });
 
             } catch (RepoError error) {
-                runOnUiThread(() -> {
+                mainHandler.post(() -> {
+                    if (isDestroyed() || isFinishing()) return;
                     progressBar.setVisibility(View.GONE);
                     tvDataStatus.setText(
                             getString(R.string.error_loading_data) + ": " + buildRepoErrorMessage(error)
@@ -534,13 +546,14 @@ public class MainActivity extends BaseActivity {
                 });
 
             } catch (Exception error) {
-                runOnUiThread(() -> {
+                mainHandler.post(() -> {
+                    if (isDestroyed() || isFinishing()) return;
                     progressBar.setVisibility(View.GONE);
                     tvDataStatus.setText(getString(R.string.error_loading_data) + ": " + error.getMessage());
                     Toast.makeText(MainActivity.this, getString(R.string.error_loading_data), Toast.LENGTH_LONG).show();
                 });
             }
-        }).start();
+        });
     }
 
     private void updateDisplayForFuel(FuelType fuel) {
