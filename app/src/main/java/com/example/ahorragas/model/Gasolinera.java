@@ -4,7 +4,7 @@ import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
 
-public class Gasolinera {
+public class Gasolinera implements android.os.Parcelable {
     private int id;
     private String marca;
     private String direccion;
@@ -176,4 +176,64 @@ public class Gasolinera {
         Double value = getPrecio(fuel);
         return value != null && value > 0;
     }
+
+    protected Gasolinera(android.os.Parcel in) {
+        id = in.readInt();
+        marca = in.readString();
+        direccion = in.readString();
+        municipio = in.readString();
+        horario = in.readString();
+        lat = in.readByte() == 0 ? null : in.readDouble();
+        lon = in.readByte() == 0 ? null : in.readDouble();
+        distanceMeters = in.readByte() == 0 ? null : in.readDouble();
+        priceLevel = PriceLevel.valueOf(in.readString());
+        int size = in.readInt();
+        for (int i = 0; i < size; i++) {
+            FuelType fuel = FuelType.valueOf(in.readString());
+            Double price = in.readByte() == 0 ? null : in.readDouble();
+            precios.put(fuel, price);
+        }
+    }
+
+    @Override
+    public void writeToParcel(android.os.Parcel dest, int flags) {
+        dest.writeInt(id);
+        dest.writeString(marca);
+        dest.writeString(direccion);
+        dest.writeString(municipio);
+        dest.writeString(horario);
+        if (lat == null) { dest.writeByte((byte) 0); } else { dest.writeByte((byte) 1); dest.writeDouble(lat); }
+        if (lon == null) { dest.writeByte((byte) 0); } else { dest.writeByte((byte) 1); dest.writeDouble(lon); }
+        if (distanceMeters == null) { dest.writeByte((byte) 0); } else { dest.writeByte((byte) 1); dest.writeDouble(distanceMeters); }
+        dest.writeString(priceLevel.name());
+        dest.writeInt(precios.size());
+        for (Map.Entry<FuelType, Double> entry : precios.entrySet()) {
+            Double price = entry.getValue();
+            dest.writeString(entry.getKey().name());
+            if (price == null) {
+                dest.writeByte((byte) 0);
+            } else {
+                dest.writeByte((byte) 1);
+                dest.writeDouble(price);
+            }
+        }
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    public static final android.os.Parcelable.Creator<Gasolinera> CREATOR =
+            new android.os.Parcelable.Creator<Gasolinera>() {
+                @Override
+                public Gasolinera createFromParcel(android.os.Parcel in) {
+                    return new Gasolinera(in);
+                }
+
+                @Override
+                public Gasolinera[] newArray(int size) {
+                    return new Gasolinera[size];
+                }
+            };
 }
