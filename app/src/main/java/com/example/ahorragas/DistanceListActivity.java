@@ -100,7 +100,7 @@ public class DistanceListActivity extends BaseActivity {
                         runOnUiThread(() -> {
                             if (isDestroyed() || isFinishing()) return;
                             Toast.makeText(DistanceListActivity.this,
-                                    "Error cargando gasolineras", Toast.LENGTH_SHORT).show();
+                                    getString(R.string.error_cargando_gasolineras), Toast.LENGTH_SHORT).show();
                         });
                     }
                 }).start();
@@ -111,7 +111,7 @@ public class DistanceListActivity extends BaseActivity {
                 runOnUiThread(() -> {
                     if (isDestroyed() || isFinishing()) return;
                     Toast.makeText(DistanceListActivity.this,
-                            "No se pudo obtener la ubicación", Toast.LENGTH_SHORT).show();
+                            getString(R.string.error_ubicacion), Toast.LENGTH_SHORT).show();
                 });
             }
         });
