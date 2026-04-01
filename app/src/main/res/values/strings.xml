@@ -46,4 +46,12 @@
     <string name="dialogo_vehiculo_consumo_hint">Ej: 6.5</string>
     <string name="dialogo_vehiculo_combustible">Tipo de combustible</string>
     <string name="dialogo_vehiculo_combustible_titulo">Combustible</string>
+    <string name="error_sin_conexion">Sin conexión con la API</string>
+    <string name="error_api_timeout">La API tardó demasiado en responder</string>
+    <string name="error_respuesta_vacia">La API devolvió una respuesta vacías</string>
+    <string name="error_procesar_gasolineras">No se pudieron procesar las gasolineras</string>
+    <string name="error_ubicacion_timeout">No se pudo obtener la ubicación a tiempo.</string>
+    <string name="error_ubicacion_actual">No se pudo obtener la ubicación actual.</string>
+    <string name="dialogo_vehiculo_nombre_vacio">Escribe un nombre.</string>
+    <string name="dialogo_vehiculo_consumo_invalido">Consumo no válido (ej: 6.5).</string>
 </resources>
