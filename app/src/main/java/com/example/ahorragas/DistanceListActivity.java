@@ -55,25 +55,7 @@ public class DistanceListActivity extends BaseActivity {
 
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavDistance);
-        bottomNav.setSelectedItemId(R.id.nav_distance);
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_distance) return true;
-            else if (id == R.id.nav_map) {
-                navigateToMap();
-                return true;
-            } else if (id == R.id.nav_price) {
-                navigateToPrice();
-                return true;
-            }else if (id == R.id.nav_favorites) {
-                navigateToFavorites();
-                return true;
-            } else if (id == R.id.nav_preferences) {
-                navigateToPreferences();
-                return true;
-            }
-            return false;
-        });
+        setupBottomNav(bottomNav, R.id.nav_distance);
     }
 
     private void setupRecyclerView() {
