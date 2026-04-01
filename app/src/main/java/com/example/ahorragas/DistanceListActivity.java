@@ -91,35 +91,46 @@ public class DistanceListActivity extends BaseActivity {
         locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
             @Override
             public void onSuccess(Location location) {
-                try {
-                    int radiusKm = RadiusUtils.loadRadiusKm(DistanceListActivity.this);
-                    double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
-                    int maxMarkers = RadiusUtils.loadMarkersCount(DistanceListActivity.this);
+                new Thread(() -> {
+                    try {
+                        int radiusKm = RadiusUtils.loadRadiusKm(DistanceListActivity.this);
+                        double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
+                        int maxMarkers = RadiusUtils.loadMarkersCount(DistanceListActivity.this);
 
-                    List<Gasolinera> gasolineras = repository.getGasolineras();
-                    List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
-                    List<Gasolinera> sorted = GasolineraSorter.getWithinRadius(
-                            filtered,
-                            location.getLatitude(),
-                            location.getLongitude(),
-                            radiusMeters,  // 10 km por ejemplo
-                            maxMarkers
-                    );
-                    PriceRange range = GasolineraSorter.calculatePriceRange(sorted, selectedFuel);
-                    for (Gasolinera g : sorted) {
-                        g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
+                        List<Gasolinera> gasolineras = repository.getGasolineras();
+                        List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
+                        List<Gasolinera> sorted = GasolineraSorter.getWithinRadius(
+                                filtered,
+                                location.getLatitude(),
+                                location.getLongitude(),
+                                radiusMeters,
+                                maxMarkers
+                        );
+                        PriceRange range = GasolineraSorter.calculatePriceRange(sorted, selectedFuel);
+                        for (Gasolinera g : sorted) {
+                            g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
+                        }
+                        runOnUiThread(() -> {
+                            if (isDestroyed() || isFinishing()) return;
+                            adapter.updateData(sorted, selectedFuel);
+                        });
+                    } catch (Exception e) {
+                        runOnUiThread(() -> {
+                            if (isDestroyed() || isFinishing()) return;
+                            Toast.makeText(DistanceListActivity.this,
+                                    "Error cargando gasolineras", Toast.LENGTH_SHORT).show();
+                        });
                     }
-                    runOnUiThread(() -> adapter.updateData(sorted, selectedFuel));
-                } catch (Exception e) {
-                    runOnUiThread(() -> Toast.makeText(DistanceListActivity.this,
-                            "Error cargando gasolineras", Toast.LENGTH_SHORT).show());
-                }
+                }).start();
             }
 
             @Override
             public void onError(LocationHelper.LocationError error) {
-                runOnUiThread(() -> Toast.makeText(DistanceListActivity.this,
-                        "No se pudo obtener la ubicación", Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> {
+                    if (isDestroyed() || isFinishing()) return;
+                    Toast.makeText(DistanceListActivity.this,
+                            "No se pudo obtener la ubicación", Toast.LENGTH_SHORT).show();
+                });
             }
         });
     }
