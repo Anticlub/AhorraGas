@@ -65,25 +65,7 @@ public class PriceListActivity extends BaseActivity {
 
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavPrice);
-        bottomNav.setSelectedItemId(R.id.nav_price);
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_price) return true;
-            else if (id == R.id.nav_map) {
-                navigateToMap();
-                return true;
-            } else if (id == R.id.nav_distance) {
-                navigateToDistanceList();
-                return true;
-            } else if (id == R.id.nav_favorites) {
-                navigateToFavorites();
-                return true;
-            } else if (id == R.id.nav_preferences) {
-                navigateToPreferences();
-                return true;
-            }
-            return false;
-        });
+        setupBottomNav(bottomNav, R.id.nav_price);
     }
 
     /**
@@ -124,7 +106,7 @@ public class PriceListActivity extends BaseActivity {
 
                     } catch (Exception e) {
                         runOnUiThread(() -> Toast.makeText(PriceListActivity.this,
-                                "Error cargando gasolineras", Toast.LENGTH_SHORT).show());
+                                getString(R.string.error_cargando_gasolineras), Toast.LENGTH_SHORT).show());
                     }
                 }).start();
             }
@@ -132,7 +114,7 @@ public class PriceListActivity extends BaseActivity {
             @Override
             public void onError(LocationHelper.LocationError error) {
                 runOnUiThread(() -> Toast.makeText(PriceListActivity.this,
-                        "No se pudo obtener la ubicación", Toast.LENGTH_SHORT).show());
+                        getString(R.string.error_ubicacion), Toast.LENGTH_SHORT).show());
             }
         });
     }
