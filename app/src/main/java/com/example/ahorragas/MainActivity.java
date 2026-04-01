@@ -234,26 +234,31 @@ public class MainActivity extends BaseActivity {
         layout.setPadding(dp(20), dp(12), dp(20), dp(4));
 
         TextView labelName = new TextView(this);
-        labelName.setText(getString(R.string.dialogo_vehiculo_nombre));        labelName.setTextColor(0xFF333333);
+        labelName.setText(getString(R.string.dialogo_vehiculo_nombre));
+        labelName.setTextColor(0xFF333333);
         labelName.setTextSize(13);
         layout.addView(labelName);
 
         EditText etName = new EditText(this);
-        etName.setHint(getString(R.string.dialogo_vehiculo_nombre_hint));        etName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        etName.setHint(getString(R.string.dialogo_vehiculo_nombre_hint));
+        etName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
         layout.addView(etName);
 
         TextView labelCons = new TextView(this);
-        labelCons.setText(getString(R.string.dialogo_vehiculo_consumo));        labelCons.setTextColor(0xFF333333);
+        labelCons.setText(getString(R.string.dialogo_vehiculo_consumo));
+        labelCons.setTextColor(0xFF333333);
         labelCons.setTextSize(13);
         labelCons.setPadding(0, dp(12), 0, 0);
         layout.addView(labelCons);
 
         EditText etCons = new EditText(this);
-        etCons.setHint(getString(R.string.dialogo_vehiculo_consumo_hint));        etCons.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        etCons.setHint(getString(R.string.dialogo_vehiculo_consumo_hint));
+        etCons.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         layout.addView(etCons);
 
         TextView labelFuel = new TextView(this);
-        labelFuel.setText(getString(R.string.dialogo_vehiculo_combustible));        labelFuel.setTextColor(0xFF333333);
+        labelFuel.setText(getString(R.string.dialogo_vehiculo_combustible));
+        labelFuel.setTextColor(0xFF333333);
         labelFuel.setTextSize(13);
         labelFuel.setPadding(0, dp(12), 0, 0);
         layout.addView(labelFuel);
@@ -289,9 +294,11 @@ public class MainActivity extends BaseActivity {
 
         // Construir diálogo — sin cancelar, sin cerrar tocando fuera
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(getString(R.string.dialogo_vehiculo_combustible_titulo))li                .setView(layout)
+                .setTitle(getString(R.string.dialogo_vehiculo_titulo))
+                .setView(layout)
                 .setCancelable(false)
-                .setPositiveButton(getString(R.string.dialogo_vehiculo_guardar), null)                .create();
+                .setPositiveButton(getString(R.string.dialogo_vehiculo_guardar), null)
+                .create();
 
         dialog.show();
 
@@ -301,7 +308,7 @@ public class MainActivity extends BaseActivity {
             String consStr = etCons.getText().toString().trim().replace(",", ".");
 
             if (name.isEmpty()) {
-                Toast.makeText(this, "Escribe un nombre.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.dialogo_vehiculo_nombre_vacio), Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -310,7 +317,7 @@ public class MainActivity extends BaseActivity {
                 cons = Double.parseDouble(consStr);
                 if (cons <= 0 || cons > 100) throw new NumberFormatException();
             } catch (Exception e) {
-                Toast.makeText(this, "Consumo no válido (ej: 6.5).", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.dialogo_vehiculo_consumo_invalido), Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -699,12 +706,12 @@ public class MainActivity extends BaseActivity {
 
     private String buildRepoErrorMessage(RepoError error) {
         switch (error.getType()) {
-            case NETWORK:        return "Sin conexión con la API";
-            case TIMEOUT:        return "La API tardó demasiado en responder";
+            case NETWORK:        return getString(R.string.error_sin_conexion);
+            case TIMEOUT:        return getString(R.string.error_api_timeout);
             case HTTP:           return "Error HTTP " + error.getHttpCode();
-            case EMPTY_RESPONSE: return "La API devolvió una respuesta vacía";
+            case EMPTY_RESPONSE: return getString(R.string.error_respuesta_vacia);
             case PARSE:
-            default:             return "No se pudieron procesar las gasolineras";
+            default:             return getString(R.string.error_procesar_gasolineras);
         }
     }
 
@@ -722,9 +729,9 @@ public class MainActivity extends BaseActivity {
         switch (error) {
             case GPS_DISABLED:   return getString(R.string.location_gps_message);
             case NO_PERMISSION:  return getString(R.string.location_permission_message);
-            case TIMEOUT:        return "No se pudo obtener la ubicación a tiempo.";
+            case TIMEOUT:        return getString(R.string.error_ubicacion_timeout);
             case TECHNICAL_ERROR:
-            default:             return "No se pudo obtener la ubicación actual.";
+            default:             return getString(R.string.error_ubicacion_actual);
         }
     }
 
