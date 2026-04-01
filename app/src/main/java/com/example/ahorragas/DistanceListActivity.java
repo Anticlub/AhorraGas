@@ -1,12 +1,12 @@
 package com.example.ahorragas;
 
-import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
-import android.widget.Toast;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -26,10 +26,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DistanceListActivity extends BaseActivity {
+
     private GasolineraRepository repository;
     private LocationHelper locationHelper;
     private GasolineraAdapter adapter;
     private FuelType selectedFuel;
+
+    private ProgressBar progressBar;
+    private RecyclerView recyclerView;
+    private TextView tvEmpty;
+    private TextView tvError;
+    private View layoutError;
+    private Button btnRetry;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,10 +47,12 @@ public class DistanceListActivity extends BaseActivity {
         repository = GasolineraRepository.getInstance(new CachedRemoteApiDataSource(this));
         locationHelper = new LocationHelper(this);
 
+        bindViews();
         setupRecyclerView();
         setupBottomNav();
-
+        btnRetry.setOnClickListener(v -> loadAndDisplay());
     }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -51,6 +61,15 @@ public class DistanceListActivity extends BaseActivity {
                         .getString("pref_selected_fuel", FuelType.GASOLEO_A.name())
         );
         loadAndDisplay();
+    }
+
+    private void bindViews() {
+        progressBar  = findViewById(R.id.progressBarDistance);
+        recyclerView = findViewById(R.id.recyclerViewDistance);
+        tvEmpty      = findViewById(R.id.tvEmptyDistance);
+        layoutError  = findViewById(R.id.layoutErrorDistance);
+        tvError      = findViewById(R.id.tvErrorDistance);
+        btnRetry     = findViewById(R.id.btnRetryDistance);
     }
 
     private void setupBottomNav() {
@@ -64,12 +83,48 @@ public class DistanceListActivity extends BaseActivity {
                 selectedFuel,
                 gasolinera -> navigateToDetail(gasolinera)
         );
-        RecyclerView recyclerView = findViewById(R.id.recyclerViewDistance);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
     }
 
+    private void showLoading() {
+        progressBar.setVisibility(View.VISIBLE);
+        recyclerView.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.GONE);
+        layoutError.setVisibility(View.GONE);
+    }
+
+    private void showData(List<Gasolinera> data) {
+        progressBar.setVisibility(View.GONE);
+        layoutError.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.VISIBLE);
+        adapter.updateData(data, selectedFuel);
+    }
+
+    private void showEmpty() {
+        progressBar.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.GONE);
+        layoutError.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.VISIBLE);
+    }
+
+    private void showError(String message) {
+        progressBar.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.GONE);
+        tvError.setText(message);
+        layoutError.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Obtiene la ubicación del usuario, carga las gasolineras del repositorio,
+     * filtra por radio y máximo de marcadores, las ordena por distancia
+     * y actualiza el adapter.
+     */
     private void loadAndDisplay() {
+        showLoading();
+
         locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
             @Override
             public void onSuccess(Location location) {
@@ -88,19 +143,25 @@ public class DistanceListActivity extends BaseActivity {
                                 radiusMeters,
                                 maxMarkers
                         );
+
                         PriceRange range = GasolineraSorter.calculatePriceRange(sorted, selectedFuel);
                         for (Gasolinera g : sorted) {
                             g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
                         }
+
                         runOnUiThread(() -> {
                             if (isDestroyed() || isFinishing()) return;
-                            adapter.updateData(sorted, selectedFuel);
+                            if (sorted.isEmpty()) {
+                                showEmpty();
+                            } else {
+                                showData(sorted);
+                            }
                         });
+
                     } catch (Exception e) {
                         runOnUiThread(() -> {
                             if (isDestroyed() || isFinishing()) return;
-                            Toast.makeText(DistanceListActivity.this,
-                                    getString(R.string.error_cargando_gasolineras), Toast.LENGTH_SHORT).show();
+                            showError(getString(R.string.error_cargando_gasolineras));
                         });
                     }
                 }).start();
@@ -110,8 +171,7 @@ public class DistanceListActivity extends BaseActivity {
             public void onError(LocationHelper.LocationError error) {
                 runOnUiThread(() -> {
                     if (isDestroyed() || isFinishing()) return;
-                    Toast.makeText(DistanceListActivity.this,
-                            getString(R.string.error_ubicacion), Toast.LENGTH_SHORT).show();
+                    showError(getString(R.string.error_ubicacion));
                 });
             }
         });

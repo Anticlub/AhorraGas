@@ -16,18 +16,54 @@ public class RemoteApiDataSource implements GasolineraDataSource {
     private static final String ENDPOINT =
             "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/";
 
+    private static final int MAX_RETRIES = 2;
+    private static final long RETRY_DELAY_MS = 1000L;
+
+    /**
+     * Descarga y parsea la lista de gasolineras, con hasta {@value MAX_RETRIES}
+     * reintentos ante fallos de red o timeout.
+     *
+     * @return lista de gasolineras parseadas
+     * @throws RepoError si todos los intentos fallan o el error no es reintentable
+     */
     @Override
     public List<Gasolinera> loadGasolineras() throws RepoError {
-        String json = downloadJson();
+        RepoError lastError = null;
 
-        try {
-            return GasolineraJsonParser.parse(json);
-        } catch (Exception e) {
-            throw new RepoError(
-                    RepoError.Type.PARSE,
-                    "Error parseando JSON: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName())
-            );
+        for (int attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
+            try {
+                String json = downloadJson();
+                try {
+                    return GasolineraJsonParser.parse(json);
+                } catch (Exception e) {
+                    throw new RepoError(
+                            RepoError.Type.PARSE,
+                            "Error parseando JSON: " + (e.getMessage() != null
+                                    ? e.getMessage() : e.getClass().getSimpleName())
+                    );
+                }
+            } catch (RepoError e) {
+                boolean isRetryable = e.getType() == RepoError.Type.NETWORK
+                        || e.getType() == RepoError.Type.TIMEOUT;
+
+                if (!isRetryable || attempt > MAX_RETRIES) {
+                    throw e;
+                }
+
+                lastError = e;
+                RepoLogger.d("Intento " + attempt + " fallido (" + e.getType()
+                        + "). Reintentando en " + RETRY_DELAY_MS + "ms…");
+
+                try {
+                    Thread.sleep(RETRY_DELAY_MS);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw e;
+                }
+            }
         }
+
+        throw lastError;
     }
 
     protected String downloadJson() throws RepoError {

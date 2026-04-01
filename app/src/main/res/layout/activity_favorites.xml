@@ -6,7 +6,6 @@
     android:orientation="vertical"
     android:background="@color/background">
 
-    <!-- Cabecera -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"
@@ -24,19 +23,56 @@
             android:gravity="center" />
     </LinearLayout>
 
-    <!-- Estado vacío -->
+    <ProgressBar
+        android:id="@+id/progressBarFavorites"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="48dp"
+        android:layout_marginBottom="48dp"
+        android:visibility="gone"
+        android:layout_weight="0"/>
+
+    <LinearLayout
+        android:id="@+id/layoutErrorFavorites"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvErrorFavorites"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="15sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginBottom="16dp"
+            android:text="@string/error_favorites"/>
+
+        <Button
+            android:id="@+id/btnRetryFavorites"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/reintentar"
+            android:backgroundTint="@color/primary_dark"/>
+    </LinearLayout>
+
     <TextView
         android:id="@+id/tvEmptyState"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="32dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:gravity="center"
-        android:text="No tienes gasolineras favoritas aún.\nPulsa ❤️ en el detalle de una gasolinera para añadirla."
-        android:textColor="@color/text_secondary"
+        android:padding="32dp"
         android:textSize="14sp"
-        android:visibility="gone" />
+        android:textColor="@color/text_secondary"
+        android:text="@string/empty_favorites"
+        android:visibility="gone"/>
 
-    <!-- Lista -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewFavorites"
         android:layout_width="match_parent"
@@ -44,9 +80,9 @@
         android:layout_weight="1"
         android:clipToPadding="false"
         android:paddingBottom="8dp"
-        android:scrollbars="vertical" />
+        android:scrollbars="vertical"
+        android:visibility="gone"/>
 
-    <!-- Navegación inferior -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavFavorites"
         android:layout_width="match_parent"
