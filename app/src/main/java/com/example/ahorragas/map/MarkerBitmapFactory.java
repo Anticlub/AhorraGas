@@ -80,11 +80,11 @@ public final class MarkerBitmapFactory {
 
         // ── Reducción ~12% respecto al original ──
         // Original: width=74, bubbleHeight=56, pinHeight=14, corner=10, logoRadius=13
-        int width        = px(density, 65);   // era 74
-        int bubbleHeight = px(density, 49);   // era 56
-        int pinHeight    = px(density, 12);   // era 14
-        int height       = bubbleHeight + pinHeight;
-        int corner       = px(density, 9);    // era 10
+        int width = px(density, 52);
+        int bubbleHeight = px(density, 40);
+        int pinHeight = px(density, 10);
+        int height = bubbleHeight + pinHeight;
+        int corner = px(density, 8);
 
         int bgColor = getPriceLevelColor(gasolinera.getPriceLevel());
 
@@ -118,7 +118,7 @@ public final class MarkerBitmapFactory {
         // Círculo blanco para el logo
         float centerX  = width / 2f;
         float centerY  = bubbleHeight * 0.40f;
-        int logoRadius = px(density, 12);
+        int logoRadius = px(density, 9);
         paint.setColor(Color.WHITE);
         paint.setAlpha(255);
         paint.setStyle(Paint.Style.FILL);
@@ -131,7 +131,7 @@ public final class MarkerBitmapFactory {
         paint.setColor(Color.WHITE);
         paint.setAlpha(255);
         paint.setFakeBoldText(false);
-        paint.setTextSize(density * 7.5f);
+        paint.setTextSize(density * 7f);
         paint.setTextAlign(Paint.Align.CENTER);
         canvas.drawText(priceText, centerX, bubbleHeight * 0.83f, paint);
 
@@ -143,13 +143,20 @@ public final class MarkerBitmapFactory {
         Bitmap logoBitmap = BitmapFactory.decodeResource(context.getResources(), logoResId);
         if (logoBitmap == null) return;
 
-        int logoSize  = (int) (radius * 1.6f);
-        int left      = (int) (cx - logoSize / 2f);
-        int top       = (int) (cy - logoSize / 2f);
-        Rect destRect = new Rect(left, top, left + logoSize, top + logoSize);
+        int logoSize = radius * 2;
+        Bitmap scaled = Bitmap.createScaledBitmap(logoBitmap, logoSize, logoSize, true);
 
-        Paint logoPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-        canvas.drawBitmap(logoBitmap, null, destRect, logoPaint);
+        Bitmap circular = Bitmap.createBitmap(logoSize, logoSize, Bitmap.Config.ARGB_8888);
+        Canvas circularCanvas = new Canvas(circular);
+
+        Paint clipPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        circularCanvas.drawCircle(logoSize / 2f, logoSize / 2f, logoSize / 2f, clipPaint);
+
+        clipPaint.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.SRC_IN));
+        circularCanvas.drawBitmap(scaled, 0, 0, clipPaint);
+
+        Paint drawPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+        canvas.drawBitmap(circular, cx - logoSize / 2f, cy - logoSize / 2f, drawPaint);
     }
 
     private static int px(float density, int dpValue) {
