@@ -1,7 +1,7 @@
 package com.example.ahorragas;
 
 import com.example.ahorragas.detail.StationDetailActivity;
-
+import com.example.ahorragas.model.Discount;
 import android.Manifest;
 import android.content.Intent;
 import android.location.Location;
@@ -30,6 +30,7 @@ import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceRange;
 import com.example.ahorragas.model.Vehicle;
+import com.example.ahorragas.util.DiscountPrefs;
 import com.example.ahorragas.util.GasolineraSorter;
 import com.example.ahorragas.util.RadiusUtils;
 import com.example.ahorragas.util.VehiclePrefs;
@@ -58,7 +59,6 @@ public class MainActivity extends BaseActivity {
     private static final double ZOOM_SPAIN = 6.0;
     private static final double ZOOM_USER = 14.0;
     private static final double ZOOM_STATION = 16.0;
-
 
     private MapView mapView;
     private FloatingActionButton fabMiUbicacion;
@@ -204,11 +204,6 @@ public class MainActivity extends BaseActivity {
 
     // ─── DIÁLOGO PRIMER VEHÍCULO ─────────────────────────────────────────────
 
-    /**
-     * Diálogo bloqueante que se muestra cuando no hay ningún vehículo guardado.
-     * No tiene botón cancelar y no se puede cerrar tocando fuera.
-     * Al guardar correctamente, sincroniza el combustible y refresca la UI.
-     */
     private void showFirstVehicleDialog() {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
@@ -237,7 +232,6 @@ public class MainActivity extends BaseActivity {
         etCons.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         layout.addView(etCons);
 
-        // ── Capacidad depósito (opcional) ────────────────────────────────────
         TextView labelTank = new TextView(this);
         labelTank.setText("Capacidad depósito (L)  · opcional");
         labelTank.setTextColor(0xFF333333);
@@ -316,7 +310,6 @@ public class MainActivity extends BaseActivity {
                 return;
             }
 
-            // Depósito opcional — vacío = 0 = no especificado
             double tank = 0.0;
             if (!tankStr.isEmpty()) {
                 try {
@@ -558,6 +551,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void showStationsOnMap(int count) {
+        MarkerBitmapFactory.clearCache();
         clearMapMarkers();
         int toShow = Math.min(count, visibleGasolineras.size());
         for (int i = 0; i < toShow; i++) {
@@ -568,6 +562,13 @@ public class MainActivity extends BaseActivity {
 
     private void addMarker(Gasolinera gasolinera) {
         if (gasolinera.getLat() == null || gasolinera.getLon() == null) return;
+
+        // Aplicar descuento al precio del marcador si existe
+        Discount discount = DiscountPrefs.findForBrand(this, gasolinera.getMarca());
+        Double originalPrice = gasolinera.getPrecio(selectedFuel);
+        if (discount != null && originalPrice != null && originalPrice > 0) {
+            gasolinera.setPrecio(selectedFuel, discount.applyTo(originalPrice));
+        }
 
         Marker marker = new Marker(mapView);
         marker.setPosition(new GeoPoint(gasolinera.getLat(), gasolinera.getLon()));
@@ -696,12 +697,6 @@ public class MainActivity extends BaseActivity {
      *
      * @param query Nombre de la localidad a buscar.
      */
-    /**
-     * Geocodifica la localidad introducida usando Nominatim (OpenStreetMap),
-     * centra el mapa en las coordenadas obtenidas y filtra los markers por municipio.
-     *
-     * @param query Nombre de la localidad a buscar.
-     */
     private void searchLocalidad(String query) {
         progressBarSearch.setVisibility(View.VISIBLE);
 
@@ -765,8 +760,7 @@ public class MainActivity extends BaseActivity {
     }
 
     /**
-     * Normaliza un texto eliminando tildes y pasándolo a minúsculas
-     * para comparaciones insensibles a acentos.
+     * Normaliza un texto eliminando tildes y pasándolo a minúsculas.
      *
      * @param text Texto a normalizar.
      * @return Texto normalizado.
@@ -779,8 +773,7 @@ public class MainActivity extends BaseActivity {
     }
 
     /**
-     * Comprueba si el municipio coincide con la búsqueda,
-     * tolerando municipios con nombres compuestos separados por '/'.
+     * Comprueba si el municipio coincide con la búsqueda.
      *
      * @param normalizedMunicipio Municipio ya normalizado.
      * @param normalizedQuery     Búsqueda ya normalizada.
@@ -796,7 +789,7 @@ public class MainActivity extends BaseActivity {
 
     /**
      * Filtra los markers del mapa mostrando solo las gasolineras
-     * cuyo municipio contiene el texto indicado, con colores de precio correctos.
+     * cuyo municipio contiene el texto indicado.
      *
      * @param query Texto a buscar en el municipio.
      */
@@ -812,7 +805,6 @@ public class MainActivity extends BaseActivity {
             }
         }
 
-        // Calcular rango de precios del conjunto filtrado para colorear correctamente
         PriceRange range = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
         for (Gasolinera g : filtered) {
             g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
@@ -828,6 +820,7 @@ public class MainActivity extends BaseActivity {
                     "No hay gasolineras en esa localidad", Toast.LENGTH_SHORT).show();
         }
     }
+
     private void setupFab() {
         fabMiUbicacion.setOnClickListener(v -> {
             if (userLocation != null) {
