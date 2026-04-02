@@ -1,5 +1,6 @@
 package com.example.ahorragas;
 
+import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
@@ -128,62 +129,168 @@ public class DistanceListActivity extends BaseActivity {
     }
 
     /**
-     * Obtiene la ubicación del usuario, carga las gasolineras del repositorio,
-     * filtra por radio y máximo de marcadores, las ordena por distancia
-     * y actualiza el adapter.
+     * Carga y muestra las gasolineras filtradas por municipio si hay búsqueda
+     * activa, o por radio alrededor de la ubicación GPS si no la hay.
      */
     private void loadAndDisplay() {
         showLoading();
+        String query = getIntent().getStringExtra("search_query");
+        if (query != null && !query.isEmpty()) {
+            loadByMunicipio(query);
+        } else {
+            locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
+                @Override
+                public void onSuccess(Location location) {
+                    loadWithCoordinates(location.getLatitude(), location.getLongitude());
+                }
 
-        locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
-            @Override
-            public void onSuccess(Location location) {
-                executor.execute(() -> {
-                    try {
-                        int radiusKm = RadiusUtils.loadRadiusKm(DistanceListActivity.this);
-                        double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
-                        int maxMarkers = RadiusUtils.loadMarkersCount(DistanceListActivity.this);
+                @Override
+                public void onError(LocationHelper.LocationError error) {
+                    runOnUiThread(() -> {
+                        if (isDestroyed() || isFinishing()) return;
+                        showError(getString(R.string.error_ubicacion));
+                    });
+                }
+            });
+        }
+    }
 
-                        List<Gasolinera> gasolineras = repository.getGasolineras();
-                        List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
-                        List<Gasolinera> sorted = GasolineraSorter.getWithinRadius(
-                                filtered,
-                                location.getLatitude(),
-                                location.getLongitude(),
-                                radiusMeters,
-                                maxMarkers
-                        );
+    /**
+     * Filtra las gasolineras por municipio y las ordena por distancia.
+     *
+     * @param query Nombre del municipio a buscar.
+     */
+    private void loadByMunicipio(String query) {
+        executor.execute(() -> {
+            try {
+                List<Gasolinera> gasolineras = repository.getGasolineras();
+                List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
 
-                        PriceRange range = GasolineraSorter.calculatePriceRange(sorted, selectedFuel);
-                        for (Gasolinera g : sorted) {
-                            g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
-                        }
-
-                        mainHandler.post(() -> {
-                            if (isDestroyed() || isFinishing()) return;
-                            if (sorted.isEmpty()) {
-                                showEmpty();
-                            } else {
-                                showData(sorted);
-                            }
-                        });
-
-                    } catch (Exception e) {
-                        mainHandler.post(() -> {
-                            if (isDestroyed() || isFinishing()) return;
-                            showError(getString(R.string.error_cargando_gasolineras));
-                        });
+                String normalizedQuery = normalize(query);
+                List<Gasolinera> byMunicipio = new ArrayList<>();
+                for (Gasolinera g : filtered) {
+                    if (matchesMunicipio(normalize(g.getMunicipio()), normalizedQuery)) {
+                        byMunicipio.add(g);
                     }
-                });
-            }
+                }
 
-            @Override
-            public void onError(LocationHelper.LocationError error) {
-                runOnUiThread(() -> {
+                PriceRange range = GasolineraSorter.calculatePriceRange(byMunicipio, selectedFuel);
+                for (Gasolinera g : byMunicipio) {
+                    g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
+                }
+
+                mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
-                    showError(getString(R.string.error_ubicacion));
+                    if (byMunicipio.isEmpty()) showEmpty();
+                    else showData(byMunicipio);
+                });
+
+            } catch (Exception e) {
+                mainHandler.post(() -> {
+                    if (isDestroyed() || isFinishing()) return;
+                    showError(getString(R.string.error_cargando_gasolineras));
                 });
             }
         });
+    }
+
+    /**
+     * Carga y muestra las gasolineras ordenadas por distancia para las coordenadas dadas.
+     *
+     * @param lat Latitud del punto de referencia.
+     * @param lon Longitud del punto de referencia.
+     */
+    private void loadWithCoordinates(double lat, double lon) {
+        executor.execute(() -> {
+            try {
+                int radiusKm = RadiusUtils.loadRadiusKm(DistanceListActivity.this);
+                double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
+                int maxMarkers = RadiusUtils.loadMarkersCount(DistanceListActivity.this);
+
+                List<Gasolinera> gasolineras = repository.getGasolineras();
+                List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
+                List<Gasolinera> sorted = GasolineraSorter.getWithinRadius(
+                        filtered, lat, lon, radiusMeters, maxMarkers
+                );
+
+                PriceRange range = GasolineraSorter.calculatePriceRange(sorted, selectedFuel);
+                for (Gasolinera g : sorted) {
+                    g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
+                }
+
+                mainHandler.post(() -> {
+                    if (isDestroyed() || isFinishing()) return;
+                    if (sorted.isEmpty()) showEmpty();
+                    else showData(sorted);
+                });
+
+            } catch (Exception e) {
+                mainHandler.post(() -> {
+                    if (isDestroyed() || isFinishing()) return;
+                    showError(getString(R.string.error_cargando_gasolineras));
+                });
+            }
+        });
+    }
+    /**
+     * Normaliza un texto eliminando tildes y pasándolo a minúsculas.
+     *
+     * @param text Texto a normalizar.
+     * @return Texto normalizado.
+     */
+    private String normalize(String text) {
+        if (text == null) return "";
+        String normalized = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .toLowerCase(java.util.Locale.getDefault());
+    }
+
+    /**
+     * Comprueba si el municipio coincide con la búsqueda.
+     * Maneja los formatos del Ministerio:
+     * - "Casar (El)" → "el casar"
+     * - "Donostia-San Sebastián" → "donostia" o "san sebastian"
+     * - "Elche/Elx" → "elche" o "elx"
+     *
+     * @param normalizedMunicipio Municipio ya normalizado.
+     * @param normalizedQuery     Búsqueda ya normalizada.
+     * @return true si el municipio coincide con la búsqueda.
+     */
+    private boolean matchesMunicipio(String normalizedMunicipio, String normalizedQuery) {
+        if (normalizedMunicipio.equals(normalizedQuery)) return true;
+
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("^(.+?)\\s*\\(([^)]+)\\)$")
+                .matcher(normalizedMunicipio);
+        if (m.matches()) {
+            String reordered = m.group(2).trim() + " " + m.group(1).trim();
+            if (reordered.equals(normalizedQuery)) return true;
+        }
+
+        for (String separator : new String[]{"/", "-"}) {
+            for (String part : normalizedMunicipio.split(java.util.regex.Pattern.quote(separator))) {
+                if (part.trim().equals(normalizedQuery)) return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        loadAndDisplay();
+    }
+
+    @Override
+    protected void navigateToPrice() {
+        Intent intent = new Intent(this, PriceListActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        String query = getIntent().getStringExtra("search_query");
+        if (query != null) {
+            intent.putExtra("search_query", query);
+        }
+        startActivity(intent);
     }
 }
