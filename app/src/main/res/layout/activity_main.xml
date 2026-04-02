@@ -47,26 +47,13 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="3">
+        android:layout_weight="1">
 
         <org.osmdroid.views.MapView
             android:id="@+id/mapView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clickable="true" />
-
-        <Button
-            android:id="@+id/btnMostrarCerca"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:layout_gravity="top|start"
-            android:layout_margin="10dp"
-            android:text="@string/mostrar_cerca"
-            android:textAllCaps="false"
-            android:textSize="11sp"
-            android:paddingHorizontal="12dp"
-            android:enabled="false"
-            android:alpha="0.92" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabMiUbicacion"
@@ -82,53 +69,6 @@
             app:elevation="6dp" />
     </FrameLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/divider" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2"
-        android:orientation="vertical"
-        android:background="@color/background">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp"
-            android:background="@color/surface"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/estaciones_cercanas"
-                android:textStyle="bold"
-                android:textSize="14sp"
-                android:textColor="@color/text_primary" />
-
-            <TextView
-                android:id="@+id/tvStationsCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/stations_count_zero"
-                android:textSize="12sp"
-                android:textColor="@color/text_secondary" />
-        </LinearLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingBottom="8dp"
-            android:scrollbars="vertical" />
-    </LinearLayout>
         <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
@@ -138,4 +78,5 @@
         app:itemIconTint="@color/white"
         app:itemTextColor="@color/white"
         app:labelVisibilityMode="labeled" />
+
 </LinearLayout>
