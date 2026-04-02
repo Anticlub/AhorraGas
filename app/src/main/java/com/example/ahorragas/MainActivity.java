@@ -1,12 +1,11 @@
 package com.example.ahorragas;
 
-import com.example.ahorragas.map.GasolineraInfoWindow;
+import com.example.ahorragas.detail.StationDetailActivity;
 
 import android.Manifest;
+import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.InputType;
 import android.view.MotionEvent;
 import android.view.View;
@@ -43,7 +42,6 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
-import org.osmdroid.views.overlay.infowindow.InfoWindow;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
@@ -60,14 +58,14 @@ public class MainActivity extends BaseActivity {
     private static final double ZOOM_SPAIN = 6.0;
     private static final double ZOOM_USER = 14.0;
     private static final double ZOOM_STATION = 16.0;
-    private static final int MAX_MAP_MARKERS = 100;
-    private static final int INFO_DELAY_MS = 450;
+
 
     private MapView mapView;
     private FloatingActionButton fabMiUbicacion;
     private TextView tvDataStatus;
     private TextView tvLocation;
-    private ProgressBar progressBar;
+    private ProgressBar progressBarSearch;
+    private EditText etSearch;
     private BottomNavigationView bottomNav;
     private int lastRadiusKm = RadiusUtils.DEFAULT_KM;
     private int lastMarkersCount = RadiusUtils.DEFAULT_MARKERS;
@@ -136,6 +134,7 @@ public class MainActivity extends BaseActivity {
         initViews();
         setupMap();
         setupFab();
+        setupSearch();
         setupBottomNav();
 
         updateLocationStatus(getString(R.string.status_location_pending));
@@ -325,8 +324,9 @@ public class MainActivity extends BaseActivity {
         fabMiUbicacion = findViewById(R.id.fabMiUbicacion);
         tvDataStatus = findViewById(R.id.tvDataStatus);
         tvLocation = findViewById(R.id.tvLocation);
-        progressBar = findViewById(R.id.progressBar);
+        progressBarSearch = findViewById(R.id.progressBarSearch);
         bottomNav = findViewById(R.id.bottomNav);
+        etSearch = findViewById(R.id.etSearch);
     }
 
     private void setupMap() {
@@ -337,7 +337,6 @@ public class MainActivity extends BaseActivity {
 
         mapView.setOnTouchListener((v, event) -> {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                InfoWindow.closeAllInfoWindowsOn(mapView);
                 if (locationOverlay != null) {
                     locationOverlay.disableFollowLocation();
                 }
@@ -410,7 +409,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void loadGasolineras() {
-        progressBar.setVisibility(View.VISIBLE);
+        progressBarSearch.setVisibility(View.VISIBLE);
 
         tvDataStatus.setText(
                 repository.getLastOrigin() == null
@@ -426,14 +425,14 @@ public class MainActivity extends BaseActivity {
                     if (isDestroyed() || isFinishing()) return;
                     allGasolineras.clear();
                     allGasolineras.addAll(loaded);
-                    progressBar.setVisibility(View.GONE);
+                    progressBarSearch.setVisibility(View.GONE);
                     updateDisplayForFuel(selectedFuel);
                 });
 
             } catch (RepoError error) {
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
-                    progressBar.setVisibility(View.GONE);
+                    progressBarSearch.setVisibility(View.GONE);
                     tvDataStatus.setText(
                             getString(R.string.error_loading_data) + ": " + buildRepoErrorMessage(error)
                     );
@@ -446,7 +445,7 @@ public class MainActivity extends BaseActivity {
             } catch (Exception error) {
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
-                    progressBar.setVisibility(View.GONE);
+                    progressBarSearch.setVisibility(View.GONE);
                     tvDataStatus.setText(getString(R.string.error_loading_data) + ": " + error.getMessage());
                     Toast.makeText(MainActivity.this, getString(R.string.error_loading_data), Toast.LENGTH_LONG).show();
                 });
@@ -551,12 +550,7 @@ public class MainActivity extends BaseActivity {
         Marker marker = new Marker(mapView);
         marker.setPosition(new GeoPoint(gasolinera.getLat(), gasolinera.getLon()));
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-
-        String marca = safeText(gasolinera.getMarca());
-        marker.setTitle(marca.isEmpty() ? getString(R.string.sin_marca) : marca);
-        marker.setSnippet(buildMarkerSnippet(gasolinera));
-
-        marker.setInfoWindow(new GasolineraInfoWindow(mapView, gasolinera, selectedFuel));
+        marker.setInfoWindow(null);
 
         marker.setIcon(new android.graphics.drawable.BitmapDrawable(
                 getResources(),
@@ -564,8 +558,9 @@ public class MainActivity extends BaseActivity {
         ));
 
         marker.setOnMarkerClickListener((clickedMarker, ignoredMapView) -> {
-            InfoWindow.closeAllInfoWindowsOn(mapView);
-            clickedMarker.showInfoWindow();
+            Intent intent = new Intent(this, StationDetailActivity.class);
+            intent.putExtra(StationDetailActivity.EXTRA_GASOLINERA, gasolinera);
+            startActivity(intent);
             return true;
         });
 
@@ -580,15 +575,6 @@ public class MainActivity extends BaseActivity {
         }
         mapView.getOverlays().removeAll(toRemove);
         markerMap.clear();
-    }
-
-    private void animateMapToGasolinera(Gasolinera gasolinera) {
-        focusOnGasolinera(gasolinera);
-        Marker marker = markerMap.get(gasolinera.getId());
-        if (marker != null) {
-            new Handler(Looper.getMainLooper())
-                    .postDelayed(marker::showInfoWindow, INFO_DELAY_MS);
-        }
     }
 
     private void focusOnGasolinera(Gasolinera gasolinera) {
@@ -655,18 +641,171 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    private String buildMarkerSnippet(Gasolinera gasolinera) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(gasolinera.getFormattedPrice(selectedFuel))
-                .append(" · ")
-                .append(gasolinera.getDisplayAddress());
-        String horario = gasolinera.getFormattedHorario();
-        if (horario != null) {
-            sb.append("\n").append(horario);
-        }
-        return sb.toString();
+    private void setupSearch() {
+        etSearch.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
+                String query = etSearch.getText().toString().trim();
+                if (!query.isEmpty()) {
+                    searchLocalidad(query);
+                }
+                return true;
+            }
+            return false;
+        });
+        etSearch.setOnTouchListener((v, event) -> {
+            if (event.getAction() == android.view.MotionEvent.ACTION_UP) {
+                if (event.getRawX() >= (etSearch.getRight()
+                        - etSearch.getCompoundDrawables()[2].getBounds().width()
+                        - etSearch.getPaddingEnd())) {
+                    String query = etSearch.getText().toString().trim();
+                    if (!query.isEmpty()) {
+                        searchLocalidad(query);
+                    }
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 
+    /**
+     * Geocodifica la localidad introducida usando Nominatim (OpenStreetMap),
+     * centra el mapa en las coordenadas obtenidas y filtra los markers por municipio.
+     *
+     * @param query Nombre de la localidad a buscar.
+     */
+    /**
+     * Geocodifica la localidad introducida usando Nominatim (OpenStreetMap),
+     * centra el mapa en las coordenadas obtenidas y filtra los markers por municipio.
+     *
+     * @param query Nombre de la localidad a buscar.
+     */
+    private void searchLocalidad(String query) {
+        progressBarSearch.setVisibility(View.VISIBLE);
+
+        executor.execute(() -> {
+            try {
+                String encoded = java.net.URLEncoder.encode(query, "UTF-8");
+                String url = "https://nominatim.openstreetmap.org/search?city="
+                        + encoded
+                        + "&country=Spain&limit=1&format=json";
+
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection)
+                        new java.net.URL(url).openConnection();
+                conn.setRequestProperty("User-Agent", getPackageName());
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
+
+                java.io.InputStream is = conn.getInputStream();
+                String response = new java.util.Scanner(is).useDelimiter("\\A").next();
+                conn.disconnect();
+
+                int latStart = response.indexOf("\"lat\":\"") + 7;
+                int latEnd   = response.indexOf("\"", latStart);
+                int lonStart = response.indexOf("\"lon\":\"") + 7;
+                int lonEnd   = response.indexOf("\"", lonStart);
+
+                if (latStart < 7 || lonStart < 7) {
+                    mainHandler.post(() -> {
+                        progressBarSearch.setVisibility(View.GONE);
+                        Toast.makeText(this,
+                                "No se encontró la localidad", Toast.LENGTH_SHORT).show();
+                    });
+                    return;
+                }
+
+                double lat = Double.parseDouble(response.substring(latStart, latEnd));
+                double lon = Double.parseDouble(response.substring(lonStart, lonEnd));
+
+                mainHandler.post(() -> {
+                    progressBarSearch.setVisibility(View.GONE);
+
+                    GeoPoint point = new GeoPoint(lat, lon);
+                    mapView.getController().animateTo(point);
+                    mapView.getController().setZoom(13.0);
+
+                    filterMarkersByMunicipio(query);
+
+                    android.view.inputmethod.InputMethodManager imm =
+                            (android.view.inputmethod.InputMethodManager)
+                                    getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
+                });
+
+            } catch (Exception e) {
+                mainHandler.post(() -> {
+                    progressBarSearch.setVisibility(View.GONE);
+                    Toast.makeText(this,
+                            "Error al buscar la localidad", Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
+    }
+
+    /**
+     * Normaliza un texto eliminando tildes y pasándolo a minúsculas
+     * para comparaciones insensibles a acentos.
+     *
+     * @param text Texto a normalizar.
+     * @return Texto normalizado.
+     */
+    private String normalize(String text) {
+        if (text == null) return "";
+        String normalized = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .toLowerCase(java.util.Locale.getDefault());
+    }
+
+    /**
+     * Comprueba si el municipio coincide con la búsqueda,
+     * tolerando municipios con nombres compuestos separados por '/'.
+     *
+     * @param normalizedMunicipio Municipio ya normalizado.
+     * @param normalizedQuery     Búsqueda ya normalizada.
+     * @return true si alguna parte del municipio coincide con la búsqueda.
+     */
+    private boolean matchesMunicipio(String normalizedMunicipio, String normalizedQuery) {
+        if (normalizedMunicipio.equals(normalizedQuery)) return true;
+        for (String part : normalizedMunicipio.split("/")) {
+            if (part.trim().equals(normalizedQuery)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Filtra los markers del mapa mostrando solo las gasolineras
+     * cuyo municipio contiene el texto indicado, con colores de precio correctos.
+     *
+     * @param query Texto a buscar en el municipio.
+     */
+    private void filterMarkersByMunicipio(String query) {
+        clearMapMarkers();
+        String normalizedQuery = normalize(query);
+
+        List<Gasolinera> filtered = new ArrayList<>();
+        for (Gasolinera g : allGasolineras) {
+            if (matchesMunicipio(normalize(g.getMunicipio()), normalizedQuery)
+                    && g.hasPrice(selectedFuel)) {
+                filtered.add(g);
+            }
+        }
+
+        // Calcular rango de precios del conjunto filtrado para colorear correctamente
+        PriceRange range = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
+        for (Gasolinera g : filtered) {
+            g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
+        }
+
+        for (Gasolinera g : filtered) {
+            addMarker(g);
+        }
+        mapView.invalidate();
+
+        if (filtered.isEmpty()) {
+            Toast.makeText(this,
+                    "No hay gasolineras en esa localidad", Toast.LENGTH_SHORT).show();
+        }
+    }
     private void setupFab() {
         fabMiUbicacion.setOnClickListener(v -> {
             if (userLocation != null) {
@@ -683,13 +822,6 @@ public class MainActivity extends BaseActivity {
                 requestLocationPermission();
             }
         });
-    }
-
-    private int indexOfFuel(FuelType[] fuels, FuelType target) {
-        for (int i = 0; i < fuels.length; i++) {
-            if (fuels[i] == target) return i;
-        }
-        return 0;
     }
 
     private String safeText(String value) {
