@@ -1,6 +1,5 @@
 package com.example.ahorragas;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
@@ -12,49 +11,64 @@ import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.ahorragas.model.Discount;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Vehicle;
+import com.example.ahorragas.util.DiscountPrefs;
 import com.example.ahorragas.util.RadiusUtils;
 import com.example.ahorragas.util.VehiclePrefs;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.List;
 import java.util.Locale;
 
 public class PreferencesActivity extends BaseActivity {
 
+    // ── Vehículos ─────────────────────────────────────────────────────────────
     private LinearLayout vehicleListContainer;
-    private FloatingActionButton fabAddVehicle;
     private List<Vehicle> vehicles;
     private int activeIndex;
 
-    // ── Radio de búsqueda ────────────────────────────────────────────────────
+    // ── Descuentos ────────────────────────────────────────────────────────────
+    private LinearLayout discountListContainer;
+    private List<Discount> discounts;
+
+    // ── Radio de búsqueda ─────────────────────────────────────────────────────
     private SeekBar seekBarRadius;
     private TextView tvRadiusValue;
 
-    // ── Gasolineras en mapa ────────────────────────────────────────────────────
+    // ── Gasolineras en mapa ───────────────────────────────────────────────────
     private SeekBar seekBarMarkers;
     private TextView tvMarkersValue;
+
+    // ── Marcas disponibles ────────────────────────────────────────────────────
+    private static final String[] BRANDS = {
+            "Repsol", "Cepsa", "Moeve", "BP", "Shell", "Galp",
+            "Petronor", "Carrefour", "Alcampo", "Avia",
+            "Ballenoil", "Petroprix", "Plenergy"
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_preferences);
 
-        vehicleListContainer = findViewById(R.id.vehicleListContainer);
-        fabAddVehicle        = findViewById(R.id.fabAddVehicle);
+        vehicleListContainer  = findViewById(R.id.vehicleListContainer);
+        discountListContainer = findViewById(R.id.discountListContainer);
 
-        fabAddVehicle.setOnClickListener(v -> showVehicleDialog(-1, null, false));
+        findViewById(R.id.btnAddVehicle).setOnClickListener(v -> showVehicleDialog(-1, null, false));
+        findViewById(R.id.btnAddDiscount).setOnClickListener(v -> showDiscountDialog(-1, null));
 
         setupRadiusSelector();
         setupBottomNav();
         setupBackPress();
         setupMarkersSelector();
         refreshVehicleList();
+        refreshDiscountList();
     }
+
+    // ─── Marcadores ───────────────────────────────────────────────────────────
 
     private void setupMarkersSelector() {
         seekBarMarkers = findViewById(R.id.seekBarMarkers);
@@ -69,10 +83,7 @@ public class PreferencesActivity extends BaseActivity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 tvMarkersValue.setText(String.valueOf(progress + RadiusUtils.MIN_MARKERS));
             }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 RadiusUtils.saveMarkersCount(PreferencesActivity.this,
@@ -81,12 +92,8 @@ public class PreferencesActivity extends BaseActivity {
         });
     }
 
-    // ─── Radio de búsqueda ────────────────────────────────────────────────────
+    // ─── Radio ────────────────────────────────────────────────────────────────
 
-    /**
-     * Inicializa el SeekBar y el TextView del radio.
-     * El SeekBar va de 0 a 49 (offset de 1) → representa 1–50 km.
-     */
     private void setupRadiusSelector() {
         seekBarRadius = findViewById(R.id.seekBarRadius);
         tvRadiusValue = findViewById(R.id.tvRadiusValue);
@@ -97,40 +104,29 @@ public class PreferencesActivity extends BaseActivity {
         seekBarRadius.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                int km = progress + RadiusUtils.MIN_KM;
-                updateRadiusLabel(km);
+                updateRadiusLabel(progress + RadiusUtils.MIN_KM);
             }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                int km = seekBar.getProgress() + RadiusUtils.MIN_KM;
-                RadiusUtils.saveRadiusKm(PreferencesActivity.this, km);
+                RadiusUtils.saveRadiusKm(PreferencesActivity.this,
+                        seekBar.getProgress() + RadiusUtils.MIN_KM);
             }
         });
     }
 
-    /**
-     * Aplica un valor de radio al SeekBar y al label.
-     * @param km   valor en kilómetros (1–50)
-     * @param save si true, persiste el valor en SharedPreferences
-     */
     private void applyRadius(int km, boolean save) {
         int clamped = Math.max(RadiusUtils.MIN_KM, Math.min(RadiusUtils.MAX_KM, km));
         seekBarRadius.setProgress(clamped - RadiusUtils.MIN_KM);
         updateRadiusLabel(clamped);
-        if (save) {
-            RadiusUtils.saveRadiusKm(this, clamped);
-        }
+        if (save) RadiusUtils.saveRadiusKm(this, clamped);
     }
 
     private void updateRadiusLabel(int km) {
         tvRadiusValue.setText(String.format(Locale.getDefault(), "%d km", km));
     }
 
-    // ─── Navegación y back press ──────────────────────────────────────────────
+    // ─── Navegación ───────────────────────────────────────────────────────────
 
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavPrefs);
@@ -140,9 +136,7 @@ public class PreferencesActivity extends BaseActivity {
             if (id == R.id.nav_preferences) return true;
             else if (id == R.id.nav_map) {
                 if (!VehiclePrefs.hasVehicles(this)) {
-                    Toast.makeText(this,
-                            "Añade al menos un vehículo para continuar.",
-                            Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Añade al menos un vehículo para continuar.", Toast.LENGTH_SHORT).show();
                     return false;
                 }
                 navigateToMap();
@@ -167,8 +161,7 @@ public class PreferencesActivity extends BaseActivity {
             public void handleOnBackPressed() {
                 if (!VehiclePrefs.hasVehicles(PreferencesActivity.this)) {
                     Toast.makeText(PreferencesActivity.this,
-                            "Añade al menos un vehículo para continuar.",
-                            Toast.LENGTH_SHORT).show();
+                            "Añade al menos un vehículo para continuar.", Toast.LENGTH_SHORT).show();
                 } else {
                     finish();
                 }
@@ -176,7 +169,7 @@ public class PreferencesActivity extends BaseActivity {
         });
     }
 
-    // ─── UI de vehículos ──────────────────────────────────────────────────────
+    // ─── UI Vehículos ─────────────────────────────────────────────────────────
 
     private void refreshVehicleList() {
         vehicles    = VehiclePrefs.loadVehicles(this);
@@ -196,7 +189,7 @@ public class PreferencesActivity extends BaseActivity {
             addVehicleRow(i, vehicles.get(i));
         }
 
-        fabAddVehicle.setVisibility(
+        findViewById(R.id.btnAddVehicle).setVisibility(
                 vehicles.size() < VehiclePrefs.MAX_VEHICLES ? View.VISIBLE : View.GONE
         );
     }
@@ -218,9 +211,8 @@ public class PreferencesActivity extends BaseActivity {
 
         LinearLayout textCol = new LinearLayout(this);
         textCol.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        textCol.setLayoutParams(textParams);
+        textCol.setLayoutParams(new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
         TextView tvName = new TextView(this);
         tvName.setText((isActive ? "✔ " : "") + vehicle.getName());
@@ -229,7 +221,6 @@ public class PreferencesActivity extends BaseActivity {
         tvName.setTypeface(null, android.graphics.Typeface.BOLD);
         textCol.addView(tvName);
 
-        // Detalle: combustible + consumo + depósito
         String consDetail = vehicle.hasConsumption()
                 ? String.format(Locale.getDefault(), "%.1f L/100km", vehicle.getConsumption())
                 : "consumo no especificado";
@@ -250,10 +241,9 @@ public class PreferencesActivity extends BaseActivity {
         card.addView(btnEdit);
 
         TextView btnDelete = makeTextButton("🗑", 0xFFEF5350);
-        btnDelete.setOnClickListener(v -> confirmDelete(index));
+        btnDelete.setOnClickListener(v -> confirmDeleteVehicle(index));
         card.addView(btnDelete);
 
-        // Pulsar la tarjeta activa el vehículo
         card.setClickable(true);
         card.setFocusable(true);
         final int finalIndex = index;
@@ -272,7 +262,84 @@ public class PreferencesActivity extends BaseActivity {
         vehicleListContainer.addView(sep);
     }
 
-    // ─── Diálogos vehículos ───────────────────────────────────────────────────
+    // ─── UI Descuentos ────────────────────────────────────────────────────────
+
+    private void refreshDiscountList() {
+        discounts = DiscountPrefs.loadDiscounts(this);
+        discountListContainer.removeAllViews();
+
+        if (discounts.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText("Sin descuentos. Pulsa + para añadir uno.");
+            empty.setTextColor(0xFFAAAAAA);
+            empty.setPadding(dp(16), dp(24), dp(16), dp(8));
+            discountListContainer.addView(empty);
+        }
+
+        for (int i = 0; i < discounts.size(); i++) {
+            addDiscountRow(i, discounts.get(i));
+        }
+
+        findViewById(R.id.btnAddDiscount).setVisibility(
+                discounts.size() < DiscountPrefs.MAX_DISCOUNTS ? View.VISIBLE : View.GONE
+        );
+    }
+
+    private void addDiscountRow(int index, Discount discount) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setBackgroundColor(0xFF383848);
+        card.setPadding(dp(16), dp(14), dp(12), dp(14));
+
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.setMargins(0, dp(4), 0, dp(4));
+        card.setLayoutParams(cardParams);
+
+        LinearLayout textCol = new LinearLayout(this);
+        textCol.setOrientation(LinearLayout.VERTICAL);
+        textCol.setLayoutParams(new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView tvName = new TextView(this);
+        tvName.setText(discount.getBrandName());
+        tvName.setTextColor(0xFFFFFFFF);
+        tvName.setTextSize(15);
+        tvName.setTypeface(null, android.graphics.Typeface.BOLD);
+        textCol.addView(tvName);
+
+        String typeLabel = discount.getType() == Discount.Type.PERCENTAGE
+                ? String.format(Locale.getDefault(), "%.1f%%", discount.getValue())
+                : String.format(Locale.getDefault(), "%.3f €/L", discount.getValue());
+
+        TextView tvDetail = new TextView(this);
+        tvDetail.setText("Descuento: " + typeLabel);
+        tvDetail.setTextColor(0xFFAAAAAA);
+        tvDetail.setTextSize(12);
+        textCol.addView(tvDetail);
+
+        card.addView(textCol);
+
+        TextView btnEdit = makeTextButton("✏", 0xFF4DB6AC);
+        btnEdit.setOnClickListener(v -> showDiscountDialog(index, discount));
+        card.addView(btnEdit);
+
+        TextView btnDelete = makeTextButton("🗑", 0xFFEF5350);
+        btnDelete.setOnClickListener(v -> confirmDeleteDiscount(index));
+        card.addView(btnDelete);
+
+        discountListContainer.addView(card);
+
+        View sep = new View(this);
+        sep.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 1));
+        sep.setBackgroundColor(0xFF444455);
+        discountListContainer.addView(sep);
+    }
+
+    // ─── Diálogo Vehículo ─────────────────────────────────────────────────────
 
     private void showVehicleDialog(int index, Vehicle existing, boolean mandatory) {
         boolean isNew = (index == -1);
@@ -281,7 +348,6 @@ public class PreferencesActivity extends BaseActivity {
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(dp(20), dp(12), dp(20), dp(4));
 
-        // ── Nombre ──────────────────────────────────────────────────────────
         TextView labelName = new TextView(this);
         labelName.setText("Nombre del vehículo *");
         labelName.setTextColor(0xFFCCCCCC);
@@ -297,7 +363,6 @@ public class PreferencesActivity extends BaseActivity {
         TextView tvNameError = makeErrorLabel();
         layout.addView(tvNameError);
 
-        // ── Consumo (opcional) ───────────────────────────────────────────────
         TextView labelCons = new TextView(this);
         labelCons.setText("Consumo (L/100 km)  · opcional");
         labelCons.setTextColor(0xFFCCCCCC);
@@ -316,7 +381,6 @@ public class PreferencesActivity extends BaseActivity {
         TextView tvConsError = makeErrorLabel();
         layout.addView(tvConsError);
 
-        // ── Capacidad depósito (opcional) ────────────────────────────────────
         TextView labelTank = new TextView(this);
         labelTank.setText("Capacidad depósito (L)  · opcional");
         labelTank.setTextColor(0xFFCCCCCC);
@@ -335,7 +399,6 @@ public class PreferencesActivity extends BaseActivity {
         TextView tvTankError = makeErrorLabel();
         layout.addView(tvTankError);
 
-        // ── Combustible ──────────────────────────────────────────────────────
         TextView labelFuel = new TextView(this);
         labelFuel.setText("Tipo de combustible *");
         labelFuel.setTextColor(0xFFCCCCCC);
@@ -375,18 +438,14 @@ public class PreferencesActivity extends BaseActivity {
         });
         layout.addView(tvFuelSelector);
 
-        // ── Construir diálogo ────────────────────────────────────────────────
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle(mandatory ? "Añade tu vehículo para empezar"
                         : (isNew ? "Añadir vehículo" : "Editar vehículo"))
                 .setView(layout)
                 .setPositiveButton("Guardar", null);
 
-        if (mandatory) {
-            builder.setCancelable(false);
-        } else {
-            builder.setNegativeButton("Cancelar", null);
-        }
+        if (mandatory) builder.setCancelable(false);
+        else builder.setNegativeButton("Cancelar", null);
 
         AlertDialog dialog = builder.create();
         dialog.show();
@@ -394,7 +453,6 @@ public class PreferencesActivity extends BaseActivity {
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             boolean hasError = false;
 
-            // Validar nombre (obligatorio)
             String name = etName.getText().toString().trim();
             if (name.isEmpty()) {
                 tvNameError.setText("El nombre es obligatorio.");
@@ -404,7 +462,6 @@ public class PreferencesActivity extends BaseActivity {
                 tvNameError.setVisibility(View.GONE);
             }
 
-            // Validar consumo (opcional — vacío = 0 = no especificado)
             String consStr = etCons.getText().toString().trim().replace(",", ".");
             double cons = 0.0;
             if (!consStr.isEmpty()) {
@@ -421,7 +478,6 @@ public class PreferencesActivity extends BaseActivity {
                 tvConsError.setVisibility(View.GONE);
             }
 
-            // Validar depósito (opcional — vacío = 0 = no especificado)
             String tankStr = etTank.getText().toString().trim().replace(",", ".");
             double tank = 0.0;
             if (!tankStr.isEmpty()) {
@@ -441,7 +497,6 @@ public class PreferencesActivity extends BaseActivity {
             if (hasError) return;
 
             Vehicle vehicle = new Vehicle(name, selectedFuel[0], cons, tank);
-
             if (isNew) {
                 boolean added = VehiclePrefs.addVehicle(this, vehicle);
                 if (!added) {
@@ -458,9 +513,161 @@ public class PreferencesActivity extends BaseActivity {
         });
     }
 
-    private void confirmDelete(int index) {
-        boolean isLast = vehicles.size() == 1;
+    // ─── Diálogo Descuento ────────────────────────────────────────────────────
 
+    private void showDiscountDialog(int index, Discount existing) {
+        boolean isNew = (index == -1);
+
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(dp(20), dp(12), dp(20), dp(4));
+
+        TextView labelBrand = new TextView(this);
+        labelBrand.setText("Marca de gasolinera *");
+        labelBrand.setTextColor(0xFFCCCCCC);
+        labelBrand.setTextSize(13);
+        layout.addView(labelBrand);
+
+        final String[] selectedBrand = {existing != null ? existing.getBrandName() : BRANDS[0]};
+
+        TextView tvBrandSelector = new TextView(this);
+        tvBrandSelector.setText(selectedBrand[0]);
+        tvBrandSelector.setTextColor(0xFFFFFFFF);
+        tvBrandSelector.setBackgroundColor(0xFF2C2C3A);
+        tvBrandSelector.setPadding(dp(12), dp(10), dp(12), dp(10));
+        tvBrandSelector.setTextSize(14);
+        tvBrandSelector.setClickable(true);
+        tvBrandSelector.setFocusable(true);
+        tvBrandSelector.setOnClickListener(v -> {
+            int checked = 0;
+            for (int i = 0; i < BRANDS.length; i++) {
+                if (BRANDS[i].equals(selectedBrand[0])) { checked = i; break; }
+            }
+            new AlertDialog.Builder(this)
+                    .setTitle("Selecciona la marca")
+                    .setSingleChoiceItems(BRANDS, checked, (d, which) -> {
+                        selectedBrand[0] = BRANDS[which];
+                        tvBrandSelector.setText(selectedBrand[0]);
+                        d.dismiss();
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
+        });
+        layout.addView(tvBrandSelector);
+
+        TextView tvBrandError = makeErrorLabel();
+        layout.addView(tvBrandError);
+
+        TextView labelType = new TextView(this);
+        labelType.setText("Tipo de descuento *");
+        labelType.setTextColor(0xFFCCCCCC);
+        labelType.setTextSize(13);
+        labelType.setPadding(0, dp(12), 0, 0);
+        layout.addView(labelType);
+
+        final Discount.Type[] selectedType = {
+                existing != null ? existing.getType() : Discount.Type.CENTS_PER_LITER
+        };
+        final String[] typeNames = {"Céntimos por litro (€/L)", "Porcentaje (%)"};
+        final Discount.Type[] typeValues = {Discount.Type.CENTS_PER_LITER, Discount.Type.PERCENTAGE};
+
+        TextView tvTypeSelector = new TextView(this);
+        tvTypeSelector.setText(selectedType[0] == Discount.Type.PERCENTAGE ? typeNames[1] : typeNames[0]);
+        tvTypeSelector.setTextColor(0xFFFFFFFF);
+        tvTypeSelector.setBackgroundColor(0xFF2C2C3A);
+        tvTypeSelector.setPadding(dp(12), dp(10), dp(12), dp(10));
+        tvTypeSelector.setTextSize(14);
+        tvTypeSelector.setClickable(true);
+        tvTypeSelector.setFocusable(true);
+        tvTypeSelector.setOnClickListener(v -> {
+            int checked = selectedType[0] == Discount.Type.PERCENTAGE ? 1 : 0;
+            new AlertDialog.Builder(this)
+                    .setTitle("Tipo de descuento")
+                    .setSingleChoiceItems(typeNames, checked, (d, which) -> {
+                        selectedType[0] = typeValues[which];
+                        tvTypeSelector.setText(typeNames[which]);
+                        d.dismiss();
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
+        });
+        layout.addView(tvTypeSelector);
+
+        TextView labelValue = new TextView(this);
+        labelValue.setText("Valor del descuento *");
+        labelValue.setTextColor(0xFFCCCCCC);
+        labelValue.setTextSize(13);
+        labelValue.setPadding(0, dp(12), 0, 0);
+        layout.addView(labelValue);
+
+        EditText etValue = new EditText(this);
+        etValue.setHint("Ej: 0.06 para €/L  ó  5 para %");
+        etValue.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        if (existing != null) {
+            etValue.setText(String.format(Locale.getDefault(), "%.3f", existing.getValue()));
+        }
+        layout.addView(etValue);
+
+        TextView tvValueError = makeErrorLabel();
+        layout.addView(tvValueError);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(isNew ? "Añadir descuento" : "Editar descuento")
+                .setView(layout)
+                .setPositiveButton("Guardar", null)
+                .setNegativeButton("Cancelar", null)
+                .create();
+
+        dialog.show();
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            boolean hasError = false;
+
+            String valueStr = etValue.getText().toString().trim().replace(",", ".");
+            double value = 0.0;
+            if (valueStr.isEmpty()) {
+                tvValueError.setText("El valor es obligatorio.");
+                tvValueError.setVisibility(View.VISIBLE);
+                hasError = true;
+            } else {
+                try {
+                    value = Double.parseDouble(valueStr);
+                    if (value <= 0) throw new NumberFormatException();
+                    if (selectedType[0] == Discount.Type.PERCENTAGE && value > 100)
+                        throw new NumberFormatException();
+                    tvValueError.setVisibility(View.GONE);
+                } catch (Exception e) {
+                    tvValueError.setText(selectedType[0] == Discount.Type.PERCENTAGE
+                            ? "Introduce un porcentaje entre 0.1 y 100."
+                            : "Introduce un valor positivo en €/L.");
+                    tvValueError.setVisibility(View.VISIBLE);
+                    hasError = true;
+                }
+            }
+
+            if (hasError) return;
+
+            Discount discount = new Discount(selectedBrand[0], selectedType[0], value);
+            if (isNew) {
+                boolean added = DiscountPrefs.addDiscount(this, discount);
+                if (!added) {
+                    tvValueError.setText("Has alcanzado el máximo de descuentos.");
+                    tvValueError.setVisibility(View.VISIBLE);
+                    return;
+                }
+            } else {
+                DiscountPrefs.updateDiscount(this, index, discount);
+            }
+
+            dialog.dismiss();
+            refreshDiscountList();
+        });
+    }
+
+    // ─── Confirmaciones borrado ───────────────────────────────────────────────
+
+    private void confirmDeleteVehicle(int index) {
+        boolean isLast = vehicles.size() == 1;
         new AlertDialog.Builder(this)
                 .setTitle("Eliminar vehículo")
                 .setMessage(isLast
@@ -469,9 +676,20 @@ public class PreferencesActivity extends BaseActivity {
                 .setPositiveButton("Eliminar", (d, w) -> {
                     VehiclePrefs.deleteVehicle(this, index);
                     refreshVehicleList();
-                    if (isLast) {
-                        showVehicleDialog(-1, null, true);
-                    }
+                    if (isLast) showVehicleDialog(-1, null, true);
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void confirmDeleteDiscount(int index) {
+        new AlertDialog.Builder(this)
+                .setTitle("Eliminar descuento")
+                .setMessage("¿Seguro que quieres eliminar el descuento de \""
+                        + discounts.get(index).getBrandName() + "\"?")
+                .setPositiveButton("Eliminar", (d, w) -> {
+                    DiscountPrefs.deleteDiscount(this, index);
+                    refreshDiscountList();
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
