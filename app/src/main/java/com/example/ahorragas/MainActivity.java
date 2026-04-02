@@ -3,7 +3,6 @@ package com.example.ahorragas;
 import com.example.ahorragas.map.GasolineraInfoWindow;
 
 import android.Manifest;
-import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,7 +10,6 @@ import android.os.Looper;
 import android.text.InputType;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -21,12 +19,8 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.ahorragas.adapter.GasolineraAdapter;
 import com.example.ahorragas.data.CachedRemoteApiDataSource;
 import com.example.ahorragas.data.DataSourceOrigin;
 import com.example.ahorragas.data.GasolineraRepository;
@@ -54,11 +48,9 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 public class MainActivity extends BaseActivity {
@@ -72,10 +64,7 @@ public class MainActivity extends BaseActivity {
     private static final int INFO_DELAY_MS = 450;
 
     private MapView mapView;
-    private RecyclerView recyclerView;
-    private Button btnMostrarCerca;
     private FloatingActionButton fabMiUbicacion;
-    private TextView tvStationsCount;
     private TextView tvDataStatus;
     private TextView tvLocation;
     private ProgressBar progressBar;
@@ -85,7 +74,6 @@ public class MainActivity extends BaseActivity {
 
     private final List<Gasolinera> allGasolineras = new ArrayList<>();
     private List<Gasolinera> visibleGasolineras = new ArrayList<>();
-    private GasolineraAdapter adapter;
     private FuelType selectedFuel = FuelType.GASOLEO_A;
     private Location userLocation;
     private final Map<Integer, Marker> markerMap = new HashMap<>();
@@ -115,7 +103,6 @@ public class MainActivity extends BaseActivity {
                         } else {
                             showSpainFallback();
                             updateLocationStatus(getString(R.string.status_location_denied));
-                            btnMostrarCerca.setEnabled(false);
                             Toast.makeText(
                                     this,
                                     R.string.location_permission_message,
@@ -148,8 +135,7 @@ public class MainActivity extends BaseActivity {
 
         initViews();
         setupMap();
-        setupRecyclerView();
-        setupButtons();
+        setupFab();
         setupBottomNav();
 
         updateLocationStatus(getString(R.string.status_location_pending));
@@ -336,10 +322,7 @@ public class MainActivity extends BaseActivity {
 
     private void initViews() {
         mapView = findViewById(R.id.mapView);
-        recyclerView = findViewById(R.id.recyclerView);
-        btnMostrarCerca = findViewById(R.id.btnMostrarCerca);
         fabMiUbicacion = findViewById(R.id.fabMiUbicacion);
-        tvStationsCount = findViewById(R.id.tvStationsCount);
         tvDataStatus = findViewById(R.id.tvDataStatus);
         tvLocation = findViewById(R.id.tvLocation);
         progressBar = findViewById(R.id.progressBar);
@@ -363,66 +346,6 @@ public class MainActivity extends BaseActivity {
         });
     }
 
-    private void setupRecyclerView() {
-        adapter = new GasolineraAdapter(
-                new ArrayList<>(),
-                selectedFuel,
-                this::animateMapToGasolinera
-        );
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(adapter);
-    }
-
-    private void setupButtons() {
-        btnMostrarCerca.setOnClickListener(v -> {
-            if (userLocation == null) {
-                Toast.makeText(this, R.string.location_gps_message, Toast.LENGTH_LONG).show();
-                requestLocationPermission();
-                return;
-            }
-
-            int radiusKm = RadiusUtils.loadRadiusKm(this);
-            double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
-            int markersCount = RadiusUtils.loadMarkersCount(this);
-
-            List<Gasolinera> inRadius = GasolineraSorter.getForMap(
-                    GasolineraSorter.filterByFuel(allGasolineras, selectedFuel),
-                    userLocation.getLatitude(),
-                    userLocation.getLongitude(),
-                    radiusMeters,
-                    markersCount
-            );
-
-            clearMapMarkers();
-            for (Gasolinera g : inRadius) addMarker(g);
-            mapView.invalidate();
-
-            if (!inRadius.isEmpty()) focusOnGasolinera(inRadius.get(0));
-
-            Toast.makeText(
-                    this,
-                    getString(R.string.showing_nearest, inRadius.size()),
-                    Toast.LENGTH_SHORT
-            ).show();
-        });
-
-        fabMiUbicacion.setOnClickListener(v -> {
-            if (userLocation != null) {
-                if (locationOverlay != null) {
-                    locationOverlay.enableFollowLocation();
-                }
-                GeoPoint point = new GeoPoint(
-                        userLocation.getLatitude(),
-                        userLocation.getLongitude()
-                );
-                mapView.getController().animateTo(point);
-                mapView.getController().setZoom(ZOOM_USER);
-            } else {
-                requestLocationPermission();
-            }
-        });
-    }
-
     private void setupBottomNav() {
         setupBottomNav(bottomNav, R.id.nav_map);
     }
@@ -442,7 +365,6 @@ public class MainActivity extends BaseActivity {
         if (!locationHelper.isLocationEnabled()) {
             showSpainFallback();
             updateLocationStatus(getString(R.string.status_location_disabled));
-            btnMostrarCerca.setEnabled(false);
             Toast.makeText(this, R.string.location_gps_message, Toast.LENGTH_LONG).show();
             renderMetaStatus();
             return;
@@ -459,7 +381,6 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onError(LocationHelper.LocationError error) {
                 showSpainFallback();
-                btnMostrarCerca.setEnabled(false);
                 updateLocationStatus(buildLocationErrorMessage(error));
                 Toast.makeText(
                         MainActivity.this,
@@ -490,7 +411,6 @@ public class MainActivity extends BaseActivity {
 
     private void loadGasolineras() {
         progressBar.setVisibility(View.VISIBLE);
-        btnMostrarCerca.setEnabled(false);
 
         tvDataStatus.setText(
                 repository.getLastOrigin() == null
@@ -519,8 +439,6 @@ public class MainActivity extends BaseActivity {
                     );
                     if (allGasolineras.isEmpty()) {
                         clearMapMarkers();
-                        adapter.updateData(Collections.emptyList(), selectedFuel);
-                        tvStationsCount.setText(getString(R.string.stations_count_format, 0));
                     }
                     Toast.makeText(MainActivity.this, buildRepoErrorMessage(error), Toast.LENGTH_LONG).show();
                 });
@@ -549,10 +467,6 @@ public class MainActivity extends BaseActivity {
                     )
             );
         }
-
-        adapter.updateData(visibleGasolineras, selectedFuel);
-        tvStationsCount.setText(getString(R.string.stations_count_format, visibleGasolineras.size()));
-        btnMostrarCerca.setEnabled(userLocation != null && !visibleGasolineras.isEmpty());
 
         if (allGasolineras.isEmpty()) {
             clearMapMarkers();
@@ -652,7 +566,6 @@ public class MainActivity extends BaseActivity {
         marker.setOnMarkerClickListener((clickedMarker, ignoredMapView) -> {
             InfoWindow.closeAllInfoWindowsOn(mapView);
             clickedMarker.showInfoWindow();
-            scrollListToGasolinera(gasolinera);
             return true;
         });
 
@@ -684,11 +597,6 @@ public class MainActivity extends BaseActivity {
                 new GeoPoint(gasolinera.getLat(), gasolinera.getLon())
         );
         mapView.getController().setZoom(ZOOM_STATION);
-    }
-
-    private void scrollListToGasolinera(Gasolinera gasolinera) {
-        int position = adapter.getPositionOf(gasolinera);
-        if (position >= 0) recyclerView.smoothScrollToPosition(position);
     }
 
     private void addMyLocationOverlay() {
@@ -757,6 +665,24 @@ public class MainActivity extends BaseActivity {
             sb.append("\n").append(horario);
         }
         return sb.toString();
+    }
+
+    private void setupFab() {
+        fabMiUbicacion.setOnClickListener(v -> {
+            if (userLocation != null) {
+                if (locationOverlay != null) {
+                    locationOverlay.enableFollowLocation();
+                }
+                GeoPoint point = new GeoPoint(
+                        userLocation.getLatitude(),
+                        userLocation.getLongitude()
+                );
+                mapView.getController().animateTo(point);
+                mapView.getController().setZoom(ZOOM_USER);
+            } else {
+                requestLocationPermission();
+            }
+        });
     }
 
     private int indexOfFuel(FuelType[] fuels, FuelType target) {
