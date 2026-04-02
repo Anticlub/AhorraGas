@@ -65,6 +65,7 @@ public class MainActivity extends BaseActivity {
     private TextView tvDataStatus;
     private TextView tvLocation;
     private ProgressBar progressBar;
+    private EditText etSearch;
     private BottomNavigationView bottomNav;
     private int lastRadiusKm = RadiusUtils.DEFAULT_KM;
     private int lastMarkersCount = RadiusUtils.DEFAULT_MARKERS;
@@ -133,6 +134,7 @@ public class MainActivity extends BaseActivity {
         initViews();
         setupMap();
         setupFab();
+        setupSearch();
         setupBottomNav();
 
         updateLocationStatus(getString(R.string.status_location_pending));
@@ -324,6 +326,7 @@ public class MainActivity extends BaseActivity {
         tvLocation = findViewById(R.id.tvLocation);
         progressBar = findViewById(R.id.progressBar);
         bottomNav = findViewById(R.id.bottomNav);
+        etSearch = findViewById(R.id.etSearch);
     }
 
     private void setupMap() {
@@ -638,6 +641,136 @@ public class MainActivity extends BaseActivity {
         }
     }
 
+    private void setupSearch() {
+        etSearch.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
+                String query = etSearch.getText().toString().trim();
+                if (!query.isEmpty()) {
+                    searchLocalidad(query);
+                }
+                return true;
+            }
+            return false;
+        });
+        etSearch.setOnTouchListener((v, event) -> {
+            if (event.getAction() == android.view.MotionEvent.ACTION_UP) {
+                if (event.getRawX() >= (etSearch.getRight()
+                        - etSearch.getCompoundDrawables()[2].getBounds().width()
+                        - etSearch.getPaddingEnd())) {
+                    String query = etSearch.getText().toString().trim();
+                    if (!query.isEmpty()) {
+                        searchLocalidad(query);
+                    }
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+
+    /**
+     * Geocodifica la localidad introducida usando Nominatim (OpenStreetMap),
+     * centra el mapa en las coordenadas obtenidas y filtra los markers por municipio.
+     *
+     * @param query Nombre de la localidad a buscar.
+     */
+    private void searchLocalidad(String query) {
+        executor.execute(() -> {
+            try {
+                String encoded = java.net.URLEncoder.encode(query, "UTF-8");
+                String url = "https://nominatim.openstreetmap.org/search?city="
+                        + encoded
+                        + "&country=Spain&limit=1&format=json";
+
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection)
+                        new java.net.URL(url).openConnection();
+                conn.setRequestProperty("User-Agent", getPackageName());
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
+
+                java.io.InputStream is = conn.getInputStream();
+                String response = new java.util.Scanner(is).useDelimiter("\\A").next();
+                conn.disconnect();
+
+                // Parsear lat/lon del primer resultado
+                // Formato: [{"lat":"40.123","lon":"-3.456",...}]
+                int latStart = response.indexOf("\"lat\":\"") + 7;
+                int latEnd   = response.indexOf("\"", latStart);
+                int lonStart = response.indexOf("\"lon\":\"") + 7;
+                int lonEnd   = response.indexOf("\"", lonStart);
+
+                if (latStart < 7 || lonStart < 7) {
+                    mainHandler.post(() ->
+                            Toast.makeText(this,
+                                    "No se encontró la localidad", Toast.LENGTH_SHORT).show()
+                    );
+                    return;
+                }
+
+                double lat = Double.parseDouble(response.substring(latStart, latEnd));
+                double lon = Double.parseDouble(response.substring(lonStart, lonEnd));
+
+                mainHandler.post(() -> {
+                    // Centrar mapa en la localidad
+                    GeoPoint point = new GeoPoint(lat, lon);
+                    mapView.getController().animateTo(point);
+                    mapView.getController().setZoom(13.0);
+
+                    // Filtrar markers por municipio
+                    filterMarkersByMunicipio(query);
+
+                    // Ocultar teclado
+                    android.view.inputmethod.InputMethodManager imm =
+                            (android.view.inputmethod.InputMethodManager)
+                                    getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
+                });
+
+            } catch (Exception e) {
+                mainHandler.post(() ->
+                        Toast.makeText(this,
+                                "Error al buscar la localidad", Toast.LENGTH_SHORT).show()
+                );
+            }
+        });
+    }
+
+    /**
+     * Filtra los markers del mapa mostrando solo las gasolineras
+     * cuyo municipio contiene el texto indicado, con colores de precio correctos.
+     *
+     * @param query Texto a buscar en el municipio.
+     */
+    private void filterMarkersByMunicipio(String query) {
+        clearMapMarkers();
+        String lowerQuery = query.toLowerCase(java.util.Locale.getDefault());
+
+        List<Gasolinera> filtered = new ArrayList<>();
+        for (Gasolinera g : allGasolineras) {
+            String municipio = g.getMunicipio();
+            if (municipio != null
+                    && municipio.toLowerCase(java.util.Locale.getDefault()).equals(lowerQuery)
+                    && g.hasPrice(selectedFuel)) {
+                filtered.add(g);
+            }
+        }
+
+        // Calcular rango de precios del conjunto filtrado para colorear correctamente
+        PriceRange range = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
+        for (Gasolinera g : filtered) {
+            g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
+        }
+
+        for (Gasolinera g : filtered) {
+            addMarker(g);
+        }
+        mapView.invalidate();
+
+        if (filtered.isEmpty()) {
+            Toast.makeText(this,
+                    "No hay gasolineras en esa localidad", Toast.LENGTH_SHORT).show();
+        }
+    }
     private void setupFab() {
         fabMiUbicacion.setOnClickListener(v -> {
             if (userLocation != null) {
