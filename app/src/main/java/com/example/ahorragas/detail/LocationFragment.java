@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -34,6 +35,9 @@ public class LocationFragment extends Fragment {
     private static final String ARG_HORARIO   = "arg_horario";
 
     private MapView mapView;
+    private FrameLayout mapContainer;
+    private GeoPoint stationPoint;
+    private String stationMarca;
 
     /**
      * Crea una nueva instancia del fragment con los datos de la gasolinera.
@@ -76,26 +80,11 @@ public class LocationFragment extends Fragment {
 
         double lat = args.getDouble(ARG_LAT);
         double lon = args.getDouble(ARG_LON);
-        String marca = args.getString(ARG_MARCA, "Gasolinera");
+        stationMarca = args.getString(ARG_MARCA, "Gasolinera");
+        stationPoint = new GeoPoint(lat, lon);
 
-        // Mini mapa
-        mapView = view.findViewById(R.id.miniMapView);
-        mapView.setTileSource(TileSourceFactory.MAPNIK);
-        mapView.setMultiTouchControls(true);
-        mapView.setBuiltInZoomControls(false);
+        mapContainer = view.findViewById(R.id.mapContainer);
 
-        GeoPoint point = new GeoPoint(lat, lon);
-        mapView.getController().setZoom(16.0);
-        mapView.getController().setCenter(point);
-
-        Marker marker = new Marker(mapView);
-        marker.setPosition(point);
-        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        marker.setTitle(marca);
-        mapView.getOverlays().add(marker);
-        mapView.invalidate();
-
-        // Botón navegar
         Button btnNavigate = view.findViewById(R.id.btnNavigate);
         btnNavigate.setOnClickListener(v -> {
             Uri geoUri = Uri.parse("geo:" + lat + "," + lon + "?q=" + lat + "," + lon);
@@ -107,12 +96,54 @@ public class LocationFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (mapView != null) mapView.onResume();
+        buildAndAttachMap();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (mapView != null) mapView.onPause();
+        destroyMap();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        destroyMap();
+    }
+
+    /** Crea un MapView nuevo, lo configura y lo añade al contenedor. */
+    private void buildAndAttachMap() {
+        if (mapContainer == null || stationPoint == null) return;
+
+        destroyMap();
+
+        mapView = new MapView(requireContext());
+        mapView.setTileSource(TileSourceFactory.MAPNIK);
+        mapView.setMultiTouchControls(true);
+        mapView.setBuiltInZoomControls(false);
+        mapView.getController().setZoom(16.0);
+        mapView.getController().setCenter(stationPoint);
+
+        Marker marker = new Marker(mapView);
+        marker.setPosition(stationPoint);
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        marker.setTitle(stationMarca);
+        mapView.getOverlays().add(marker);
+
+        mapContainer.removeAllViews();
+        mapContainer.addView(mapView, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+        ));
+        mapView.invalidate();
+    }
+
+    /** Destruye el MapView actual y lo elimina del contenedor. */
+    private void destroyMap() {
+        if (mapView != null) {
+            mapView.onDetach();
+            if (mapContainer != null) mapContainer.removeAllViews();
+            mapView = null;
+        }
     }
 }
