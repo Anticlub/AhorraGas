@@ -64,7 +64,7 @@ public class MainActivity extends BaseActivity {
     private FloatingActionButton fabMiUbicacion;
     private TextView tvDataStatus;
     private TextView tvLocation;
-    private ProgressBar progressBar;
+    private ProgressBar progressBarSearch;
     private EditText etSearch;
     private BottomNavigationView bottomNav;
     private int lastRadiusKm = RadiusUtils.DEFAULT_KM;
@@ -324,7 +324,7 @@ public class MainActivity extends BaseActivity {
         fabMiUbicacion = findViewById(R.id.fabMiUbicacion);
         tvDataStatus = findViewById(R.id.tvDataStatus);
         tvLocation = findViewById(R.id.tvLocation);
-        progressBar = findViewById(R.id.progressBar);
+        progressBarSearch = findViewById(R.id.progressBarSearch);
         bottomNav = findViewById(R.id.bottomNav);
         etSearch = findViewById(R.id.etSearch);
     }
@@ -409,7 +409,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void loadGasolineras() {
-        progressBar.setVisibility(View.VISIBLE);
+        progressBarSearch.setVisibility(View.VISIBLE);
 
         tvDataStatus.setText(
                 repository.getLastOrigin() == null
@@ -425,14 +425,14 @@ public class MainActivity extends BaseActivity {
                     if (isDestroyed() || isFinishing()) return;
                     allGasolineras.clear();
                     allGasolineras.addAll(loaded);
-                    progressBar.setVisibility(View.GONE);
+                    progressBarSearch.setVisibility(View.GONE);
                     updateDisplayForFuel(selectedFuel);
                 });
 
             } catch (RepoError error) {
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
-                    progressBar.setVisibility(View.GONE);
+                    progressBarSearch.setVisibility(View.GONE);
                     tvDataStatus.setText(
                             getString(R.string.error_loading_data) + ": " + buildRepoErrorMessage(error)
                     );
@@ -445,7 +445,7 @@ public class MainActivity extends BaseActivity {
             } catch (Exception error) {
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
-                    progressBar.setVisibility(View.GONE);
+                    progressBarSearch.setVisibility(View.GONE);
                     tvDataStatus.setText(getString(R.string.error_loading_data) + ": " + error.getMessage());
                     Toast.makeText(MainActivity.this, getString(R.string.error_loading_data), Toast.LENGTH_LONG).show();
                 });
@@ -674,7 +674,15 @@ public class MainActivity extends BaseActivity {
      *
      * @param query Nombre de la localidad a buscar.
      */
+    /**
+     * Geocodifica la localidad introducida usando Nominatim (OpenStreetMap),
+     * centra el mapa en las coordenadas obtenidas y filtra los markers por municipio.
+     *
+     * @param query Nombre de la localidad a buscar.
+     */
     private void searchLocalidad(String query) {
+        progressBarSearch.setVisibility(View.VISIBLE);
+
         executor.execute(() -> {
             try {
                 String encoded = java.net.URLEncoder.encode(query, "UTF-8");
@@ -692,18 +700,17 @@ public class MainActivity extends BaseActivity {
                 String response = new java.util.Scanner(is).useDelimiter("\\A").next();
                 conn.disconnect();
 
-                // Parsear lat/lon del primer resultado
-                // Formato: [{"lat":"40.123","lon":"-3.456",...}]
                 int latStart = response.indexOf("\"lat\":\"") + 7;
                 int latEnd   = response.indexOf("\"", latStart);
                 int lonStart = response.indexOf("\"lon\":\"") + 7;
                 int lonEnd   = response.indexOf("\"", lonStart);
 
                 if (latStart < 7 || lonStart < 7) {
-                    mainHandler.post(() ->
-                            Toast.makeText(this,
-                                    "No se encontró la localidad", Toast.LENGTH_SHORT).show()
-                    );
+                    mainHandler.post(() -> {
+                        progressBarSearch.setVisibility(View.GONE);
+                        Toast.makeText(this,
+                                "No se encontró la localidad", Toast.LENGTH_SHORT).show();
+                    });
                     return;
                 }
 
@@ -711,15 +718,14 @@ public class MainActivity extends BaseActivity {
                 double lon = Double.parseDouble(response.substring(lonStart, lonEnd));
 
                 mainHandler.post(() -> {
-                    // Centrar mapa en la localidad
+                    progressBarSearch.setVisibility(View.GONE);
+
                     GeoPoint point = new GeoPoint(lat, lon);
                     mapView.getController().animateTo(point);
                     mapView.getController().setZoom(13.0);
 
-                    // Filtrar markers por municipio
                     filterMarkersByMunicipio(query);
 
-                    // Ocultar teclado
                     android.view.inputmethod.InputMethodManager imm =
                             (android.view.inputmethod.InputMethodManager)
                                     getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
@@ -727,12 +733,43 @@ public class MainActivity extends BaseActivity {
                 });
 
             } catch (Exception e) {
-                mainHandler.post(() ->
-                        Toast.makeText(this,
-                                "Error al buscar la localidad", Toast.LENGTH_SHORT).show()
-                );
+                mainHandler.post(() -> {
+                    progressBarSearch.setVisibility(View.GONE);
+                    Toast.makeText(this,
+                            "Error al buscar la localidad", Toast.LENGTH_SHORT).show();
+                });
             }
         });
+    }
+
+    /**
+     * Normaliza un texto eliminando tildes y pasándolo a minúsculas
+     * para comparaciones insensibles a acentos.
+     *
+     * @param text Texto a normalizar.
+     * @return Texto normalizado.
+     */
+    private String normalize(String text) {
+        if (text == null) return "";
+        String normalized = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .toLowerCase(java.util.Locale.getDefault());
+    }
+
+    /**
+     * Comprueba si el municipio coincide con la búsqueda,
+     * tolerando municipios con nombres compuestos separados por '/'.
+     *
+     * @param normalizedMunicipio Municipio ya normalizado.
+     * @param normalizedQuery     Búsqueda ya normalizada.
+     * @return true si alguna parte del municipio coincide con la búsqueda.
+     */
+    private boolean matchesMunicipio(String normalizedMunicipio, String normalizedQuery) {
+        if (normalizedMunicipio.equals(normalizedQuery)) return true;
+        for (String part : normalizedMunicipio.split("/")) {
+            if (part.trim().equals(normalizedQuery)) return true;
+        }
+        return false;
     }
 
     /**
@@ -743,13 +780,11 @@ public class MainActivity extends BaseActivity {
      */
     private void filterMarkersByMunicipio(String query) {
         clearMapMarkers();
-        String lowerQuery = query.toLowerCase(java.util.Locale.getDefault());
+        String normalizedQuery = normalize(query);
 
         List<Gasolinera> filtered = new ArrayList<>();
         for (Gasolinera g : allGasolineras) {
-            String municipio = g.getMunicipio();
-            if (municipio != null
-                    && municipio.toLowerCase(java.util.Locale.getDefault()).equals(lowerQuery)
+            if (matchesMunicipio(normalize(g.getMunicipio()), normalizedQuery)
                     && g.hasPrice(selectedFuel)) {
                 filtered.add(g);
             }
