@@ -157,13 +157,11 @@ public class MainActivity extends BaseActivity {
             bottomNav.setSelectedItemId(R.id.nav_map);
         }
 
-        // Si no hay ningún vehículo, mostrar diálogo bloqueante
         if (!VehiclePrefs.hasVehicles(this)) {
             showFirstVehicleDialog();
             return;
         }
 
-        // Sincronizar combustible con el vehículo activo
         FuelType savedFuel = FuelType.fromString(
                 PreferenceManager.getDefaultSharedPreferences(this)
                         .getString(PREF_SELECTED_FUEL, FuelType.GASOLEO_A.name())
@@ -174,14 +172,12 @@ public class MainActivity extends BaseActivity {
             updateDisplayForFuel(selectedFuel);
         }
 
-        // si el radio de preferencias es diferente se actualiza
         int currentRadius = RadiusUtils.loadRadiusKm(this);
         if (currentRadius != lastRadiusKm) {
             lastRadiusKm = currentRadius;
             updateDisplayForFuel(selectedFuel);
         }
 
-        // si el marcador de las gasolineras cambia se actualiza
         int currentMarkers = RadiusUtils.loadMarkersCount(this);
         if (currentMarkers != lastMarkersCount) {
             lastMarkersCount = currentMarkers;
@@ -241,6 +237,19 @@ public class MainActivity extends BaseActivity {
         etCons.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         layout.addView(etCons);
 
+        // ── Capacidad depósito (opcional) ────────────────────────────────────
+        TextView labelTank = new TextView(this);
+        labelTank.setText("Capacidad depósito (L)  · opcional");
+        labelTank.setTextColor(0xFF333333);
+        labelTank.setTextSize(13);
+        labelTank.setPadding(0, dp(12), 0, 0);
+        layout.addView(labelTank);
+
+        EditText etTank = new EditText(this);
+        etTank.setHint("Ej: 50  (entre 1 y 200)");
+        etTank.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        layout.addView(etTank);
+
         TextView labelFuel = new TextView(this);
         labelFuel.setText(getString(R.string.dialogo_vehiculo_combustible));
         labelFuel.setTextColor(0xFF333333);
@@ -268,16 +277,17 @@ public class MainActivity extends BaseActivity {
                 if (fuels[i] == selectedFuelLocal[0]) { checked = i; break; }
             }
             new AlertDialog.Builder(this)
-                    .setTitle(getString(R.string.dialogo_vehiculo_titulo))                    .setSingleChoiceItems(fuelNames, checked, (d, which) -> {
+                    .setTitle(getString(R.string.dialogo_vehiculo_titulo))
+                    .setSingleChoiceItems(fuelNames, checked, (d, which) -> {
                         selectedFuelLocal[0] = fuels[which];
                         tvFuelSelector.setText(selectedFuelLocal[0].displayName());
                         d.dismiss();
                     })
-                    .setNegativeButton(getString(R.string.dialogo_vehiculo_cancelar), null)                    .show();
+                    .setNegativeButton(getString(R.string.dialogo_vehiculo_cancelar), null)
+                    .show();
         });
         layout.addView(tvFuelSelector);
 
-        // Construir diálogo — sin cancelar, sin cerrar tocando fuera
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.dialogo_vehiculo_titulo))
                 .setView(layout)
@@ -287,10 +297,10 @@ public class MainActivity extends BaseActivity {
 
         dialog.show();
 
-        // Sobreescribir el botón positivo para validar antes de cerrar
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String name = etName.getText().toString().trim();
             String consStr = etCons.getText().toString().trim().replace(",", ".");
+            String tankStr = etTank.getText().toString().trim().replace(",", ".");
 
             if (name.isEmpty()) {
                 Toast.makeText(this, getString(R.string.dialogo_vehiculo_nombre_vacio), Toast.LENGTH_SHORT).show();
@@ -306,8 +316,20 @@ public class MainActivity extends BaseActivity {
                 return;
             }
 
-            Vehicle vehicle = new Vehicle(name, selectedFuelLocal[0], cons);
-            VehiclePrefs.addVehicle(this, vehicle); // también sincroniza pref_selected_fuel
+            // Depósito opcional — vacío = 0 = no especificado
+            double tank = 0.0;
+            if (!tankStr.isEmpty()) {
+                try {
+                    tank = Double.parseDouble(tankStr);
+                    if (tank <= 0 || tank > 200) throw new NumberFormatException();
+                } catch (Exception e) {
+                    Toast.makeText(this, "Capacidad no válida. Introduce un número entre 1 y 200.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+
+            Vehicle vehicle = new Vehicle(name, selectedFuelLocal[0], cons, tank);
+            VehiclePrefs.addVehicle(this, vehicle);
 
             selectedFuel = selectedFuelLocal[0];
             MarkerBitmapFactory.clearCache();
