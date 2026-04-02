@@ -73,6 +73,12 @@ public class GasolineraRepository {
         return lastOrigin;
     }
 
+    /**
+     * Invalida la caché en memoria forzando una recarga completa en la siguiente llamada
+     * a {@link #getGasolineras()}. Útil para implementar un botón de "Actualizar" o para
+     * limpiar datos corruptos. Si también se quiere forzar ignorar la caché de fichero,
+     * llamar adicionalmente a {@link CachedRemoteApiDataSource#requestForceRefresh()}.
+     */
     public synchronized void clearMemoryCache() {
         memoryCache = null;
         memoryCacheTimestamp = 0L;
