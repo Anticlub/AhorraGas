@@ -1,12 +1,11 @@
 package com.example.ahorragas;
 
-import com.example.ahorragas.map.GasolineraInfoWindow;
+import com.example.ahorragas.detail.StationDetailActivity;
 
 import android.Manifest;
+import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.InputType;
 import android.view.MotionEvent;
 import android.view.View;
@@ -43,7 +42,6 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
-import org.osmdroid.views.overlay.infowindow.InfoWindow;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
@@ -60,8 +58,7 @@ public class MainActivity extends BaseActivity {
     private static final double ZOOM_SPAIN = 6.0;
     private static final double ZOOM_USER = 14.0;
     private static final double ZOOM_STATION = 16.0;
-    private static final int MAX_MAP_MARKERS = 100;
-    private static final int INFO_DELAY_MS = 450;
+
 
     private MapView mapView;
     private FloatingActionButton fabMiUbicacion;
@@ -337,7 +334,6 @@ public class MainActivity extends BaseActivity {
 
         mapView.setOnTouchListener((v, event) -> {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                InfoWindow.closeAllInfoWindowsOn(mapView);
                 if (locationOverlay != null) {
                     locationOverlay.disableFollowLocation();
                 }
@@ -551,12 +547,7 @@ public class MainActivity extends BaseActivity {
         Marker marker = new Marker(mapView);
         marker.setPosition(new GeoPoint(gasolinera.getLat(), gasolinera.getLon()));
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-
-        String marca = safeText(gasolinera.getMarca());
-        marker.setTitle(marca.isEmpty() ? getString(R.string.sin_marca) : marca);
-        marker.setSnippet(buildMarkerSnippet(gasolinera));
-
-        marker.setInfoWindow(new GasolineraInfoWindow(mapView, gasolinera, selectedFuel));
+        marker.setInfoWindow(null);
 
         marker.setIcon(new android.graphics.drawable.BitmapDrawable(
                 getResources(),
@@ -564,8 +555,9 @@ public class MainActivity extends BaseActivity {
         ));
 
         marker.setOnMarkerClickListener((clickedMarker, ignoredMapView) -> {
-            InfoWindow.closeAllInfoWindowsOn(mapView);
-            clickedMarker.showInfoWindow();
+            Intent intent = new Intent(this, StationDetailActivity.class);
+            intent.putExtra(StationDetailActivity.EXTRA_GASOLINERA, gasolinera);
+            startActivity(intent);
             return true;
         });
 
@@ -580,15 +572,6 @@ public class MainActivity extends BaseActivity {
         }
         mapView.getOverlays().removeAll(toRemove);
         markerMap.clear();
-    }
-
-    private void animateMapToGasolinera(Gasolinera gasolinera) {
-        focusOnGasolinera(gasolinera);
-        Marker marker = markerMap.get(gasolinera.getId());
-        if (marker != null) {
-            new Handler(Looper.getMainLooper())
-                    .postDelayed(marker::showInfoWindow, INFO_DELAY_MS);
-        }
     }
 
     private void focusOnGasolinera(Gasolinera gasolinera) {
@@ -655,18 +638,6 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    private String buildMarkerSnippet(Gasolinera gasolinera) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(gasolinera.getFormattedPrice(selectedFuel))
-                .append(" · ")
-                .append(gasolinera.getDisplayAddress());
-        String horario = gasolinera.getFormattedHorario();
-        if (horario != null) {
-            sb.append("\n").append(horario);
-        }
-        return sb.toString();
-    }
-
     private void setupFab() {
         fabMiUbicacion.setOnClickListener(v -> {
             if (userLocation != null) {
@@ -683,13 +654,6 @@ public class MainActivity extends BaseActivity {
                 requestLocationPermission();
             }
         });
-    }
-
-    private int indexOfFuel(FuelType[] fuels, FuelType target) {
-        for (int i = 0; i < fuels.length; i++) {
-            if (fuels[i] == target) return i;
-        }
-        return 0;
     }
 
     private String safeText(String value) {
