@@ -5,12 +5,11 @@
     android:orientation="vertical">
 
     <!-- Mini mapa -->
-    <org.osmdroid.views.MapView
-        android:id="@+id/miniMapView"
+    <FrameLayout
+        android:id="@+id/mapContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clickable="true" />
+        android:layout_weight="1" />
 
     <!-- Botón navegar -->
     <Button
