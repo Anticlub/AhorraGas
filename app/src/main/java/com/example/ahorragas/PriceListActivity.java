@@ -39,6 +39,10 @@ public class PriceListActivity extends BaseActivity {
     private TextView tvError;
     private View layoutError;
     private Button btnRetry;
+    private final java.util.concurrent.ExecutorService executor =
+            java.util.concurrent.Executors.newSingleThreadExecutor();
+    private final android.os.Handler mainHandler =
+            new android.os.Handler(android.os.Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +66,12 @@ public class PriceListActivity extends BaseActivity {
                         .getString("pref_selected_fuel", FuelType.GASOLEO_A.name())
         );
         loadAndDisplay();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        executor.shutdownNow();
     }
 
     private void bindViews() {
@@ -129,7 +139,7 @@ public class PriceListActivity extends BaseActivity {
         locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
             @Override
             public void onSuccess(Location location) {
-                new Thread(() -> {
+                executor.execute(() -> {
                     try {
                         int radiusKm = RadiusUtils.loadRadiusKm(PriceListActivity.this);
                         double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
@@ -154,7 +164,8 @@ public class PriceListActivity extends BaseActivity {
                             g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
                         }
 
-                        runOnUiThread(() -> {
+                        mainHandler.post(() -> {
+                            if (isDestroyed() || isFinishing()) return;
                             if (inRadius.isEmpty()) {
                                 showEmpty();
                             } else {
@@ -163,10 +174,12 @@ public class PriceListActivity extends BaseActivity {
                         });
 
                     } catch (Exception e) {
-                        runOnUiThread(() ->
-                                showError(getString(R.string.error_cargando_gasolineras)));
+                        mainHandler.post(() -> {
+                            if (isDestroyed() || isFinishing()) return;
+                            showError(getString(R.string.error_cargando_gasolineras));
+                        });
                     }
-                }).start();
+                });
             }
 
             @Override
