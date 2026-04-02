@@ -48,11 +48,14 @@ public class FileJsonCache {
     }
 
     private String readAll(File file) throws Exception {
-        try (FileInputStream fis = new FileInputStream(file)) {
-            byte[] bytes = new byte[(int) file.length()];
-            int read = fis.read(bytes);
-            if (read <= 0) return "";
-            return new String(bytes, StandardCharsets.UTF_8);
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+            return sb.toString();
         }
     }
 
