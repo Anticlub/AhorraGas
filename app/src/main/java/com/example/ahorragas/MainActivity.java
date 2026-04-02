@@ -74,6 +74,8 @@ public class MainActivity extends BaseActivity {
     private List<Gasolinera> visibleGasolineras = new ArrayList<>();
     private FuelType selectedFuel = FuelType.GASOLEO_A;
     private Location userLocation;
+    private Location searchLocation;
+    private String searchQuery;
     private final Map<Integer, Marker> markerMap = new HashMap<>();
     private MyLocationNewOverlay locationOverlay;
 
@@ -740,6 +742,10 @@ public class MainActivity extends BaseActivity {
                     GeoPoint point = new GeoPoint(lat, lon);
                     mapView.getController().animateTo(point);
                     mapView.getController().setZoom(13.0);
+                    searchLocation = new Location("search");
+                    searchLocation.setLatitude(lat);
+                    searchLocation.setLongitude(lon);
+                    searchQuery = query;
 
                     filterMarkersByMunicipio(query);
 
@@ -844,6 +850,8 @@ public class MainActivity extends BaseActivity {
                 if (locationOverlay != null) {
                     locationOverlay.enableFollowLocation();
                 }
+                searchLocation = null;
+                searchQuery = null;
                 etSearch.setText("");
                 GeoPoint point = new GeoPoint(
                         userLocation.getLatitude(),
@@ -856,6 +864,26 @@ public class MainActivity extends BaseActivity {
                 requestLocationPermission();
             }
         });
+    }
+
+    @Override
+    protected void navigateToPrice() {
+        Intent intent = new Intent(this, PriceListActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        if (searchQuery != null) {
+            intent.putExtra("search_query", searchQuery);
+        }
+        startActivity(intent);
+    }
+
+    @Override
+    protected void navigateToDistanceList() {
+        Intent intent = new Intent(this, DistanceListActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        if (searchQuery != null) {
+            intent.putExtra("search_query", searchQuery);
+        }
+        startActivity(intent);
     }
 
     private String safeText(String value) {
