@@ -774,19 +774,36 @@ public class MainActivity extends BaseActivity {
 
     /**
      * Comprueba si el municipio coincide con la búsqueda.
+     * Maneja los formatos del Ministerio:
+     * - "Casar (El)" → "el casar"
+     * - "Donostia-San Sebastián" → "donostia" o "san sebastian"
+     * - "Elche/Elx" → "elche" o "elx"
      *
      * @param normalizedMunicipio Municipio ya normalizado.
      * @param normalizedQuery     Búsqueda ya normalizada.
-     * @return true si alguna parte del municipio coincide con la búsqueda.
+     * @return true si el municipio coincide con la búsqueda.
      */
     private boolean matchesMunicipio(String normalizedMunicipio, String normalizedQuery) {
         if (normalizedMunicipio.equals(normalizedQuery)) return true;
-        for (String part : normalizedMunicipio.split("/")) {
-            if (part.trim().equals(normalizedQuery)) return true;
+
+        // Formato "Nombre (Artículo)" → reconstruir como "artículo nombre"
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("^(.+?)\\s*\\(([^)]+)\\)$")
+                .matcher(normalizedMunicipio);
+        if (m.matches()) {
+            String reordered = m.group(2).trim() + " " + m.group(1).trim();
+            if (reordered.equals(normalizedQuery)) return true;
         }
+
+        // Formato con "/" (nombre bilingüe) o "-" (nombre compuesto)
+        for (String separator : new String[]{"/", "-"}) {
+            for (String part : normalizedMunicipio.split(java.util.regex.Pattern.quote(separator))) {
+                if (part.trim().equals(normalizedQuery)) return true;
+            }
+        }
+
         return false;
     }
-
     /**
      * Filtra los markers del mapa mostrando solo las gasolineras
      * cuyo municipio contiene el texto indicado.
