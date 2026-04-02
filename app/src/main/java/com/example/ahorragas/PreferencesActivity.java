@@ -80,6 +80,7 @@ public class PreferencesActivity extends BaseActivity {
             }
         });
     }
+
     // ─── Radio de búsqueda ────────────────────────────────────────────────────
 
     /**
@@ -87,21 +88,21 @@ public class PreferencesActivity extends BaseActivity {
      * El SeekBar va de 0 a 49 (offset de 1) → representa 1–50 km.
      */
     private void setupRadiusSelector() {
-        seekBarRadius  = findViewById(R.id.seekBarRadius);
-        tvRadiusValue  = findViewById(R.id.tvRadiusValue);
+        seekBarRadius = findViewById(R.id.seekBarRadius);
+        tvRadiusValue = findViewById(R.id.tvRadiusValue);
 
         int savedKm = RadiusUtils.loadRadiusKm(this);
-        applyRadius(savedKm, false);   // actualiza label sin guardar de nuevo
+        applyRadius(savedKm, false);
 
         seekBarRadius.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                int km = progress + RadiusUtils.MIN_KM;   // progress 0..49 → 1..50 km
+                int km = progress + RadiusUtils.MIN_KM;
                 updateRadiusLabel(km);
             }
 
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) { /* no-op */ }
+            public void onStartTrackingTouch(SeekBar seekBar) {}
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
@@ -113,8 +114,8 @@ public class PreferencesActivity extends BaseActivity {
 
     /**
      * Aplica un valor de radio al SeekBar y al label.
-     * @param km     valor en kilómetros (1–50)
-     * @param save   si true, persiste el valor en SharedPreferences
+     * @param km   valor en kilómetros (1–50)
+     * @param save si true, persiste el valor en SharedPreferences
      */
     private void applyRadius(int km, boolean save) {
         int clamped = Math.max(RadiusUtils.MIN_KM, Math.min(RadiusUtils.MAX_KM, km));
@@ -228,12 +229,16 @@ public class PreferencesActivity extends BaseActivity {
         tvName.setTypeface(null, android.graphics.Typeface.BOLD);
         textCol.addView(tvName);
 
-        // Detalle: combustible + consumo (o "sin consumo" si no está especificado)
+        // Detalle: combustible + consumo + depósito
         String consDetail = vehicle.hasConsumption()
                 ? String.format(Locale.getDefault(), "%.1f L/100km", vehicle.getConsumption())
                 : "consumo no especificado";
+        String tankDetail = vehicle.hasTankCapacity()
+                ? String.format(Locale.getDefault(), " · %.0f L depósito", vehicle.getTankCapacity())
+                : "";
+
         TextView tvDetail = new TextView(this);
-        tvDetail.setText(vehicle.getFuelType().displayName() + " · " + consDetail);
+        tvDetail.setText(vehicle.getFuelType().displayName() + " · " + consDetail + tankDetail);
         tvDetail.setTextColor(0xFFAAAAAA);
         tvDetail.setTextSize(12);
         textCol.addView(tvDetail);
@@ -248,6 +253,7 @@ public class PreferencesActivity extends BaseActivity {
         btnDelete.setOnClickListener(v -> confirmDelete(index));
         card.addView(btnDelete);
 
+        // Pulsar la tarjeta activa el vehículo
         card.setClickable(true);
         card.setFocusable(true);
         final int finalIndex = index;
@@ -302,7 +308,6 @@ public class PreferencesActivity extends BaseActivity {
         EditText etCons = new EditText(this);
         etCons.setHint("Ej: 6.5  (entre 0.1 y 100)");
         etCons.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        // Solo pre-rellenar si el vehículo tiene consumo especificado (> 0)
         if (existing != null && existing.hasConsumption()) {
             etCons.setText(String.format(Locale.getDefault(), "%.1f", existing.getConsumption()));
         }
@@ -310,6 +315,25 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView tvConsError = makeErrorLabel();
         layout.addView(tvConsError);
+
+        // ── Capacidad depósito (opcional) ────────────────────────────────────
+        TextView labelTank = new TextView(this);
+        labelTank.setText("Capacidad depósito (L)  · opcional");
+        labelTank.setTextColor(0xFFCCCCCC);
+        labelTank.setTextSize(13);
+        labelTank.setPadding(0, dp(12), 0, 0);
+        layout.addView(labelTank);
+
+        EditText etTank = new EditText(this);
+        etTank.setHint("Ej: 50  (entre 1 y 200)");
+        etTank.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        if (existing != null && existing.hasTankCapacity()) {
+            etTank.setText(String.format(Locale.getDefault(), "%.0f", existing.getTankCapacity()));
+        }
+        layout.addView(etTank);
+
+        TextView tvTankError = makeErrorLabel();
+        layout.addView(tvTankError);
 
         // ── Combustible ──────────────────────────────────────────────────────
         TextView labelFuel = new TextView(this);
@@ -397,9 +421,26 @@ public class PreferencesActivity extends BaseActivity {
                 tvConsError.setVisibility(View.GONE);
             }
 
+            // Validar depósito (opcional — vacío = 0 = no especificado)
+            String tankStr = etTank.getText().toString().trim().replace(",", ".");
+            double tank = 0.0;
+            if (!tankStr.isEmpty()) {
+                try {
+                    tank = Double.parseDouble(tankStr);
+                    if (tank <= 0 || tank > 200) throw new NumberFormatException();
+                    tvTankError.setVisibility(View.GONE);
+                } catch (Exception e) {
+                    tvTankError.setText("Valor no válido. Introduce un número entre 1 y 200.");
+                    tvTankError.setVisibility(View.VISIBLE);
+                    hasError = true;
+                }
+            } else {
+                tvTankError.setVisibility(View.GONE);
+            }
+
             if (hasError) return;
 
-            Vehicle vehicle = new Vehicle(name, selectedFuel[0], cons);
+            Vehicle vehicle = new Vehicle(name, selectedFuel[0], cons, tank);
 
             if (isNew) {
                 boolean added = VehiclePrefs.addVehicle(this, vehicle);

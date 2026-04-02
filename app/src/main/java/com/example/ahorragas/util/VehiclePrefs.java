@@ -25,8 +25,8 @@ import java.util.List;
 public final class VehiclePrefs {
 
     public static final int MAX_VEHICLES = 3;
-    private static final String KEY_VEHICLES     = "pref_vehicles";
-    private static final String KEY_ACTIVE       = "pref_active_vehicle";
+    private static final String KEY_VEHICLES      = "pref_vehicles";
+    private static final String KEY_ACTIVE        = "pref_active_vehicle";
     private static final String KEY_SELECTED_FUEL = "pref_selected_fuel";
 
     private VehiclePrefs() {}
@@ -45,7 +45,8 @@ public final class VehiclePrefs {
                 String name = obj.optString("name", "Vehículo " + (i + 1));
                 String fuel = obj.optString("fuel", FuelType.GASOLEO_A.name());
                 double cons = obj.optDouble("consumption", 6.0);
-                list.add(new Vehicle(name, FuelType.fromString(fuel), cons));
+                double tank = obj.optDouble("tankCapacity", 0.0);
+                list.add(new Vehicle(name, FuelType.fromString(fuel), cons, tank));
             }
         } catch (Exception e) {
             android.util.Log.e("VehiclePrefs", "Error leyendo vehículos: " + e.getMessage(), e);
@@ -83,9 +84,10 @@ public final class VehiclePrefs {
             for (int i = 0; i < limit; i++) {
                 Vehicle v = vehicles.get(i);
                 JSONObject obj = new JSONObject();
-                obj.put("name",        v.getName());
-                obj.put("fuel",        v.getFuelType().name());
-                obj.put("consumption", v.getConsumption());
+                obj.put("name",         v.getName());
+                obj.put("fuel",         v.getFuelType().name());
+                obj.put("consumption",  v.getConsumption());
+                obj.put("tankCapacity", v.getTankCapacity());
                 arr.put(obj);
             }
             prefs(ctx).edit().putString(KEY_VEHICLES, arr.toString()).apply();
@@ -105,7 +107,6 @@ public final class VehiclePrefs {
         if (list.size() >= MAX_VEHICLES) return false;
         list.add(vehicle);
         saveVehicles(ctx, list);
-        // Si es el primero, activarlo y sincronizar combustible
         if (list.size() == 1) {
             prefs(ctx).edit().putInt(KEY_ACTIVE, 0).apply();
         }
