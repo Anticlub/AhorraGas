@@ -10,10 +10,11 @@ public class GasolineraRepository {
 
     private GasolineraDataSource primary;
 
-    // Cache en memoria (solo mientras la app está abierta)
+    // Cache en memoria con expiración de 30 minutos
+    private static final long MEMORY_CACHE_MAX_AGE_MS = 30L * 60L * 1000L;
     private List<Gasolinera> memoryCache;
+    private long memoryCacheTimestamp = 0L;
     private DataSourceOrigin lastOrigin;
-
     public GasolineraRepository(GasolineraDataSource primary) {
         this.primary = primary;
     }
@@ -29,14 +30,19 @@ public class GasolineraRepository {
 
     public synchronized List<Gasolinera> getGasolineras() throws RepoError {
 
-        // 1) Si ya está en memoria, devolver directamente
-        if (memoryCache != null) {
+        // 1) Si ya está en memoria y no ha expirado, devolver directamente
+        long ageMs = System.currentTimeMillis() - memoryCacheTimestamp;
+        if (memoryCache != null && ageMs <= MEMORY_CACHE_MAX_AGE_MS) {
             return memoryCache;
         }
+
+        // Si ha expirado, limpiar para forzar recarga
+        memoryCache = null;
 
         // 2) Cargar desde primary (CachedRemoteApiDataSource ya incluye fallback a cache de archivo)
         try {
             memoryCache = primary.loadGasolineras();
+            memoryCacheTimestamp = System.currentTimeMillis();
 
             if (memoryCache == null || memoryCache.isEmpty()) {
                 throw new RepoError(RepoError.Type.EMPTY_RESPONSE, "La fuente devolvió datos vacíos");
@@ -67,7 +73,14 @@ public class GasolineraRepository {
         return lastOrigin;
     }
 
+    /**
+     * Invalida la caché en memoria forzando una recarga completa en la siguiente llamada
+     * a {@link #getGasolineras()}. Útil para implementar un botón de "Actualizar" o para
+     * limpiar datos corruptos. Si también se quiere forzar ignorar la caché de fichero,
+     * llamar adicionalmente a {@link CachedRemoteApiDataSource#requestForceRefresh()}.
+     */
     public synchronized void clearMemoryCache() {
         memoryCache = null;
+        memoryCacheTimestamp = 0L;
     }
 }
