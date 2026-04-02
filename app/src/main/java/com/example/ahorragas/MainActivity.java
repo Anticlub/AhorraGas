@@ -827,12 +827,14 @@ public class MainActivity extends BaseActivity {
                 if (locationOverlay != null) {
                     locationOverlay.enableFollowLocation();
                 }
+                etSearch.setText("");
                 GeoPoint point = new GeoPoint(
                         userLocation.getLatitude(),
                         userLocation.getLongitude()
                 );
                 mapView.getController().animateTo(point);
                 mapView.getController().setZoom(ZOOM_USER);
+                updateDisplayForFuel(selectedFuel);
             } else {
                 requestLocationPermission();
             }
