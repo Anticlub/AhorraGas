@@ -310,9 +310,10 @@ public class PreferencesActivity extends BaseActivity {
         tvName.setTypeface(null, android.graphics.Typeface.BOLD);
         textCol.addView(tvName);
 
+        // Mostrar céntimos como número entero, porcentaje como porcentaje
         String typeLabel = discount.getType() == Discount.Type.PERCENTAGE
                 ? String.format(Locale.getDefault(), "%.1f%%", discount.getValue())
-                : String.format(Locale.getDefault(), "%.3f €/L", discount.getValue());
+                : String.format(Locale.getDefault(), "%.0f cts/L", discount.getValue());
 
         TextView tvDetail = new TextView(this);
         tvDetail.setText("Descuento: " + typeLabel);
@@ -568,7 +569,7 @@ public class PreferencesActivity extends BaseActivity {
         final Discount.Type[] selectedType = {
                 existing != null ? existing.getType() : Discount.Type.CENTS_PER_LITER
         };
-        final String[] typeNames = {"Céntimos por litro (€/L)", "Porcentaje (%)"};
+        final String[] typeNames = {"Céntimos por litro", "Porcentaje (%)"};
         final Discount.Type[] typeValues = {Discount.Type.CENTS_PER_LITER, Discount.Type.PERCENTAGE};
 
         TextView tvTypeSelector = new TextView(this);
@@ -601,10 +602,16 @@ public class PreferencesActivity extends BaseActivity {
         layout.addView(labelValue);
 
         EditText etValue = new EditText(this);
-        etValue.setHint("Ej: 0.06 para €/L  ó  5 para %");
+        // Hint dinámico según tipo
+        etValue.setHint("Ej: 6 para 6 cts/L  ó  5 para 5%");
         etValue.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         if (existing != null) {
-            etValue.setText(String.format(Locale.getDefault(), "%.3f", existing.getValue()));
+            // Al editar, mostrar el valor en céntimos si es CENTS_PER_LITER
+            if (existing.getType() == Discount.Type.CENTS_PER_LITER) {
+                etValue.setText(String.format(Locale.getDefault(), "%.0f", existing.getValue()));
+            } else {
+                etValue.setText(String.format(Locale.getDefault(), "%.1f", existing.getValue()));
+            }
         }
         layout.addView(etValue);
 
@@ -635,11 +642,13 @@ public class PreferencesActivity extends BaseActivity {
                     if (value <= 0) throw new NumberFormatException();
                     if (selectedType[0] == Discount.Type.PERCENTAGE && value > 100)
                         throw new NumberFormatException();
+                    if (selectedType[0] == Discount.Type.CENTS_PER_LITER && value > 50)
+                        throw new NumberFormatException();
                     tvValueError.setVisibility(View.GONE);
                 } catch (Exception e) {
                     tvValueError.setText(selectedType[0] == Discount.Type.PERCENTAGE
                             ? "Introduce un porcentaje entre 0.1 y 100."
-                            : "Introduce un valor positivo en €/L.");
+                            : "Introduce céntimos entre 0.1 y 50.");
                     tvValueError.setVisibility(View.VISIBLE);
                     hasError = true;
                 }

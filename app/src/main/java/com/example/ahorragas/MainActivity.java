@@ -71,10 +71,12 @@ public class MainActivity extends BaseActivity {
     private BottomNavigationView bottomNav;
     private int lastRadiusKm = RadiusUtils.DEFAULT_KM;
     private int lastMarkersCount = RadiusUtils.DEFAULT_MARKERS;
+    private int lastDiscountsVersion = -1;
 
     private final List<Gasolinera> allGasolineras = new ArrayList<>();
     private final Map<String, List<Gasolinera>> municipioIndex = new HashMap<>();
     private List<Gasolinera> searchGasolineras = null;
+    private String lastSearchQuery = null;
     private List<Gasolinera> visibleGasolineras = new ArrayList<>();
     private FuelType selectedFuel = FuelType.GASOLEO_A;
     private Location userLocation;
@@ -175,18 +177,34 @@ public class MainActivity extends BaseActivity {
             selectedFuel = savedFuel;
             MarkerBitmapFactory.clearCache();
             updateDisplayForFuel(selectedFuel);
+            return;
         }
 
         int currentRadius = RadiusUtils.loadRadiusKm(this);
         if (currentRadius != lastRadiusKm) {
             lastRadiusKm = currentRadius;
             updateDisplayForFuel(selectedFuel);
+            return;
         }
 
         int currentMarkers = RadiusUtils.loadMarkersCount(this);
         if (currentMarkers != lastMarkersCount) {
             lastMarkersCount = currentMarkers;
             updateDisplayForFuel(selectedFuel);
+            return;
+        }
+
+        // ── Detectar cambios en descuentos y refrescar mapa ──────────────────
+        int currentDiscountsVersion = DiscountPrefs.getVersion(this);
+        if (currentDiscountsVersion != lastDiscountsVersion) {
+            lastDiscountsVersion = currentDiscountsVersion;
+            MarkerBitmapFactory.clearCache();
+            if (lastSearchQuery != null) {
+                // Estamos en modo búsqueda → refrescar los markers del municipio
+                filterMarkersByMunicipio(lastSearchQuery);
+            } else {
+                updateDisplayForFuel(selectedFuel);
+            }
         }
     }
 
@@ -569,11 +587,15 @@ public class MainActivity extends BaseActivity {
     private void addMarker(Gasolinera gasolinera) {
         if (gasolinera.getLat() == null || gasolinera.getLon() == null) return;
 
-        // Aplicar descuento al precio del marcador si existe
-        Discount discount = DiscountPrefs.findForBrand(this, gasolinera.getMarca());
+        // Calcular precio con descuento sin modificar el objeto original
         Double originalPrice = gasolinera.getPrecio(selectedFuel);
-        if (discount != null && originalPrice != null && originalPrice > 0) {
-            gasolinera.setPrecio(selectedFuel, discount.applyTo(originalPrice));
+        String priceText;
+        if (originalPrice != null && originalPrice > 0) {
+            double discounted = DiscountPrefs.applyAllDiscounts(
+                    this, gasolinera.getMarca(), originalPrice);
+            priceText = String.format(java.util.Locale.getDefault(), "%.3f €", discounted);
+        } else {
+            priceText = gasolinera.getFormattedPrice(selectedFuel);
         }
 
         Marker marker = new Marker(mapView);
@@ -583,7 +605,7 @@ public class MainActivity extends BaseActivity {
 
         marker.setIcon(new android.graphics.drawable.BitmapDrawable(
                 getResources(),
-                MarkerBitmapFactory.createMarker(this, gasolinera, selectedFuel)
+                MarkerBitmapFactory.createMarker(this, gasolinera, selectedFuel, priceText)
         ));
 
         marker.setOnMarkerClickListener((clickedMarker, ignoredMapView) -> {
@@ -741,7 +763,6 @@ public class MainActivity extends BaseActivity {
                 double lon = Double.parseDouble(response.substring(lonStart, lonEnd));
 
                 mainHandler.post(() -> {
-
                     GeoPoint point = new GeoPoint(lat, lon);
                     mapView.getController().animateTo(point);
                     mapView.getController().setZoom(13.0);
@@ -782,10 +803,6 @@ public class MainActivity extends BaseActivity {
 
     /**
      * Comprueba si el municipio coincide con la búsqueda.
-     * Maneja los formatos del Ministerio:
-     * - "Casar (El)" → "el casar"
-     * - "Donostia-San Sebastián" → "donostia" o "san sebastian"
-     * - "Elche/Elx" → "elche" o "elx"
      *
      * @param normalizedMunicipio Municipio ya normalizado.
      * @param normalizedQuery     Búsqueda ya normalizada.
@@ -794,14 +811,12 @@ public class MainActivity extends BaseActivity {
     private boolean matchesMunicipio(String normalizedMunicipio, String normalizedQuery) {
         if (normalizedMunicipio.equals(normalizedQuery)) return true;
 
-        // Formato "Nombre (Artículo)" → reconstruir como "artículo nombre"
         java.util.regex.Matcher m = MUNICIPIO_ARTICLE_PATTERN.matcher(normalizedMunicipio);
         if (m.matches()) {
             String reordered = m.group(2).trim() + " " + m.group(1).trim();
             if (reordered.equals(normalizedQuery)) return true;
         }
 
-        // Formato con "/" (nombre bilingüe) o "-" (nombre compuesto)
         for (String separator : new String[]{"/", "-"}) {
             for (String part : normalizedMunicipio.split(java.util.regex.Pattern.quote(separator))) {
                 if (part.trim().equals(normalizedQuery)) return true;
@@ -813,7 +828,6 @@ public class MainActivity extends BaseActivity {
 
     /**
      * Pre-calcula un índice de municipios normalizados para búsqueda rápida.
-     * Se ejecuta una sola vez al cargar las gasolineras.
      */
     private void buildMunicipioIndex() {
         municipioIndex.clear();
@@ -821,17 +835,14 @@ public class MainActivity extends BaseActivity {
             String municipio = g.getMunicipio();
             if (municipio == null) continue;
 
-            // Clave principal: municipio normalizado completo
             addToIndex(normalize(municipio), g);
 
-            // Formato "Nombre (Artículo)" → añadir también "artículo nombre"
             java.util.regex.Matcher m = MUNICIPIO_ARTICLE_PATTERN.matcher(normalize(municipio));
             if (m.matches()) {
                 String reordered = m.group(2).trim() + " " + m.group(1).trim();
                 addToIndex(reordered, g);
             }
 
-            // Formato con "/" o "-" → añadir cada parte por separado
             for (String separator : new String[]{"/", "-"}) {
                 String[] parts = normalize(municipio).split(java.util.regex.Pattern.quote(separator));
                 if (parts.length > 1) {
@@ -846,7 +857,7 @@ public class MainActivity extends BaseActivity {
     /**
      * Añade una gasolinera al índice bajo la clave dada.
      *
-     * @param key       Clave normalizada del municipio.
+     * @param key        Clave normalizada del municipio.
      * @param gasolinera Gasolinera a indexar.
      */
     private void addToIndex(String key, Gasolinera gasolinera) {
@@ -859,11 +870,11 @@ public class MainActivity extends BaseActivity {
 
     /**
      * Filtra los markers del mapa usando el índice pre-calculado de municipios.
-     * Búsqueda directa en O(1) en lugar de iterar las 12.241 gasolineras.
      *
      * @param query Texto a buscar en el municipio.
      */
     private void filterMarkersByMunicipio(String query) {
+        lastSearchQuery = query;
         clearMapMarkers();
         String normalizedQuery = normalize(query);
 
@@ -905,6 +916,7 @@ public class MainActivity extends BaseActivity {
                 }
                 searchLocation = null;
                 searchGasolineras = null;
+                lastSearchQuery = null;
                 etSearch.setText("");
                 GeoPoint point = new GeoPoint(
                         userLocation.getLatitude(),
