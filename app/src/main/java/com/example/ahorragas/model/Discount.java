@@ -6,7 +6,7 @@ package com.example.ahorragas.model;
 public class Discount {
 
     public enum Type {
-        CENTS_PER_LITER,  // Descuento en céntimos por litro (ej: 0.06 €/L)
+        CENTS_PER_LITER,  // Descuento en céntimos por litro (ej: 5 = 0.05 €/L)
         PERCENTAGE        // Descuento en porcentaje (ej: 5%)
     }
 
@@ -37,6 +37,7 @@ public class Discount {
 
     /**
      * Aplica el descuento a un precio por litro dado.
+     * Para céntimos/litro, el valor introducido es en céntimos (ej: 5 = 0.05 €/L).
      *
      * @param pricePerLiter Precio original por litro en euros.
      * @return Precio con descuento aplicado, nunca negativo.
@@ -46,7 +47,8 @@ public class Discount {
         if (type == Type.PERCENTAGE) {
             discounted = pricePerLiter * (1.0 - value / 100.0);
         } else {
-            discounted = pricePerLiter - value;
+            // value está en céntimos, convertir a euros
+            discounted = pricePerLiter - (value / 100.0);
         }
         return Math.max(0.0, discounted);
     }
