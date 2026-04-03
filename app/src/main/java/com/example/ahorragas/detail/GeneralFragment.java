@@ -21,6 +21,8 @@ import com.example.ahorragas.util.DiscountPrefs;
 import com.example.ahorragas.util.FavoritesPrefs;
 import com.example.ahorragas.util.VehiclePrefs;
 
+import java.util.List;
+
 public class GeneralFragment extends Fragment {
 
     private static final String ARG_ID            = "arg_id";
@@ -82,7 +84,6 @@ public class GeneralFragment extends Fragment {
                         .getString("pref_selected_fuel", FuelType.GASOLEO_A.name())
         );
 
-        // Reconstruir gasolinera desde args
         Gasolinera g = new Gasolinera(
                 args.getInt(ARG_ID),
                 args.getString(ARG_MARCA),
@@ -148,16 +149,26 @@ public class GeneralFragment extends Fragment {
         }
 
         // ── Descuento ────────────────────────────────────────────────────────
-        Discount discount = DiscountPrefs.findForBrand(requireContext(), g.getMarca());
-        if (discount != null && price != null && price > 0) {
-            double discountedPrice = discount.applyTo(price);
+        List<Discount> discounts = DiscountPrefs.findAllForBrand(requireContext(), g.getMarca());
+        if (!discounts.isEmpty() && price != null && price > 0) {
+            double discountedPrice = DiscountPrefs.applyAllDiscounts(
+                    requireContext(), g.getMarca(), price);
 
-            String typeLabel = discount.getType() == Discount.Type.PERCENTAGE
-                    ? String.format(java.util.Locale.getDefault(), "-%.1f%%", discount.getValue())
-                    : String.format(java.util.Locale.getDefault(), "-%.3f €/L", discount.getValue());
+            // Construir texto legible de los descuentos aplicados
+            StringBuilder labelBuilder = new StringBuilder("Descuentos aplicados: ");
+            for (int i = 0; i < discounts.size(); i++) {
+                Discount d = discounts.get(i);
+                if (d.getType() == Discount.Type.PERCENTAGE) {
+                    labelBuilder.append(String.format(java.util.Locale.getDefault(),
+                            "%.0f%% de descuento", d.getValue()));
+                } else {
+                    labelBuilder.append(String.format(java.util.Locale.getDefault(),
+                            "%.0f cts/L", d.getValue()));
+                }
+                if (i < discounts.size() - 1) labelBuilder.append(" · ");
+            }
 
-            tvDiscountLabel.setText("Precio con descuento " + discount.getBrandName()
-                    + " (" + typeLabel + ")");
+            tvDiscountLabel.setText(labelBuilder.toString());
             tvDiscountPrice.setText(String.format(java.util.Locale.getDefault(),
                     "%.3f €", discountedPrice));
 
@@ -167,7 +178,8 @@ public class GeneralFragment extends Fragment {
 
             if (activeVehicle != null && activeVehicle.hasTankCapacity()) {
                 tvDiscountFill.setText(String.format(java.util.Locale.getDefault(),
-                        "Llenado con descuento: %.2f €", activeVehicle.estimateFillCost(discountedPrice)));
+                        "Llenado con descuento: %.2f €",
+                        activeVehicle.estimateFillCost(discountedPrice)));
                 tvDiscountFill.setVisibility(View.VISIBLE);
             } else {
                 tvDiscountFill.setVisibility(View.GONE);
