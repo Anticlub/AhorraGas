@@ -7,7 +7,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.LruCache;
 
@@ -57,12 +56,24 @@ public final class MarkerBitmapFactory {
         }
     }
 
+    /**
+     * Crea el bitmap del marcador con precio personalizado (para descuentos).
+     *
+     * @param context           Contexto de la aplicación.
+     * @param gasolinera        Gasolinera a representar.
+     * @param fuelType          Tipo de combustible seleccionado.
+     * @param overridePriceText Texto de precio a mostrar, o null para usar el precio original.
+     * @return Bitmap del marcador.
+     */
     public static Bitmap createMarker(Context context,
                                       Gasolinera gasolinera,
-                                      FuelType fuelType) {
-        String priceText = gasolinera.getFormattedPrice(fuelType);
-        int logoResId    = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
-        String key       = logoResId + "|" + gasolinera.getPriceLevel().name() + "|" + priceText;
+                                      FuelType fuelType,
+                                      String overridePriceText) {
+        String priceText = overridePriceText != null
+                ? overridePriceText
+                : gasolinera.getFormattedPrice(fuelType);
+        int logoResId = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
+        String key = gasolinera.getId() + "|" + gasolinera.getPriceLevel().name() + "|" + priceText;
 
         Bitmap cached = CACHE.get(key);
         if (cached != null && !cached.isRecycled()) return cached;
@@ -72,19 +83,31 @@ public final class MarkerBitmapFactory {
         return rendered;
     }
 
+    /**
+     * Crea el bitmap del marcador con el precio original de la gasolinera.
+     *
+     * @param context    Contexto de la aplicación.
+     * @param gasolinera Gasolinera a representar.
+     * @param fuelType   Tipo de combustible seleccionado.
+     * @return Bitmap del marcador.
+     */
+    public static Bitmap createMarker(Context context,
+                                      Gasolinera gasolinera,
+                                      FuelType fuelType) {
+        return createMarker(context, gasolinera, fuelType, null);
+    }
+
     private static Bitmap renderMarker(Context context,
                                        Gasolinera gasolinera,
                                        String priceText,
                                        int logoResId) {
         float density = context.getResources().getDisplayMetrics().density;
 
-        // ── Reducción ~12% respecto al original ──
-        // Original: width=74, bubbleHeight=56, pinHeight=14, corner=10, logoRadius=13
-        int width = px(density, 52);
+        int width        = px(density, 52);
         int bubbleHeight = px(density, 40);
-        int pinHeight = px(density, 10);
-        int height = bubbleHeight + pinHeight;
-        int corner = px(density, 8);
+        int pinHeight    = px(density, 10);
+        int height       = bubbleHeight + pinHeight;
+        int corner       = px(density, 8);
 
         int bgColor = getPriceLevelColor(gasolinera.getPriceLevel());
 
@@ -92,19 +115,16 @@ public final class MarkerBitmapFactory {
         Canvas canvas = new Canvas(bitmap);
         Paint paint   = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-        // Burbuja de fondo
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(bgColor);
         RectF bubble = new RectF(0, 0, width, bubbleHeight);
         canvas.drawRoundRect(bubble, corner, corner, paint);
 
-        // Borde blanco
         paint.setStyle(Paint.Style.STROKE);
         paint.setColor(Color.WHITE);
         paint.setStrokeWidth(density * 1.6f);
         canvas.drawRoundRect(bubble, corner, corner, paint);
 
-        // Pin inferior
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(bgColor);
         float pinWidth = px(density, 8);
@@ -115,7 +135,6 @@ public final class MarkerBitmapFactory {
         pin.close();
         canvas.drawPath(pin, paint);
 
-        // Círculo blanco para el logo
         float centerX  = width / 2f;
         float centerY  = bubbleHeight * 0.40f;
         int logoRadius = px(density, 9);
@@ -124,10 +143,8 @@ public final class MarkerBitmapFactory {
         paint.setStyle(Paint.Style.FILL);
         canvas.drawCircle(centerX, centerY, logoRadius, paint);
 
-        // Logo dentro del círculo
         drawLogo(context, canvas, logoResId, centerX, centerY, logoRadius);
 
-        // Texto del precio
         paint.setColor(Color.WHITE);
         paint.setAlpha(255);
         paint.setFakeBoldText(false);
@@ -152,7 +169,8 @@ public final class MarkerBitmapFactory {
         Paint clipPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         circularCanvas.drawCircle(logoSize / 2f, logoSize / 2f, logoSize / 2f, clipPaint);
 
-        clipPaint.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.SRC_IN));
+        clipPaint.setXfermode(new android.graphics.PorterDuffXfermode(
+                android.graphics.PorterDuff.Mode.SRC_IN));
         circularCanvas.drawBitmap(scaled, 0, 0, clipPaint);
 
         Paint drawPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
