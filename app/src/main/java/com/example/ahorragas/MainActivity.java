@@ -59,6 +59,8 @@ public class MainActivity extends BaseActivity {
     private static final double ZOOM_SPAIN = 6.0;
     private static final double ZOOM_USER = 14.0;
     private static final double ZOOM_STATION = 16.0;
+    private static final java.util.regex.Pattern MUNICIPIO_ARTICLE_PATTERN =
+            java.util.regex.Pattern.compile("^(.+?)\\s*\\(([^)]+)\\)$");
 
     private MapView mapView;
     private FloatingActionButton fabMiUbicacion;
@@ -71,11 +73,12 @@ public class MainActivity extends BaseActivity {
     private int lastMarkersCount = RadiusUtils.DEFAULT_MARKERS;
 
     private final List<Gasolinera> allGasolineras = new ArrayList<>();
+    private final Map<String, List<Gasolinera>> municipioIndex = new HashMap<>();
+    private List<Gasolinera> searchGasolineras = null;
     private List<Gasolinera> visibleGasolineras = new ArrayList<>();
     private FuelType selectedFuel = FuelType.GASOLEO_A;
     private Location userLocation;
     private Location searchLocation;
-    private String searchQuery;
     private final Map<Integer, Marker> markerMap = new HashMap<>();
     private MyLocationNewOverlay locationOverlay;
 
@@ -442,6 +445,7 @@ public class MainActivity extends BaseActivity {
                     if (isDestroyed() || isFinishing()) return;
                     allGasolineras.clear();
                     allGasolineras.addAll(loaded);
+                    buildMunicipioIndex();
                     progressBarSearch.setVisibility(View.GONE);
                     updateDisplayForFuel(selectedFuel);
                 });
@@ -737,7 +741,6 @@ public class MainActivity extends BaseActivity {
                 double lon = Double.parseDouble(response.substring(lonStart, lonEnd));
 
                 mainHandler.post(() -> {
-                    progressBarSearch.setVisibility(View.GONE);
 
                     GeoPoint point = new GeoPoint(lat, lon);
                     mapView.getController().animateTo(point);
@@ -745,7 +748,6 @@ public class MainActivity extends BaseActivity {
                     searchLocation = new Location("search");
                     searchLocation.setLatitude(lat);
                     searchLocation.setLongitude(lon);
-                    searchQuery = query;
 
                     filterMarkersByMunicipio(query);
 
@@ -793,9 +795,7 @@ public class MainActivity extends BaseActivity {
         if (normalizedMunicipio.equals(normalizedQuery)) return true;
 
         // Formato "Nombre (Artículo)" → reconstruir como "artículo nombre"
-        java.util.regex.Matcher m = java.util.regex.Pattern
-                .compile("^(.+?)\\s*\\(([^)]+)\\)$")
-                .matcher(normalizedMunicipio);
+        java.util.regex.Matcher m = MUNICIPIO_ARTICLE_PATTERN.matcher(normalizedMunicipio);
         if (m.matches()) {
             String reordered = m.group(2).trim() + " " + m.group(1).trim();
             if (reordered.equals(normalizedQuery)) return true;
@@ -810,9 +810,56 @@ public class MainActivity extends BaseActivity {
 
         return false;
     }
+
     /**
-     * Filtra los markers del mapa mostrando solo las gasolineras
-     * cuyo municipio contiene el texto indicado.
+     * Pre-calcula un índice de municipios normalizados para búsqueda rápida.
+     * Se ejecuta una sola vez al cargar las gasolineras.
+     */
+    private void buildMunicipioIndex() {
+        municipioIndex.clear();
+        for (Gasolinera g : allGasolineras) {
+            String municipio = g.getMunicipio();
+            if (municipio == null) continue;
+
+            // Clave principal: municipio normalizado completo
+            addToIndex(normalize(municipio), g);
+
+            // Formato "Nombre (Artículo)" → añadir también "artículo nombre"
+            java.util.regex.Matcher m = MUNICIPIO_ARTICLE_PATTERN.matcher(normalize(municipio));
+            if (m.matches()) {
+                String reordered = m.group(2).trim() + " " + m.group(1).trim();
+                addToIndex(reordered, g);
+            }
+
+            // Formato con "/" o "-" → añadir cada parte por separado
+            for (String separator : new String[]{"/", "-"}) {
+                String[] parts = normalize(municipio).split(java.util.regex.Pattern.quote(separator));
+                if (parts.length > 1) {
+                    for (String part : parts) {
+                        addToIndex(part.trim(), g);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Añade una gasolinera al índice bajo la clave dada.
+     *
+     * @param key       Clave normalizada del municipio.
+     * @param gasolinera Gasolinera a indexar.
+     */
+    private void addToIndex(String key, Gasolinera gasolinera) {
+        if (key == null || key.isEmpty()) return;
+        if (!municipioIndex.containsKey(key)) {
+            municipioIndex.put(key, new ArrayList<>());
+        }
+        municipioIndex.get(key).add(gasolinera);
+    }
+
+    /**
+     * Filtra los markers del mapa usando el índice pre-calculado de municipios.
+     * Búsqueda directa en O(1) en lugar de iterar las 12.241 gasolineras.
      *
      * @param query Texto a buscar en el municipio.
      */
@@ -820,28 +867,34 @@ public class MainActivity extends BaseActivity {
         clearMapMarkers();
         String normalizedQuery = normalize(query);
 
-        List<Gasolinera> filtered = new ArrayList<>();
-        for (Gasolinera g : allGasolineras) {
-            if (matchesMunicipio(normalize(g.getMunicipio()), normalizedQuery)
-                    && g.hasPrice(selectedFuel)) {
-                filtered.add(g);
+        executor.execute(() -> {
+            List<Gasolinera> found = municipioIndex.getOrDefault(normalizedQuery, new ArrayList<>());
+
+            List<Gasolinera> filtered = new ArrayList<>();
+            for (Gasolinera g : found) {
+                if (g.hasPrice(selectedFuel)) filtered.add(g);
             }
-        }
 
-        PriceRange range = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
-        for (Gasolinera g : filtered) {
-            g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
-        }
+            PriceRange range = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
+            for (Gasolinera g : filtered) {
+                g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
+            }
 
-        for (Gasolinera g : filtered) {
-            addMarker(g);
-        }
-        mapView.invalidate();
+            mainHandler.post(() -> {
+                if (isDestroyed() || isFinishing()) return;
+                searchGasolineras = filtered;
+                progressBarSearch.setVisibility(View.GONE);
+                for (Gasolinera g : filtered) {
+                    addMarker(g);
+                }
+                mapView.invalidate();
 
-        if (filtered.isEmpty()) {
-            Toast.makeText(this,
-                    "No hay gasolineras en esa localidad", Toast.LENGTH_SHORT).show();
-        }
+                if (filtered.isEmpty()) {
+                    Toast.makeText(this,
+                            "No hay gasolineras en esa localidad", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
     }
 
     private void setupFab() {
@@ -851,7 +904,7 @@ public class MainActivity extends BaseActivity {
                     locationOverlay.enableFollowLocation();
                 }
                 searchLocation = null;
-                searchQuery = null;
+                searchGasolineras = null;
                 etSearch.setText("");
                 GeoPoint point = new GeoPoint(
                         userLocation.getLatitude(),
@@ -870,8 +923,8 @@ public class MainActivity extends BaseActivity {
     protected void navigateToPrice() {
         Intent intent = new Intent(this, PriceListActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        if (searchQuery != null) {
-            intent.putExtra("search_query", searchQuery);
+        if (searchGasolineras != null && !searchGasolineras.isEmpty()) {
+            intent.putParcelableArrayListExtra("gasolineras", new ArrayList<>(searchGasolineras));
         }
         startActivity(intent);
     }
@@ -880,8 +933,8 @@ public class MainActivity extends BaseActivity {
     protected void navigateToDistanceList() {
         Intent intent = new Intent(this, DistanceListActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        if (searchQuery != null) {
-            intent.putExtra("search_query", searchQuery);
+        if (searchGasolineras != null && !searchGasolineras.isEmpty()) {
+            intent.putParcelableArrayListExtra("gasolineras", new ArrayList<>(searchGasolineras));
         }
         startActivity(intent);
     }
