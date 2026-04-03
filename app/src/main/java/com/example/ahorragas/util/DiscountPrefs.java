@@ -19,7 +19,8 @@ import java.util.List;
  */
 public final class DiscountPrefs {
 
-    private static final String KEY_DISCOUNTS = "pref_discounts";
+    private static final String KEY_DISCOUNTS         = "pref_discounts";
+    private static final String KEY_DISCOUNTS_VERSION = "pref_discounts_version";
     public static final int MAX_DISCOUNTS = 10;
 
     private DiscountPrefs() {}
@@ -54,23 +55,51 @@ public final class DiscountPrefs {
     }
 
     /**
-     * Devuelve el descuento aplicable a una marca de gasolinera, o null si no hay ninguno.
+     * Devuelve todos los descuentos aplicables a una marca de gasolinera.
      *
-     * @param ctx         Contexto de la aplicación.
+     * @param ctx          Contexto de la aplicación.
      * @param stationBrand Marca de la gasolinera.
-     * @return Primer descuento que aplica, o null.
+     * @return Lista de descuentos que aplican, vacía si no hay ninguno.
      */
-    public static Discount findForBrand(Context ctx, String stationBrand) {
+    public static List<Discount> findAllForBrand(Context ctx, String stationBrand) {
+        List<Discount> result = new ArrayList<>();
         for (Discount d : loadDiscounts(ctx)) {
-            if (d.appliesTo(stationBrand)) return d;
+            if (d.appliesTo(stationBrand)) result.add(d);
         }
-        return null;
+        return result;
+    }
+
+    /**
+     * Aplica todos los descuentos aplicables a un precio dado.
+     *
+     * @param ctx          Contexto de la aplicación.
+     * @param stationBrand Marca de la gasolinera.
+     * @param price        Precio original por litro.
+     * @return Precio final tras aplicar todos los descuentos.
+     */
+    public static double applyAllDiscounts(Context ctx, String stationBrand, double price) {
+        double result = price;
+        for (Discount d : findAllForBrand(ctx, stationBrand)) {
+            result = d.applyTo(result);
+        }
+        return result;
+    }
+
+    /**
+     * Devuelve la versión actual de los descuentos.
+     * Cambia cada vez que se añade, edita o borra un descuento.
+     *
+     * @param ctx Contexto de la aplicación.
+     * @return Número de versión actual.
+     */
+    public static int getVersion(Context ctx) {
+        return prefs(ctx).getInt(KEY_DISCOUNTS_VERSION, 0);
     }
 
     // ─── WRITE ───────────────────────────────────────────────────────────────
 
     /**
-     * Guarda la lista completa de descuentos.
+     * Guarda la lista completa de descuentos e incrementa la versión.
      *
      * @param ctx       Contexto de la aplicación.
      * @param discounts Lista de descuentos a guardar.
@@ -87,7 +116,11 @@ public final class DiscountPrefs {
                 obj.put("value", d.getValue());
                 arr.put(obj);
             }
-            prefs(ctx).edit().putString(KEY_DISCOUNTS, arr.toString()).apply();
+            int v = prefs(ctx).getInt(KEY_DISCOUNTS_VERSION, 0);
+            prefs(ctx).edit()
+                    .putString(KEY_DISCOUNTS, arr.toString())
+                    .putInt(KEY_DISCOUNTS_VERSION, v + 1)
+                    .apply();
         } catch (Exception e) {
             android.util.Log.e("DiscountPrefs", "Error guardando descuentos: " + e.getMessage(), e);
         }
