@@ -34,6 +34,10 @@ public class PriceListActivity extends BaseActivity {
     private FuelType selectedFuel;
     private LocationHelper locationHelper;
 
+    private boolean dataLoaded = false;
+    private FuelType lastLoadedFuel = null;
+    private List<Gasolinera> lastLoadedGasolineras = null;
+
     private ProgressBar progressBar;
     private RecyclerView recyclerView;
     private TextView tvEmpty;
@@ -62,17 +66,22 @@ public class PriceListActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        selectedFuel = FuelType.fromString(
+        FuelType currentFuel = FuelType.fromString(
                 PreferenceManager.getDefaultSharedPreferences(this)
                         .getString("pref_selected_fuel", FuelType.GASOLEO_A.name())
         );
-        loadAndDisplay();
+        if (!dataLoaded || currentFuel != lastLoadedFuel) {
+            selectedFuel = currentFuel;
+            lastLoadedFuel = currentFuel;
+            loadAndDisplay();
+        }
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
+        dataLoaded = false;
         loadAndDisplay();
     }
 
@@ -106,45 +115,16 @@ public class PriceListActivity extends BaseActivity {
         setupBottomNav(bottomNav, R.id.nav_price);
     }
 
-    private void showLoading() {
-        progressBar.setVisibility(View.VISIBLE);
-        recyclerView.setVisibility(View.GONE);
-        tvEmpty.setVisibility(View.GONE);
-        layoutError.setVisibility(View.GONE);
-    }
-
-    private void showData(List<Gasolinera> data) {
-        progressBar.setVisibility(View.GONE);
-        layoutError.setVisibility(View.GONE);
-        tvEmpty.setVisibility(View.GONE);
-        recyclerView.setVisibility(View.VISIBLE);
-        adapter.updateData(data, selectedFuel);
-    }
-
-    private void showEmpty() {
-        progressBar.setVisibility(View.GONE);
-        recyclerView.setVisibility(View.GONE);
-        layoutError.setVisibility(View.GONE);
-        tvEmpty.setVisibility(View.VISIBLE);
-    }
-
-    private void showError(String message) {
-        progressBar.setVisibility(View.GONE);
-        recyclerView.setVisibility(View.GONE);
-        tvEmpty.setVisibility(View.GONE);
-        tvError.setText(message);
-        layoutError.setVisibility(View.VISIBLE);
-    }
-
     /**
-     * Carga y muestra las gasolineras filtradas por municipio si hay búsqueda
-     * activa, o por radio alrededor de la ubicación GPS si no la hay.
+     * Carga y muestra las gasolineras. Si vienen en el Intent las usa
+     * directamente, si no las obtiene por GPS y radio.
      */
     private void loadAndDisplay() {
         showLoading();
-        String query = getIntent().getStringExtra("search_query");
-        if (query != null && !query.isEmpty()) {
-            loadByMunicipio(query);
+
+        ArrayList<Gasolinera> fromIntent = getIntent().getParcelableArrayListExtra("gasolineras");
+        if (fromIntent != null && !fromIntent.isEmpty()) {
+            loadFromIntent(fromIntent);
         } else {
             locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
                 @Override
@@ -162,45 +142,28 @@ public class PriceListActivity extends BaseActivity {
     }
 
     /**
-     * Filtra las gasolineras por municipio y las ordena por precio ascendente.
+     * Usa las gasolineras recibidas desde el Intent, las ordena por precio.
      *
-     * @param query Nombre del municipio a buscar.
+     * @param gasolineras Lista de gasolineras del municipio buscado.
      */
-    private void loadByMunicipio(String query) {
+    private void loadFromIntent(List<Gasolinera> gasolineras) {
         executor.execute(() -> {
-            try {
-                List<Gasolinera> gasolineras = repository.getGasolineras();
-                List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
+            List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
 
-                String normalizedQuery = normalize(query);
-                List<Gasolinera> byMunicipio = new ArrayList<>();
-                for (Gasolinera g : filtered) {
-                    if (matchesMunicipio(normalize(g.getMunicipio()), normalizedQuery)) {
-                        byMunicipio.add(g);
-                    }
-                }
+            filtered.sort(Comparator.comparingDouble(g ->
+                    g.getPrecio(selectedFuel) != null ? g.getPrecio(selectedFuel) : Double.MAX_VALUE
+            ));
 
-                byMunicipio.sort(Comparator.comparingDouble(g ->
-                        g.getPrecio(selectedFuel) != null ? g.getPrecio(selectedFuel) : Double.MAX_VALUE
-                ));
-
-                PriceRange range = GasolineraSorter.calculatePriceRange(byMunicipio, selectedFuel);
-                for (Gasolinera g : byMunicipio) {
-                    g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
-                }
-
-                mainHandler.post(() -> {
-                    if (isDestroyed() || isFinishing()) return;
-                    if (byMunicipio.isEmpty()) showEmpty();
-                    else showData(byMunicipio);
-                });
-
-            } catch (Exception e) {
-                mainHandler.post(() -> {
-                    if (isDestroyed() || isFinishing()) return;
-                    showError(getString(R.string.error_cargando_gasolineras));
-                });
+            PriceRange range = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
+            for (Gasolinera g : filtered) {
+                g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
             }
+
+            mainHandler.post(() -> {
+                if (isDestroyed() || isFinishing()) return;
+                if (filtered.isEmpty()) showEmpty();
+                else showData(filtered);
+            });
         });
     }
 
@@ -247,56 +210,46 @@ public class PriceListActivity extends BaseActivity {
         });
     }
 
-    /**
-     * Normaliza un texto eliminando tildes y pasándolo a minúsculas.
-     *
-     * @param text Texto a normalizar.
-     * @return Texto normalizado.
-     */
-    private String normalize(String text) {
-        if (text == null) return "";
-        String normalized = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD);
-        return normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
-                .toLowerCase(java.util.Locale.getDefault());
+    private void showLoading() {
+        progressBar.setVisibility(View.VISIBLE);
+        recyclerView.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.GONE);
+        layoutError.setVisibility(View.GONE);
     }
 
-    /**
-     * Comprueba si el municipio coincide con la búsqueda.
-     * Maneja los formatos del Ministerio:
-     * - "Casar (El)" → "el casar"
-     * - "Donostia-San Sebastián" → "donostia" o "san sebastian"
-     * - "Elche/Elx" → "elche" o "elx"
-     *
-     * @param normalizedMunicipio Municipio ya normalizado.
-     * @param normalizedQuery     Búsqueda ya normalizada.
-     * @return true si el municipio coincide con la búsqueda.
-     */
-    private boolean matchesMunicipio(String normalizedMunicipio, String normalizedQuery) {
-        if (normalizedMunicipio.equals(normalizedQuery)) return true;
-
-        java.util.regex.Matcher m = java.util.regex.Pattern
-                .compile("^(.+?)\\s*\\(([^)]+)\\)$")
-                .matcher(normalizedMunicipio);
-        if (m.matches()) {
-            String reordered = m.group(2).trim() + " " + m.group(1).trim();
-            if (reordered.equals(normalizedQuery)) return true;
-        }
-
-        for (String separator : new String[]{"/", "-"}) {
-            for (String part : normalizedMunicipio.split(java.util.regex.Pattern.quote(separator))) {
-                if (part.trim().equals(normalizedQuery)) return true;
-            }
-        }
-
-        return false;
+    private void showData(List<Gasolinera> data) {
+        dataLoaded = true;
+        lastLoadedGasolineras = data;
+        progressBar.setVisibility(View.GONE);
+        layoutError.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.VISIBLE);
+        adapter.updateData(data, selectedFuel);
     }
+
+    private void showEmpty() {
+        progressBar.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.GONE);
+        layoutError.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.VISIBLE);
+    }
+
+    private void showError(String message) {
+        progressBar.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.GONE);
+        tvError.setText(message);
+        layoutError.setVisibility(View.VISIBLE);
+    }
+
     @Override
     protected void navigateToDistanceList() {
         Intent intent = new Intent(this, DistanceListActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        String query = getIntent().getStringExtra("search_query");
-        if (query != null) {
-            intent.putExtra("search_query", query);
+        ArrayList<Gasolinera> gasolineras =
+                getIntent().getParcelableArrayListExtra("gasolineras");
+        if (gasolineras != null) {
+            intent.putParcelableArrayListExtra("gasolineras", gasolineras);
         }
         startActivity(intent);
     }
