@@ -72,13 +72,7 @@ public class PromotionRepository {
 
             try {
                 connection = openHttpsConnectionTrusted(CSV_URL);
-                // LOG TEMPORAL — borrar tras depurar
-                int responseCode = connection.getResponseCode();
-                android.util.Log.d("PromotionRepo", "HTTP response code: " + responseCode);
-                android.util.Log.d("PromotionRepo", "Content-Type: " + connection.getContentType());
-                android.util.Log.d("PromotionRepo", "Content-Length: " + connection.getContentLength());
-                // LOG TEMPORAL — borrar tras depurar
-                android.util.Log.d("PromotionRepo", "Location: " + connection.getHeaderField("Location"));
+
                 try (BufferedReader reader = new BufferedReader(
                         new InputStreamReader(
                                 connection.getInputStream(),
@@ -88,16 +82,6 @@ public class PromotionRepository {
                     // Fila 1: cabeceras reales → ignorar
                     reader.readLine(); // metadatos
                     reader.readLine(); // cabeceras
-                    // LOG TEMPORAL — borrar tras depurar
-                    String testLine = reader.readLine();
-                    android.util.Log.d("PromotionRepo", "Primera línea de datos: [" + testLine + "]");
-                    if (testLine != null) {
-                        List<String> testFields = splitCsvLine(testLine);
-                        android.util.Log.d("PromotionRepo", "Campos detectados: " + testFields.size());
-                        for (int i = 0; i < testFields.size(); i++) {
-                            android.util.Log.d("PromotionRepo", "  [" + i + "] = " + testFields.get(i));
-                        }
-                    }
 
                     String line;
                     while ((line = reader.readLine()) != null) {
