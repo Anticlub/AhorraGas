@@ -34,6 +34,7 @@ public class Gasolinera implements android.os.Parcelable {
         this.lat = lat;
         this.lon = lon;
         setPrecio(FuelType.GASOLEO_A, precio);
+
     }
 
     // ======================
@@ -196,6 +197,24 @@ public class Gasolinera implements android.os.Parcelable {
             Double price = in.readByte() == 0 ? null : in.readDouble();
             precios.put(fuel, price);
         }
+        electric = in.readByte() != 0;
+        operador = in.readString();
+        String conectoresRaw = in.readString();
+        if (conectoresRaw != null && !conectoresRaw.isEmpty()) {
+            conectores = new java.util.ArrayList<>();
+            for (String item : conectoresRaw.split(";")) {
+                String[] parts = item.split("\\|", -1);
+                if (parts.length < 3) continue;
+                ConnectorType tipo;
+                try { tipo = ConnectorType.valueOf(parts[0]); }
+                catch (Exception e) { tipo = ConnectorType.UNKNOWN; }
+                String modo = parts[1];
+                Double potencia = null;
+                try { potencia = Double.parseDouble(parts[2]); }
+                catch (Exception ignored) {}
+                conectores.add(new Electrolinera.Conector(tipo, modo, potencia));
+            }
+        }
     }
 
     @Override
@@ -219,6 +238,24 @@ public class Gasolinera implements android.os.Parcelable {
                 dest.writeByte((byte) 1);
                 dest.writeDouble(price);
             }
+        }
+        dest.writeByte((byte) (electric ? 1 : 0));
+        dest.writeString(operador != null ? operador : "");
+// Serializar conectores como string: "TIPO|modo|potencia;TIPO|modo|potencia"
+        if (conectores == null || conectores.isEmpty()) {
+            dest.writeString("");
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < conectores.size(); i++) {
+                Electrolinera.Conector c = conectores.get(i);
+                if (i > 0) sb.append(";");
+                sb.append(c.getTipo() != null ? c.getTipo().name() : "UNKNOWN");
+                sb.append("|");
+                sb.append(c.getModoRecarga() != null ? c.getModoRecarga() : "");
+                sb.append("|");
+                sb.append(c.getPotenciaW() != null ? c.getPotenciaW() : "0");
+            }
+            dest.writeString(sb.toString());
         }
     }
 
@@ -262,5 +299,23 @@ public class Gasolinera implements android.os.Parcelable {
             sb.append(conectores.get(i).toResumen());
         }
         return sb.toString();
+    }
+
+    /**
+     * Devuelve el resumen del conector de mayor potencia para mostrar en lista.
+     * Ejemplo: "CCS2 · 350 kW"
+     *
+     * @return string con el conector de mayor potencia o null si no es eléctrica
+     */
+    public String getResumenMejorConector() {
+        if (!electric || conectores == null || conectores.isEmpty()) return null;
+        Electrolinera.Conector mejor = null;
+        for (Electrolinera.Conector c : conectores) {
+            if (mejor == null || (c.getPotenciaW() != null &&
+                    (mejor.getPotenciaW() == null || c.getPotenciaW() > mejor.getPotenciaW()))) {
+                mejor = c;
+            }
+        }
+        return mejor != null ? mejor.toResumen() : null;
     }
 }

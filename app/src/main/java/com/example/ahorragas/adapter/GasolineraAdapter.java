@@ -136,7 +136,7 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
 
             if (gasolinera.isElectric()) {
                 // Electrolineras: mostrar resumen de conectores en lugar del precio
-                String resumen = gasolinera.getResumenConectores();
+                String resumen = gasolinera.getResumenMejorConector();
                 tvPrice.setText(resumen != null ? resumen : "Sin datos");
                 tvPrice.setTextColor(MarkerBitmapFactory.getElectricColor());
                 vPriceStripe.setBackgroundColor(MarkerBitmapFactory.getElectricColor());
@@ -161,4 +161,5 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
             itemView.setOnClickListener(v -> clickListener.onGasolineraClick(gasolinera));
         }
     }
+
 }

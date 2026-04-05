@@ -19,6 +19,7 @@ import com.example.ahorragas.data.EstacionRepository;
 import com.example.ahorragas.data.GasolineraRepository;
 import com.example.ahorragas.data.RemoteDgtDataSource;
 import com.example.ahorragas.location.LocationHelper;
+import com.example.ahorragas.model.Electrolinera;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceRange;
@@ -105,6 +106,10 @@ public class PriceListActivity extends BaseActivity {
         layoutError  = findViewById(R.id.layoutErrorPrice);
         tvError      = findViewById(R.id.tvErrorPrice);
         btnRetry     = findViewById(R.id.btnRetryPrice);
+        TextView tvTitle = findViewById(R.id.tvPriceListTitle);
+        if (selectedFuel == FuelType.ELECTRICO) {
+            tvTitle.setText("Estaciones por cargador");
+        }
     }
 
     private void setupRecyclerView() {
@@ -306,4 +311,5 @@ public class PriceListActivity extends BaseActivity {
         }
         return max;
     }
+
 }
