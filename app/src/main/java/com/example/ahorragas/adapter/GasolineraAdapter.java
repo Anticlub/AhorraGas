@@ -102,40 +102,29 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
 
         void bind(Gasolinera gasolinera,
                   FuelType fuel,
-                  PriceRange priceRange,
                   OnGasolineraClickListener clickListener) {
+            int logoResId = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
+            ivBrandLogo.setImageResource(logoResId);
 
-            Context ctx = itemView.getContext();
-
-            // ── Logo y nombre ─────────────────────────────────────────────────
-            ivBrandLogo.setImageResource(BrandLogoProvider.getLogoResId(gasolinera.getMarca()));
             String marca = gasolinera.getMarca();
             tvBrandName.setText(marca == null || marca.trim().isEmpty()
-                    ? ctx.getString(R.string.sin_marca)
+                    ? itemView.getContext().getString(R.string.sin_marca)
                     : marca);
             tvAddress.setText(gasolinera.getDisplayAddress());
 
-            // ── Precio con descuento y color ──────────────────────────────────
-            Double originalPrice = gasolinera.getPrecio(fuel);
-            String priceText;
-            PriceLevel priceLevel;
-
-            if (originalPrice != null && originalPrice > 0) {
-                double discounted = DiscountPrefs.applyAllDiscounts(
-                        ctx, gasolinera.getMarca(), originalPrice);
-                priceText  = String.format(java.util.Locale.getDefault(), "%.3f €", discounted);
-                priceLevel = GasolineraSorter.getPriceLevel(discounted, priceRange);
+            if (gasolinera.isElectric()) {
+                // Electrolineras: mostrar resumen de conectores en lugar del precio
+                String resumen = gasolinera.getResumenConectores();
+                tvPrice.setText(resumen != null ? resumen : "Sin datos");
+                tvPrice.setTextColor(MarkerBitmapFactory.getElectricColor());
+                vPriceStripe.setBackgroundColor(MarkerBitmapFactory.getElectricColor());
             } else {
-                priceText  = gasolinera.getFormattedPrice(fuel);
-                priceLevel = gasolinera.getPriceLevel();
+                tvPrice.setText(gasolinera.getFormattedPrice(fuel));
+                int priceColor = MarkerBitmapFactory.getPriceLevelColor(gasolinera.getPriceLevel());
+                tvPrice.setTextColor(priceColor);
+                vPriceStripe.setBackgroundColor(priceColor);
             }
 
-            int priceColor = MarkerBitmapFactory.getPriceLevelColor(priceLevel);
-            tvPrice.setText(priceText);
-            tvPrice.setTextColor(priceColor);
-            vPriceStripe.setBackgroundColor(priceColor);
-
-            // ── Distancia ─────────────────────────────────────────────────────
             String distance = gasolinera.getFormattedDistance();
             tvDistance.setText(distance.isEmpty() ? "" : "\uD83D\uDCCD " + distance);
 
