@@ -100,23 +100,23 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        private final View      vPriceStripe;
+        private final View vPriceStripe;
         private final ImageView ivBrandLogo;
-        private final TextView  tvBrandName;
-        private final TextView  tvAddress;
-        private final TextView  tvPrice;
-        private final TextView  tvDistance;
-        private final TextView  btnAlert;
+        private final TextView tvBrandName;
+        private final TextView tvAddress;
+        private final TextView tvPrice;
+        private final TextView tvDistance;
+        private final TextView btnAlert;
 
         ViewHolder(View itemView) {
             super(itemView);
             vPriceStripe = itemView.findViewById(R.id.vPriceStripe);
-            ivBrandLogo  = itemView.findViewById(R.id.ivBrandLogo);
-            tvBrandName  = itemView.findViewById(R.id.tvBrandName);
-            tvAddress    = itemView.findViewById(R.id.tvAddress);
-            tvPrice      = itemView.findViewById(R.id.tvPrice);
-            tvDistance   = itemView.findViewById(R.id.tvDistance);
-            btnAlert     = itemView.findViewById(R.id.btnAlert);
+            ivBrandLogo = itemView.findViewById(R.id.ivBrandLogo);
+            tvBrandName = itemView.findViewById(R.id.tvBrandName);
+            tvAddress = itemView.findViewById(R.id.tvAddress);
+            tvPrice = itemView.findViewById(R.id.tvPrice);
+            tvDistance = itemView.findViewById(R.id.tvDistance);
+            btnAlert = itemView.findViewById(R.id.btnAlert);
         }
 
         void bind(Gasolinera gasolinera,
@@ -125,37 +125,28 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
                   OnGasolineraClickListener clickListener,
                   OnAlertClickListener alertListener) {
 
-            Context ctx = itemView.getContext();
+            int logoResId = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
+            ivBrandLogo.setImageResource(logoResId);
 
-            // ── Logo y nombre ─────────────────────────────────────────────────
-            ivBrandLogo.setImageResource(BrandLogoProvider.getLogoResId(gasolinera.getMarca()));
             String marca = gasolinera.getMarca();
             tvBrandName.setText(marca == null || marca.trim().isEmpty()
-                    ? ctx.getString(R.string.sin_marca)
+                    ? itemView.getContext().getString(R.string.sin_marca)
                     : marca);
             tvAddress.setText(gasolinera.getDisplayAddress());
 
-            // ── Precio con descuento y color ──────────────────────────────────
-            Double originalPrice = gasolinera.getPrecio(fuel);
-            String priceText;
-            PriceLevel priceLevel;
-
-            if (originalPrice != null && originalPrice > 0) {
-                double discounted = DiscountPrefs.applyAllDiscounts(
-                        ctx, gasolinera.getMarca(), originalPrice);
-                priceText  = String.format(java.util.Locale.getDefault(), "%.3f €", discounted);
-                priceLevel = GasolineraSorter.getPriceLevel(discounted, priceRange);
+            if (gasolinera.isElectric()) {
+                // Electrolineras: mostrar resumen de conectores en lugar del precio
+                String resumen = gasolinera.getResumenConectores();
+                tvPrice.setText(resumen != null ? resumen : "Sin datos");
+                tvPrice.setTextColor(MarkerBitmapFactory.getElectricColor());
+                vPriceStripe.setBackgroundColor(MarkerBitmapFactory.getElectricColor());
             } else {
-                priceText  = gasolinera.getFormattedPrice(fuel);
-                priceLevel = gasolinera.getPriceLevel();
+                tvPrice.setText(gasolinera.getFormattedPrice(fuel));
+                int priceColor = MarkerBitmapFactory.getPriceLevelColor(gasolinera.getPriceLevel());
+                tvPrice.setTextColor(priceColor);
+                vPriceStripe.setBackgroundColor(priceColor);
             }
 
-            int priceColor = MarkerBitmapFactory.getPriceLevelColor(priceLevel);
-            tvPrice.setText(priceText);
-            tvPrice.setTextColor(priceColor);
-            vPriceStripe.setBackgroundColor(priceColor);
-
-            // ── Distancia ─────────────────────────────────────────────────────
             String distance = gasolinera.getFormattedDistance();
             tvDistance.setText(distance.isEmpty() ? "" : "\uD83D\uDCCD " + distance);
 
