@@ -19,6 +19,7 @@ import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceRange;
+import com.example.ahorragas.util.DiscountPrefs;
 import com.example.ahorragas.util.GasolineraSorter;
 import com.example.ahorragas.util.RadiusUtils;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -142,7 +143,7 @@ public class PriceListActivity extends BaseActivity {
     }
 
     /**
-     * Usa las gasolineras recibidas desde el Intent, las ordena por precio.
+     * Usa las gasolineras recibidas desde el Intent, las ordena por precio descontado.
      *
      * @param gasolineras Lista de gasolineras del municipio buscado.
      */
@@ -150,9 +151,13 @@ public class PriceListActivity extends BaseActivity {
         executor.execute(() -> {
             List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
 
-            filtered.sort(Comparator.comparingDouble(g ->
-                    g.getPrecio(selectedFuel) != null ? g.getPrecio(selectedFuel) : Double.MAX_VALUE
-            ));
+            // Ordenar por precio descontado
+            filtered.sort(Comparator.comparingDouble(g -> {
+                Double price = g.getPrecio(selectedFuel);
+                if (price == null || price <= 0) return Double.MAX_VALUE;
+                return DiscountPrefs.applyAllDiscounts(
+                        PriceListActivity.this, g.getMarca(), price);
+            }));
 
             PriceRange range = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
             for (Gasolinera g : filtered) {
@@ -162,13 +167,13 @@ public class PriceListActivity extends BaseActivity {
             mainHandler.post(() -> {
                 if (isDestroyed() || isFinishing()) return;
                 if (filtered.isEmpty()) showEmpty();
-                else showData(filtered);
+                else showData(filtered, range);
             });
         });
     }
 
     /**
-     * Carga y muestra las gasolineras ordenadas por precio para las coordenadas dadas.
+     * Carga y muestra las gasolineras ordenadas por precio descontado para las coordenadas dadas.
      *
      * @param lat Latitud del punto de referencia.
      * @param lon Longitud del punto de referencia.
@@ -186,9 +191,13 @@ public class PriceListActivity extends BaseActivity {
                         filtered, lat, lon, radiusMeters, maxMarkers
                 );
 
-                inRadius.sort(Comparator.comparingDouble(g ->
-                        g.getPrecio(selectedFuel) != null ? g.getPrecio(selectedFuel) : Double.MAX_VALUE
-                ));
+                // Ordenar por precio descontado
+                inRadius.sort(Comparator.comparingDouble(g -> {
+                    Double price = g.getPrecio(selectedFuel);
+                    if (price == null || price <= 0) return Double.MAX_VALUE;
+                    return DiscountPrefs.applyAllDiscounts(
+                            PriceListActivity.this, g.getMarca(), price);
+                }));
 
                 PriceRange range = GasolineraSorter.calculatePriceRange(inRadius, selectedFuel);
                 for (Gasolinera g : inRadius) {
@@ -198,7 +207,7 @@ public class PriceListActivity extends BaseActivity {
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
                     if (inRadius.isEmpty()) showEmpty();
-                    else showData(inRadius);
+                    else showData(inRadius, range);
                 });
 
             } catch (Exception e) {
@@ -217,14 +226,14 @@ public class PriceListActivity extends BaseActivity {
         layoutError.setVisibility(View.GONE);
     }
 
-    private void showData(List<Gasolinera> data) {
+    private void showData(List<Gasolinera> data, PriceRange priceRange) {
         dataLoaded = true;
         lastLoadedGasolineras = data;
         progressBar.setVisibility(View.GONE);
         layoutError.setVisibility(View.GONE);
         tvEmpty.setVisibility(View.GONE);
         recyclerView.setVisibility(View.VISIBLE);
-        adapter.updateData(data, selectedFuel);
+        adapter.updateData(data, selectedFuel, priceRange);
     }
 
     private void showEmpty() {

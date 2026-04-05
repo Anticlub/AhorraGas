@@ -41,6 +41,49 @@
                 android:paddingBottom="88dp">
 
                 <!-- ══════════════════════════════════════════════════ -->
+                <!-- SECCIÓN: Mis vehículos                            -->
+                <!-- ══════════════════════════════════════════════════ -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="#383848"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="10dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Mis vehículos  (toca uno para activarlo)"
+                        android:textColor="#4DB6AC"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btnAddVehicle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:text="+ Añadir"
+                        android:textAllCaps="false"
+                        android:textSize="13sp"
+                        android:gravity="center"
+                        android:backgroundTint="#4DB6AC"
+                        android:textColor="#FFFFFF"
+                        android:paddingHorizontal="16dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/vehicleListContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="12dp"
+                    android:paddingTop="8dp" />
+
+                <!-- ══════════════════════════════════════════════════ -->
                 <!-- SECCIÓN: Radio de búsqueda                        -->
                 <!-- ══════════════════════════════════════════════════ -->
                 <TextView
@@ -200,49 +243,6 @@
                         android:textColor="#888888"
                         android:textSize="11sp" />
                 </LinearLayout>
-
-                <!-- ══════════════════════════════════════════════════ -->
-                <!-- SECCIÓN: Mis vehículos                            -->
-                <!-- ══════════════════════════════════════════════════ -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:background="#383848"
-                    android:paddingHorizontal="16dp"
-                    android:paddingTop="14dp"
-                    android:paddingBottom="10dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Mis vehículos  (toca uno para activarlo)"
-                        android:textColor="#4DB6AC"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <Button
-                        android:id="@+id/btnAddVehicle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="40dp"
-                        android:text="+ Añadir"
-                        android:textAllCaps="false"
-                        android:textSize="13sp"
-                        android:gravity="center"
-                        android:backgroundTint="#4DB6AC"
-                        android:textColor="#FFFFFF"
-                        android:paddingHorizontal="16dp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/vehicleListContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingHorizontal="12dp"
-                    android:paddingTop="8dp" />
 
                 <!-- ══════════════════════════════════════════════════ -->
                 <!-- SECCIÓN: Mis descuentos                           -->
