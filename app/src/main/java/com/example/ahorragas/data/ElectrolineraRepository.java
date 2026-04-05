@@ -35,6 +35,7 @@ public class ElectrolineraRepository {
      * @throws RepoError si hay fallo de red, parseo o respuesta vacía
      */
     public synchronized List<Electrolinera> getElectrolineras() throws RepoError {
+        android.util.Log.d("DGT", "getElectrolineras() llamado");
         if (memoryCache != null) return memoryCache;
 
         memoryCache = dataSource.loadElectrolineras();
