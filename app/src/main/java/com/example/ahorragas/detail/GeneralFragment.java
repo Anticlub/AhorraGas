@@ -133,8 +133,8 @@ public class GeneralFragment extends Fragment {
             // Para electrolineras mostramos el operador en lugar del precio
             String operador = args.getString(ARG_OPERADOR, "Operador desconocido");
             tvPrice.setText(operador);
-            tvFillCost.setVisibility(View.GONE);
-            tvArrivalCost.setVisibility(View.GONE);
+            tvFillCost.setText("N/D");
+            tvArrivalCost.setText("N/D");
             tvDiscountLabel.setVisibility(View.GONE);
             tvDiscountPrice.setVisibility(View.GONE);
             tvDiscountFill.setVisibility(View.GONE);
@@ -205,7 +205,8 @@ public class GeneralFragment extends Fragment {
         tvDistance.setText(g.getFormattedDistance().isEmpty()
                 ? "Distancia no disponible"
                 : g.getFormattedDistance());
-        tvHorario.setText(g.getFormattedHorario());
+        String horario = g.getFormattedHorario();
+        tvHorario.setText(horario != null && !horario.isEmpty() ? horario : "No disponible");
 
         // ── Botón favorito ───────────────────────────────────────────────────
         Button btnFavorite = view.findViewById(R.id.btnFavorite);
