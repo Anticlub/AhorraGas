@@ -62,4 +62,11 @@
     <string name="empty_distance_list">No hay estaciones en tu radio actual.</string>
     <string name="empty_favorites">No tienes gasolineras favoritas aún.\nPulsa ❤️ en el detalle de una gasolinera para añadirla.</string>
     <string name="error_favorites">No se pudieron cargar los favoritos.</string>
+
+    <!-- Promociones -->
+    <string name="promo_cargando">Cargando promociones…</string>
+    <string name="promo_sin_resultados">No hay promociones disponibles en este momento.</string>
+    <string name="promo_error_red">No se pudieron cargar las promociones.\nComprueba tu conexión.</string>
+    <string name="promo_ver_mas">Ver más</string>
+    <string name="promo_ver_menos">Ver menos</string>
 </resources>
