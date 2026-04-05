@@ -28,6 +28,7 @@ import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.map.MarkerBitmapFactory;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
+import com.example.ahorragas.model.PriceLevel;
 import com.example.ahorragas.model.PriceRange;
 import com.example.ahorragas.model.Vehicle;
 import com.example.ahorragas.util.DiscountPrefs;
@@ -72,6 +73,7 @@ public class MainActivity extends BaseActivity {
     private int lastRadiusKm = RadiusUtils.DEFAULT_KM;
     private int lastMarkersCount = RadiusUtils.DEFAULT_MARKERS;
     private int lastDiscountsVersion = -1;
+    private PriceRange currentPriceRange = new PriceRange(null, null, 0);
 
     private final List<Gasolinera> allGasolineras = new ArrayList<>();
     private final Map<String, List<Gasolinera>> municipioIndex = new HashMap<>();
@@ -200,7 +202,6 @@ public class MainActivity extends BaseActivity {
             lastDiscountsVersion = currentDiscountsVersion;
             MarkerBitmapFactory.clearCache();
             if (lastSearchQuery != null) {
-                // Estamos en modo búsqueda → refrescar los markers del municipio
                 filterMarkersByMunicipio(lastSearchQuery);
             } else {
                 updateDisplayForFuel(selectedFuel);
@@ -496,12 +497,12 @@ public class MainActivity extends BaseActivity {
         selectedFuel = fuel != null ? fuel : FuelType.GASOLEO_A;
         visibleGasolineras = buildVisibleGasolineras(selectedFuel);
 
-        PriceRange range = GasolineraSorter.calculatePriceRange(visibleGasolineras, selectedFuel);
+        currentPriceRange = GasolineraSorter.calculatePriceRange(visibleGasolineras, selectedFuel);
         for (Gasolinera gasolinera : visibleGasolineras) {
             gasolinera.setPriceLevel(
                     GasolineraSorter.getPriceLevel(
                             gasolinera.getPrecio(selectedFuel),
-                            range
+                            currentPriceRange
                     )
             );
         }
@@ -587,15 +588,18 @@ public class MainActivity extends BaseActivity {
     private void addMarker(Gasolinera gasolinera) {
         if (gasolinera.getLat() == null || gasolinera.getLon() == null) return;
 
-        // Calcular precio con descuento sin modificar el objeto original
         Double originalPrice = gasolinera.getPrecio(selectedFuel);
         String priceText;
+        PriceLevel priceLevel;
+
         if (originalPrice != null && originalPrice > 0) {
             double discounted = DiscountPrefs.applyAllDiscounts(
                     this, gasolinera.getMarca(), originalPrice);
             priceText = String.format(java.util.Locale.getDefault(), "%.3f €", discounted);
+            priceLevel = GasolineraSorter.getPriceLevel(discounted, currentPriceRange);
         } else {
             priceText = gasolinera.getFormattedPrice(selectedFuel);
+            priceLevel = gasolinera.getPriceLevel();
         }
 
         Marker marker = new Marker(mapView);
@@ -605,7 +609,7 @@ public class MainActivity extends BaseActivity {
 
         marker.setIcon(new android.graphics.drawable.BitmapDrawable(
                 getResources(),
-                MarkerBitmapFactory.createMarker(this, gasolinera, selectedFuel, priceText)
+                MarkerBitmapFactory.createMarker(this, gasolinera, selectedFuel, priceText, priceLevel)
         ));
 
         marker.setOnMarkerClickListener((clickedMarker, ignoredMapView) -> {
@@ -886,9 +890,9 @@ public class MainActivity extends BaseActivity {
                 if (g.hasPrice(selectedFuel)) filtered.add(g);
             }
 
-            PriceRange range = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
+            currentPriceRange = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
             for (Gasolinera g : filtered) {
-                g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
+                g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), currentPriceRange));
             }
 
             mainHandler.post(() -> {
