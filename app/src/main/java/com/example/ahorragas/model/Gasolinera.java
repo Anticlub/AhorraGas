@@ -1,6 +1,7 @@
 package com.example.ahorragas.model;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -14,6 +15,10 @@ public class Gasolinera implements android.os.Parcelable {
     private Double lon;
     private Double distanceMeters;
     private PriceLevel priceLevel = PriceLevel.UNKNOWN;
+    // Campos exclusivos de electrolineras (null en gasolineras normales)
+    private boolean electric = false;
+    private String operador;
+    private List<Electrolinera.Conector> conectores;
 
     private final Map<FuelType, Double> precios = new EnumMap<>(FuelType.class);
 
@@ -234,4 +239,28 @@ public class Gasolinera implements android.os.Parcelable {
                     return new Gasolinera[size];
                 }
             };
+
+    public boolean isElectric()                              { return electric; }
+    public void setElectric(boolean electric)                { this.electric = electric; }
+
+    public String getOperador()                              { return operador; }
+    public void setOperador(String operador)                 { this.operador = operador; }
+
+    public List<Electrolinera.Conector> getConectores()      { return conectores; }
+    public void setConectores(List<Electrolinera.Conector> conectores) { this.conectores = conectores; }
+
+    /**
+     * Devuelve el resumen de conectores si es una electrolinera.
+     *
+     * @return resumen de conectores o null si no es eléctrica
+     */
+    public String getResumenConectores() {
+        if (!electric || conectores == null || conectores.isEmpty()) return null;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < conectores.size(); i++) {
+            if (i > 0) sb.append("  |  ");
+            sb.append(conectores.get(i).toResumen());
+        }
+        return sb.toString();
+    }
 }
