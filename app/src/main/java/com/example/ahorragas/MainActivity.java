@@ -620,7 +620,7 @@ public class MainActivity extends BaseActivity {
 
         marker.setIcon(new android.graphics.drawable.BitmapDrawable(
                 getResources(),
-                MarkerBitmapFactory.createMarker(this, gasolinera, selectedFuel, priceText, priceLevel)
+                MarkerBitmapFactory.createMarker(this, gasolinera, selectedFuel)
         ));
 
         marker.setOnMarkerClickListener((clickedMarker, ignoredMapView) -> {
