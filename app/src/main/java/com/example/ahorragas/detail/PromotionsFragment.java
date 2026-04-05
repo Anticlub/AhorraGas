@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ahorragas.R;
+import com.example.ahorragas.adapter.PromotionAdapter;
 import com.example.ahorragas.model.PromotionPlan;
 import com.example.ahorragas.ui.PromotionsViewModel;
 

@@ -1,4 +1,4 @@
-package com.example.ahorragas.detail;
+package com.example.ahorragas.adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
