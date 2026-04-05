@@ -44,8 +44,17 @@ public final class GasolineraSorter {
 
         for (Gasolinera g : gasolineras) {
             if (g == null || !GeoValidation.isValidLatLon(g.getLat(), g.getLon())) continue;
-            if (fuel == null || g.hasPrice(fuel)) {
+
+            if (fuel == null) {
                 result.add(g);
+                continue;
+            }
+
+            // Las electrolineras se identifican por isElectric, no por precio
+            if (fuel == FuelType.ELECTRICO) {
+                if (g.isElectric()) result.add(g);
+            } else {
+                if (!g.isElectric() && g.hasPrice(fuel)) result.add(g);
             }
         }
         return result;

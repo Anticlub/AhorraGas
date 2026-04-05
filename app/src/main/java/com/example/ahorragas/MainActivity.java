@@ -1,5 +1,8 @@
 package com.example.ahorragas;
 
+import com.example.ahorragas.data.ElectrolineraRepository;
+import com.example.ahorragas.data.EstacionRepository;
+import com.example.ahorragas.data.RemoteDgtDataSource;
 import com.example.ahorragas.detail.StationDetailActivity;
 import com.example.ahorragas.model.Discount;
 import android.Manifest;
@@ -89,7 +92,7 @@ public class MainActivity extends BaseActivity {
     private MyLocationNewOverlay locationOverlay;
 
     private CachedRemoteApiDataSource dataSource;
-    private GasolineraRepository repository;
+    private EstacionRepository repository;
     private LocationHelper locationHelper;
     private final java.util.concurrent.ExecutorService executor =
             java.util.concurrent.Executors.newSingleThreadExecutor();
@@ -134,7 +137,10 @@ public class MainActivity extends BaseActivity {
         setContentView(R.layout.activity_main);
 
         dataSource = new CachedRemoteApiDataSource(this);
-        repository = GasolineraRepository.getInstance(dataSource);
+        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(dataSource);
+        ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
+                new RemoteDgtDataSource());
+        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo);
         locationHelper = new LocationHelper(this);
 
         selectedFuel = FuelType.fromString(
@@ -458,15 +464,11 @@ public class MainActivity extends BaseActivity {
     private void loadGasolineras() {
         progressBarSearch.setVisibility(View.VISIBLE);
 
-        tvDataStatus.setText(
-                repository.getLastOrigin() == null
-                        ? getString(R.string.status_loading_data)
-                        : getString(R.string.status_refreshing_data)
-        );
+        tvDataStatus.setText(getString(R.string.status_loading_data));
 
         executor.execute(() -> {
             try {
-                List<Gasolinera> loaded = repository.getGasolineras();
+                List<Gasolinera> loaded = repository.getEstaciones();
 
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
@@ -569,7 +571,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void renderMetaStatus() {
-        String originText = getOriginLabel(repository.getLastOrigin());
+        String originText = getOriginLabel(null);
         String orderText = userLocation != null
                 ? getString(R.string.order_by_distance)
                 : getString(R.string.order_by_price);

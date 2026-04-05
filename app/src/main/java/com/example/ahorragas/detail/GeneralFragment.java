@@ -34,6 +34,8 @@ public class GeneralFragment extends Fragment {
     private static final String ARG_HORARIO       = "arg_horario";
     private static final String ARG_PRICES_PREFIX = "arg_price_";
     private static final String ARG_DISTANCE      = "arg_distance";
+    private static final String ARG_IS_ELECTRIC = "arg_is_electric";
+    private static final String ARG_OPERADOR    = "arg_operador";
 
     /**
      * Crea una nueva instancia del fragment con los datos de la gasolinera.
@@ -59,6 +61,10 @@ public class GeneralFragment extends Fragment {
         }
         if (gasolinera.getDistanceMeters() != null) {
             args.putDouble(ARG_DISTANCE, gasolinera.getDistanceMeters());
+        }
+        args.putBoolean(ARG_IS_ELECTRIC, gasolinera.isElectric());
+        if (gasolinera.getOperador() != null) {
+            args.putString(ARG_OPERADOR, gasolinera.getOperador());
         }
         fragment.setArguments(args);
         return fragment;
@@ -117,78 +123,83 @@ public class GeneralFragment extends Fragment {
         TextView tvDiscountFill  = view.findViewById(R.id.tvDiscountFill);
         View dividerDiscount     = view.findViewById(R.id.dividerDiscount);
 
+        boolean isElectric = args.getBoolean(ARG_IS_ELECTRIC, false);
         Vehicle activeVehicle = VehiclePrefs.loadActiveVehicle(requireContext());
         Double price = g.getPrecio(selectedFuel);
 
         tvFuelLabel.setText(selectedFuel.displayName());
-        tvPrice.setText(g.getFormattedPrice(selectedFuel));
 
-        // ── Coste de llenado ─────────────────────────────────────────────────
-        if (activeVehicle == null) {
-            tvFillCost.setText("Configura tu vehículo para calcular el coste de llenado");
-        } else if (!activeVehicle.hasTankCapacity()) {
-            tvFillCost.setText("Añade la capacidad del depósito en preferencias");
-        } else if (price == null || price <= 0) {
-            tvFillCost.setText("Precio no disponible");
-        } else {
-            tvFillCost.setText(String.format(java.util.Locale.getDefault(),
-                    "%.2f €", activeVehicle.estimateFillCost(price)));
-        }
-
-        // ── Coste de llegada ─────────────────────────────────────────────────
-        if (activeVehicle == null || !activeVehicle.hasConsumption()) {
-            tvArrivalCost.setText("Configura tu vehículo para calcular el coste");
-        } else if (g.getDistanceMeters() == null || g.getDistanceMeters() <= 0) {
-            tvArrivalCost.setText("Distancia no disponible");
-        } else if (price == null || price <= 0) {
-            tvArrivalCost.setText("Precio no disponible");
-        } else {
-            double distanceKm = g.getDistanceMeters() / 1000.0;
-            double coste = (distanceKm / 100.0) * activeVehicle.getConsumption() * price;
-            tvArrivalCost.setText(String.format(java.util.Locale.getDefault(), "%.2f €", coste));
-        }
-
-        // ── Descuento ────────────────────────────────────────────────────────
-        List<Discount> discounts = DiscountPrefs.findAllForBrand(requireContext(), g.getMarca());
-        if (!discounts.isEmpty() && price != null && price > 0) {
-            double discountedPrice = DiscountPrefs.applyAllDiscounts(
-                    requireContext(), g.getMarca(), price);
-
-            // Construir texto legible de los descuentos aplicados
-            StringBuilder labelBuilder = new StringBuilder("Descuentos aplicados: ");
-            for (int i = 0; i < discounts.size(); i++) {
-                Discount d = discounts.get(i);
-                if (d.getType() == Discount.Type.PERCENTAGE) {
-                    labelBuilder.append(String.format(java.util.Locale.getDefault(),
-                            "%.0f%% de descuento", d.getValue()));
-                } else {
-                    labelBuilder.append(String.format(java.util.Locale.getDefault(),
-                            "%.0f cts/L", d.getValue()));
-                }
-                if (i < discounts.size() - 1) labelBuilder.append(" · ");
-            }
-
-            tvDiscountLabel.setText(labelBuilder.toString());
-            tvDiscountPrice.setText(String.format(java.util.Locale.getDefault(),
-                    "%.3f €", discountedPrice));
-
-            tvDiscountLabel.setVisibility(View.VISIBLE);
-            tvDiscountPrice.setVisibility(View.VISIBLE);
-            dividerDiscount.setVisibility(View.VISIBLE);
-
-            if (activeVehicle != null && activeVehicle.hasTankCapacity()) {
-                tvDiscountFill.setText(String.format(java.util.Locale.getDefault(),
-                        "Llenado con descuento: %.2f €",
-                        activeVehicle.estimateFillCost(discountedPrice)));
-                tvDiscountFill.setVisibility(View.VISIBLE);
-            } else {
-                tvDiscountFill.setVisibility(View.GONE);
-            }
-        } else {
+        if (isElectric) {
+            // Para electrolineras mostramos el operador en lugar del precio
+            String operador = args.getString(ARG_OPERADOR, "Operador desconocido");
+            tvPrice.setText(operador);
+            tvFillCost.setVisibility(View.GONE);
+            tvArrivalCost.setVisibility(View.GONE);
             tvDiscountLabel.setVisibility(View.GONE);
             tvDiscountPrice.setVisibility(View.GONE);
             tvDiscountFill.setVisibility(View.GONE);
             dividerDiscount.setVisibility(View.GONE);
+        } else {
+            tvPrice.setText(g.getFormattedPrice(selectedFuel));
+
+            // ── Coste de llenado ─────────────────────────────────────────────────
+            if (activeVehicle == null) {
+                tvFillCost.setText("Configura tu vehículo para calcular el coste de llenado");
+            } else if (!activeVehicle.hasTankCapacity()) {
+                tvFillCost.setText("Añade la capacidad del depósito en preferencias");
+            } else if (price == null || price <= 0) {
+                tvFillCost.setText("Precio no disponible");
+            } else {
+                tvFillCost.setText(String.format(java.util.Locale.getDefault(),
+                        "%.2f €", activeVehicle.estimateFillCost(price)));
+            }
+
+            // ── Coste de llegada ─────────────────────────────────────────────────
+            if (activeVehicle == null || !activeVehicle.hasConsumption()) {
+                tvArrivalCost.setText("Configura tu vehículo para calcular el coste");
+            } else if (g.getDistanceMeters() == null || g.getDistanceMeters() <= 0) {
+                tvArrivalCost.setText("Distancia no disponible");
+            } else if (price == null || price <= 0) {
+                tvArrivalCost.setText("Precio no disponible");
+            } else {
+                double distanceKm = g.getDistanceMeters() / 1000.0;
+                double coste = (distanceKm / 100.0) * activeVehicle.getConsumption() * price;
+                tvArrivalCost.setText(String.format(java.util.Locale.getDefault(), "%.2f €", coste));
+            }
+
+            // ── Descuento ────────────────────────────────────────────────────────
+            List<Discount> discounts = DiscountPrefs.findAllForBrand(requireContext(), g.getMarca());
+            Discount discount = discounts.isEmpty() ? null : discounts.get(0);
+            if (discount != null && price != null && price > 0) {
+                double discountedPrice = discount.applyTo(price);
+
+                String typeLabel = discount.getType() == Discount.Type.PERCENTAGE
+                        ? String.format(java.util.Locale.getDefault(), "-%.1f%%", discount.getValue())
+                        : String.format(java.util.Locale.getDefault(), "-%.3f €/L", discount.getValue());
+
+                tvDiscountLabel.setText("Precio con descuento " + discount.getBrandName()
+                        + " (" + typeLabel + ")");
+                tvDiscountPrice.setText(String.format(java.util.Locale.getDefault(),
+                        "%.3f €", discountedPrice));
+
+                tvDiscountLabel.setVisibility(View.VISIBLE);
+                tvDiscountPrice.setVisibility(View.VISIBLE);
+                dividerDiscount.setVisibility(View.VISIBLE);
+
+                if (activeVehicle != null && activeVehicle.hasTankCapacity()) {
+                    tvDiscountFill.setText(String.format(java.util.Locale.getDefault(),
+                            "Llenado con descuento: %.2f €",
+                            activeVehicle.estimateFillCost(discountedPrice)));
+                    tvDiscountFill.setVisibility(View.VISIBLE);
+                } else {
+                    tvDiscountFill.setVisibility(View.GONE);
+                }
+            } else {
+                tvDiscountLabel.setVisibility(View.GONE);
+                tvDiscountPrice.setVisibility(View.GONE);
+                tvDiscountFill.setVisibility(View.GONE);
+                dividerDiscount.setVisibility(View.GONE);
+            }
         }
 
         tvDistance.setText(g.getFormattedDistance().isEmpty()

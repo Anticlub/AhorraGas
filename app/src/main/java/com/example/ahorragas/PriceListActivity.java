@@ -14,7 +14,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ahorragas.adapter.GasolineraAdapter;
 import com.example.ahorragas.data.CachedRemoteApiDataSource;
+import com.example.ahorragas.data.ElectrolineraRepository;
+import com.example.ahorragas.data.EstacionRepository;
 import com.example.ahorragas.data.GasolineraRepository;
+import com.example.ahorragas.data.RemoteDgtDataSource;
 import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
@@ -30,7 +33,7 @@ import java.util.List;
 
 public class PriceListActivity extends BaseActivity {
 
-    private GasolineraRepository repository;
+    private EstacionRepository repository;
     private GasolineraAdapter adapter;
     private FuelType selectedFuel;
     private LocationHelper locationHelper;
@@ -55,8 +58,11 @@ public class PriceListActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_price_list);
 
-        repository = GasolineraRepository.getInstance(new CachedRemoteApiDataSource(this));
-        locationHelper = new LocationHelper(this);
+        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(
+                new CachedRemoteApiDataSource(this));
+        ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
+                new RemoteDgtDataSource());
+        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo);        locationHelper = new LocationHelper(this);
 
         bindViews();
         setupRecyclerView();
@@ -151,23 +157,33 @@ public class PriceListActivity extends BaseActivity {
         executor.execute(() -> {
             List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
 
-            // Ordenar por precio descontado
-            filtered.sort(Comparator.comparingDouble(g -> {
-                Double price = g.getPrecio(selectedFuel);
-                if (price == null || price <= 0) return Double.MAX_VALUE;
-                return DiscountPrefs.applyAllDiscounts(
-                        PriceListActivity.this, g.getMarca(), price);
-            }));
-
-            PriceRange range = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
-            for (Gasolinera g : filtered) {
-                g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
+            if (selectedFuel == FuelType.ELECTRICO) {
+                // Electrolineras: ordenar por potencia máxima descendente
+                filtered.sort((a, b) -> {
+                    double potA = getMaxPotencia(a);
+                    double potB = getMaxPotencia(b);
+                    return Double.compare(potB, potA);
+                });
+            } else {
+                filtered.sort(Comparator.comparingDouble(g ->
+                        g.getPrecio(selectedFuel) != null
+                                ? g.getPrecio(selectedFuel) : Double.MAX_VALUE
+                ));
+                PriceRange range = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
+                for (Gasolinera g : filtered) {
+                    g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
+                }
             }
 
             mainHandler.post(() -> {
                 if (isDestroyed() || isFinishing()) return;
                 if (filtered.isEmpty()) showEmpty();
-                else showData(filtered, range);
+                else {
+                    PriceRange range = selectedFuel == FuelType.ELECTRICO
+                            ? new PriceRange(null, null, 0)
+                            : GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
+                    showData(filtered, range);
+                }
             });
         });
     }
@@ -185,29 +201,40 @@ public class PriceListActivity extends BaseActivity {
                 double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
                 int maxMarkers = RadiusUtils.loadMarkersCount(PriceListActivity.this);
 
-                List<Gasolinera> gasolineras = repository.getGasolineras();
+                List<Gasolinera> gasolineras = repository.getEstaciones();
                 List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
                 List<Gasolinera> inRadius = GasolineraSorter.getWithinRadius(
                         filtered, lat, lon, radiusMeters, maxMarkers
                 );
 
-                // Ordenar por precio descontado
-                inRadius.sort(Comparator.comparingDouble(g -> {
-                    Double price = g.getPrecio(selectedFuel);
-                    if (price == null || price <= 0) return Double.MAX_VALUE;
-                    return DiscountPrefs.applyAllDiscounts(
-                            PriceListActivity.this, g.getMarca(), price);
-                }));
-
-                PriceRange range = GasolineraSorter.calculatePriceRange(inRadius, selectedFuel);
-                for (Gasolinera g : inRadius) {
-                    g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
+                if (selectedFuel == FuelType.ELECTRICO) {
+                    // Electrolineras: ordenar por potencia máxima descendente
+                    inRadius.sort((a, b) -> {
+                        double potA = getMaxPotencia(a);
+                        double potB = getMaxPotencia(b);
+                        return Double.compare(potB, potA);
+                    });
+                } else {
+                    inRadius.sort(Comparator.comparingDouble(g ->
+                            g.getPrecio(selectedFuel) != null
+                                    ? g.getPrecio(selectedFuel) : Double.MAX_VALUE
+                    ));
+                    PriceRange range = GasolineraSorter.calculatePriceRange(inRadius, selectedFuel);
+                    for (Gasolinera g : inRadius) {
+                        g.setPriceLevel(GasolineraSorter.getPriceLevel(
+                                g.getPrecio(selectedFuel), range));
+                    }
                 }
 
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
                     if (inRadius.isEmpty()) showEmpty();
-                    else showData(inRadius, range);
+                    else {
+                        PriceRange range = selectedFuel == FuelType.ELECTRICO
+                                ? new PriceRange(null, null, 0)
+                                : GasolineraSorter.calculatePriceRange(inRadius, selectedFuel);
+                        showData(inRadius, range);
+                    }
                 });
 
             } catch (Exception e) {
@@ -261,5 +288,22 @@ public class PriceListActivity extends BaseActivity {
             intent.putParcelableArrayListExtra("gasolineras", gasolineras);
         }
         startActivity(intent);
+    }
+    /**
+     * Devuelve la potencia máxima en vatios de una electrolinera.
+     * Devuelve 0 si no tiene conectores o no es eléctrica.
+     *
+     * @param g estación a consultar
+     * @return potencia máxima en vatios
+     */
+    private double getMaxPotencia(Gasolinera g) {
+        if (g.getConectores() == null || g.getConectores().isEmpty()) return 0;
+        double max = 0;
+        for (com.example.ahorragas.model.Electrolinera.Conector c : g.getConectores()) {
+            if (c.getPotenciaW() != null && c.getPotenciaW() > max) {
+                max = c.getPotenciaW();
+            }
+        }
+        return max;
     }
 }
