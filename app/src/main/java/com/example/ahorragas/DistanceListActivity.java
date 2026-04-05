@@ -158,7 +158,7 @@ public class DistanceListActivity extends BaseActivity {
             mainHandler.post(() -> {
                 if (isDestroyed() || isFinishing()) return;
                 if (filtered.isEmpty()) showEmpty();
-                else showData(filtered);
+                else showData(filtered, range);
             });
         });
     }
@@ -190,7 +190,7 @@ public class DistanceListActivity extends BaseActivity {
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
                     if (sorted.isEmpty()) showEmpty();
-                    else showData(sorted);
+                    else showData(sorted, range);
                 });
 
             } catch (Exception e) {
@@ -209,13 +209,13 @@ public class DistanceListActivity extends BaseActivity {
         layoutError.setVisibility(View.GONE);
     }
 
-    private void showData(List<Gasolinera> data) {
+    private void showData(List<Gasolinera> data, PriceRange priceRange) {
         dataLoaded = true;
         progressBar.setVisibility(View.GONE);
         layoutError.setVisibility(View.GONE);
         tvEmpty.setVisibility(View.GONE);
         recyclerView.setVisibility(View.VISIBLE);
-        adapter.updateData(data, selectedFuel);
+        adapter.updateData(data, selectedFuel, priceRange);
     }
 
     private void showEmpty() {

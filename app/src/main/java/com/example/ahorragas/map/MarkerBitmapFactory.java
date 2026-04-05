@@ -57,34 +57,7 @@ public final class MarkerBitmapFactory {
     }
 
     /**
-     * Crea el bitmap del marcador con precio personalizado (para descuentos).
-     *
-     * @param context           Contexto de la aplicación.
-     * @param gasolinera        Gasolinera a representar.
-     * @param fuelType          Tipo de combustible seleccionado.
-     * @param overridePriceText Texto de precio a mostrar, o null para usar el precio original.
-     * @return Bitmap del marcador.
-     */
-    public static Bitmap createMarker(Context context,
-                                      Gasolinera gasolinera,
-                                      FuelType fuelType,
-                                      String overridePriceText) {
-        String priceText = overridePriceText != null
-                ? overridePriceText
-                : gasolinera.getFormattedPrice(fuelType);
-        int logoResId = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
-        String key = gasolinera.getId() + "|" + gasolinera.getPriceLevel().name() + "|" + priceText;
-
-        Bitmap cached = CACHE.get(key);
-        if (cached != null && !cached.isRecycled()) return cached;
-
-        Bitmap rendered = renderMarker(context, gasolinera, priceText, logoResId);
-        CACHE.put(key, rendered);
-        return rendered;
-    }
-
-    /**
-     * Crea el bitmap del marcador con el precio original de la gasolinera.
+     * Crea el bitmap del marcador usando el PriceLevel original de la gasolinera.
      *
      * @param context    Contexto de la aplicación.
      * @param gasolinera Gasolinera a representar.
@@ -94,13 +67,44 @@ public final class MarkerBitmapFactory {
     public static Bitmap createMarker(Context context,
                                       Gasolinera gasolinera,
                                       FuelType fuelType) {
-        return createMarker(context, gasolinera, fuelType, null);
+        return createMarker(context, gasolinera, fuelType, null, gasolinera.getPriceLevel());
+    }
+
+    /**
+     * Crea el bitmap del marcador con precio y nivel de precio explícitos.
+     * Usar cuando el precio mostrado difiere del original (p.ej. con descuento).
+     *
+     * @param context           Contexto de la aplicación.
+     * @param gasolinera        Gasolinera a representar.
+     * @param fuelType          Tipo de combustible seleccionado.
+     * @param overridePriceText Texto de precio a mostrar, o null para usar el precio original.
+     * @param priceLevel        Nivel de precio a usar para el color del marcador.
+     * @return Bitmap del marcador.
+     */
+    public static Bitmap createMarker(Context context,
+                                      Gasolinera gasolinera,
+                                      FuelType fuelType,
+                                      String overridePriceText,
+                                      PriceLevel priceLevel) {
+        String priceText = overridePriceText != null
+                ? overridePriceText
+                : gasolinera.getFormattedPrice(fuelType);
+        int logoResId = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
+        PriceLevel levelToUse = priceLevel != null ? priceLevel : gasolinera.getPriceLevel();
+        String key = gasolinera.getId() + "|" + levelToUse.name() + "|" + priceText;
+
+        Bitmap cached = CACHE.get(key);
+        if (cached != null && !cached.isRecycled()) return cached;
+
+        Bitmap rendered = renderMarker(context, priceText, logoResId, levelToUse);
+        CACHE.put(key, rendered);
+        return rendered;
     }
 
     private static Bitmap renderMarker(Context context,
-                                       Gasolinera gasolinera,
                                        String priceText,
-                                       int logoResId) {
+                                       int logoResId,
+                                       PriceLevel priceLevel) {
         float density = context.getResources().getDisplayMetrics().density;
 
         int width        = px(density, 52);
@@ -109,7 +113,7 @@ public final class MarkerBitmapFactory {
         int height       = bubbleHeight + pinHeight;
         int corner       = px(density, 8);
 
-        int bgColor = getPriceLevelColor(gasolinera.getPriceLevel());
+        int bgColor = getPriceLevelColor(priceLevel);
 
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
