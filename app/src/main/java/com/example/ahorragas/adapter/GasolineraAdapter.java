@@ -1,5 +1,6 @@
 package com.example.ahorragas.adapter;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,10 @@ import com.example.ahorragas.map.BrandLogoProvider;
 import com.example.ahorragas.map.MarkerBitmapFactory;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
+import com.example.ahorragas.model.PriceLevel;
+import com.example.ahorragas.model.PriceRange;
+import com.example.ahorragas.util.DiscountPrefs;
+import com.example.ahorragas.util.GasolineraSorter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +31,7 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
 
     private List<Gasolinera> gasolineras;
     private FuelType currentFuel;
+    private PriceRange currentPriceRange;
     private final OnGasolineraClickListener clickListener;
 
     public GasolineraAdapter(List<Gasolinera> gasolineras,
@@ -33,12 +39,21 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
                              OnGasolineraClickListener clickListener) {
         this.gasolineras = new ArrayList<>(gasolineras);
         this.currentFuel = fuel;
+        this.currentPriceRange = new PriceRange(null, null, 0);
         this.clickListener = clickListener;
     }
 
-    public void updateData(List<Gasolinera> newGasolineras, FuelType fuel) {
+    /**
+     * Actualiza los datos mostrados en la lista.
+     *
+     * @param newGasolineras Lista de gasolineras a mostrar.
+     * @param fuel           Tipo de combustible seleccionado.
+     * @param priceRange     Rango de precios para calcular el nivel de precio con descuento.
+     */
+    public void updateData(List<Gasolinera> newGasolineras, FuelType fuel, PriceRange priceRange) {
         this.gasolineras = new ArrayList<>(newGasolineras);
         this.currentFuel = fuel;
+        this.currentPriceRange = priceRange != null ? priceRange : new PriceRange(null, null, 0);
         notifyDataSetChanged();
     }
 
@@ -59,7 +74,7 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.bind(gasolineras.get(position), currentFuel, clickListener);
+        holder.bind(gasolineras.get(position), currentFuel, currentPriceRange, clickListener);
     }
 
     @Override
@@ -78,30 +93,49 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
         ViewHolder(View itemView) {
             super(itemView);
             vPriceStripe = itemView.findViewById(R.id.vPriceStripe);
-            ivBrandLogo = itemView.findViewById(R.id.ivBrandLogo);
-            tvBrandName = itemView.findViewById(R.id.tvBrandName);
-            tvAddress = itemView.findViewById(R.id.tvAddress);
-            tvPrice = itemView.findViewById(R.id.tvPrice);
-            tvDistance = itemView.findViewById(R.id.tvDistance);
+            ivBrandLogo  = itemView.findViewById(R.id.ivBrandLogo);
+            tvBrandName  = itemView.findViewById(R.id.tvBrandName);
+            tvAddress    = itemView.findViewById(R.id.tvAddress);
+            tvPrice      = itemView.findViewById(R.id.tvPrice);
+            tvDistance   = itemView.findViewById(R.id.tvDistance);
         }
 
         void bind(Gasolinera gasolinera,
                   FuelType fuel,
+                  PriceRange priceRange,
                   OnGasolineraClickListener clickListener) {
-            int logoResId = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
-            ivBrandLogo.setImageResource(logoResId);
 
+            Context ctx = itemView.getContext();
+
+            // ── Logo y nombre ─────────────────────────────────────────────────
+            ivBrandLogo.setImageResource(BrandLogoProvider.getLogoResId(gasolinera.getMarca()));
             String marca = gasolinera.getMarca();
             tvBrandName.setText(marca == null || marca.trim().isEmpty()
-                    ? itemView.getContext().getString(R.string.sin_marca)
+                    ? ctx.getString(R.string.sin_marca)
                     : marca);
             tvAddress.setText(gasolinera.getDisplayAddress());
 
-            tvPrice.setText(gasolinera.getFormattedPrice(fuel));
-            int priceColor = MarkerBitmapFactory.getPriceLevelColor(gasolinera.getPriceLevel());
+            // ── Precio con descuento y color ──────────────────────────────────
+            Double originalPrice = gasolinera.getPrecio(fuel);
+            String priceText;
+            PriceLevel priceLevel;
+
+            if (originalPrice != null && originalPrice > 0) {
+                double discounted = DiscountPrefs.applyAllDiscounts(
+                        ctx, gasolinera.getMarca(), originalPrice);
+                priceText  = String.format(java.util.Locale.getDefault(), "%.3f €", discounted);
+                priceLevel = GasolineraSorter.getPriceLevel(discounted, priceRange);
+            } else {
+                priceText  = gasolinera.getFormattedPrice(fuel);
+                priceLevel = gasolinera.getPriceLevel();
+            }
+
+            int priceColor = MarkerBitmapFactory.getPriceLevelColor(priceLevel);
+            tvPrice.setText(priceText);
             tvPrice.setTextColor(priceColor);
             vPriceStripe.setBackgroundColor(priceColor);
 
+            // ── Distancia ─────────────────────────────────────────────────────
             String distance = gasolinera.getFormattedDistance();
             tvDistance.setText(distance.isEmpty() ? "" : "\uD83D\uDCCD " + distance);
 

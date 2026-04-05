@@ -15,7 +15,10 @@ import com.example.ahorragas.adapter.GasolineraAdapter;
 import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
+import com.example.ahorragas.model.PriceRange;
+import com.example.ahorragas.util.DiscountPrefs;
 import com.example.ahorragas.util.FavoritesPrefs;
+import com.example.ahorragas.util.GasolineraSorter;
 import com.example.ahorragas.util.GeoUtils;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -85,11 +88,15 @@ public class FavoritesActivity extends BaseActivity {
     }
 
     private void showData(List<Gasolinera> data) {
+        PriceRange priceRange = GasolineraSorter.calculatePriceRange(data, selectedFuel);
+        for (Gasolinera g : data) {
+            g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), priceRange));
+        }
         progressBar.setVisibility(View.GONE);
         layoutError.setVisibility(View.GONE);
         tvEmpty.setVisibility(View.GONE);
         recyclerView.setVisibility(View.VISIBLE);
-        adapter.updateData(data, selectedFuel);
+        adapter.updateData(data, selectedFuel, priceRange);
     }
 
     private void showEmpty() {
