@@ -32,7 +32,7 @@ public class RemoteDgtDataSource implements ElectrolineraDataSource {
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(15000);
             connection.setReadTimeout(60000); // XML grande → timeout generoso
-            connection.setRequestProperty("User-Agent", "Ahorragas/1.0 (Android)");
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
 
             int code = connection.getResponseCode();
             if (code < 200 || code >= 300) {
@@ -40,6 +40,10 @@ public class RemoteDgtDataSource implements ElectrolineraDataSource {
             }
 
             is = connection.getInputStream();
+            String encoding = connection.getContentEncoding();
+            if ("gzip".equalsIgnoreCase(encoding)) {
+                is = new java.util.zip.GZIPInputStream(is);
+            }
             List<Electrolinera> result = parseXml(is);
 
             if (result.isEmpty()) {
@@ -68,15 +72,16 @@ public class RemoteDgtDataSource implements ElectrolineraDataSource {
         Electrolinera current = null;
         Electrolinera.Conector connectorEnCurso = null;
 
-        // Flags de contexto
-        boolean inName          = false;
-        boolean inOperator      = false;
-        boolean inCoordinates   = false;
-        boolean inConnector     = false;
-        boolean inAddressLine   = false;
-        boolean nombreSiteAsignado   = false;
-        boolean operadorAsignado     = false;
-        int addressOrder        = -1;
+        boolean inName        = false;
+        boolean inOperator    = false;
+        boolean inCoordinates = false;
+        boolean inConnector   = false;
+        boolean inAddressLine = false;
+        boolean inText        = false;
+        boolean nombreSiteAsignado = false;
+        boolean operadorAsignado   = false;
+        int addressOrder      = -1;
+        String lastOpenTag    = ""; // último START_TAG procesado
 
         try {
             XmlPullParser parser = Xml.newPullParser();
@@ -90,6 +95,8 @@ public class RemoteDgtDataSource implements ElectrolineraDataSource {
                 if (localName == null) localName = "";
 
                 if (eventType == XmlPullParser.START_TAG) {
+                    lastOpenTag = localName;
+
                     switch (localName) {
                         case "energyInfrastructureSite":
                             current = new Electrolinera();
@@ -103,9 +110,6 @@ public class RemoteDgtDataSource implements ElectrolineraDataSource {
                         case "operator":
                             inOperator = true;
                             break;
-                        case "label":
-                            // horario — se lee en TEXT
-                            break;
                         case "coordinatesForDisplay":
                             inCoordinates = true;
                             break;
@@ -113,6 +117,9 @@ public class RemoteDgtDataSource implements ElectrolineraDataSource {
                             inAddressLine = true;
                             String order = parser.getAttributeValue(null, "order");
                             addressOrder = order != null ? Integer.parseInt(order) : -1;
+                            break;
+                        case "text":
+                            if (inAddressLine) inText = true;
                             break;
                         case "connector":
                             inConnector = true;
@@ -130,19 +137,15 @@ public class RemoteDgtDataSource implements ElectrolineraDataSource {
                             }
                             current = null;
                             break;
-                        case "name":
-                            inName = false;
-                            break;
-                        case "operator":
-                            inOperator = false;
-                            break;
+                        case "name":        inName = false; break;
+                        case "operator":    inOperator = false; break;
+                        case "coordinatesForDisplay": inCoordinates = false; break;
                         case "addressLine":
                             inAddressLine = false;
+                            inText        = false;
                             addressOrder  = -1;
                             break;
-                        case "coordinatesForDisplay":
-                            inCoordinates = false;
-                            break;
+                        case "text":        inText = false; break;
                         case "connector":
                             if (current != null && connectorEnCurso != null) {
                                 current.addConector(connectorEnCurso);
@@ -151,80 +154,79 @@ public class RemoteDgtDataSource implements ElectrolineraDataSource {
                             inConnector      = false;
                             break;
                     }
+                    lastOpenTag = "";
 
                 } else if (eventType == XmlPullParser.TEXT && current != null) {
                     String text = parser.getText();
-                    if (text == null) {
-                        eventType = parser.next();
-                        continue;
-                    }
+                    if (text == null) { eventType = parser.next(); continue; }
                     text = text.trim();
-                    if (text.isEmpty()) {
-                        eventType = parser.next();
-                        continue;
-                    }
+                    if (text.isEmpty()) { eventType = parser.next(); continue; }
 
-                    // Nombre del site — primer <value> dentro de <name> fuera de operator
-                    if ("value".equals(localName) && inName && !inOperator && !nombreSiteAsignado) {
-                        current.setNombre(text);
-                        nombreSiteAsignado = true;
-                    }
+                    // Usamos lastOpenTag en lugar de localName para el bloque TEXT
+                    switch (lastOpenTag) {
+                        case "value":
+                            if (inName && !inOperator && !inAddressLine && !inText
+                                    && !nombreSiteAsignado && current != null) {
+                                current.setNombre(text);
+                                nombreSiteAsignado = true;
+                            } else if (inOperator && !operadorAsignado && current != null) {
+                                current.setOperador(text);
+                                operadorAsignado = true;
+                            } else if (inText && current != null) {
+                                switch (addressOrder) {
+                                    case 1: current.setDireccion(stripPrefix(text, "Dirección:")); break;
+                                    case 2: current.setMunicipio(stripPrefix(text, "Municipio:")); break;
+                                    case 3: current.setProvincia(stripPrefix(text, "Provincia:")); break;
+                                }
+                            }
+                            break;
 
-                    // Operador — primer <value> dentro de <operator>
-                    if ("value".equals(localName) && inOperator && !operadorAsignado) {
-                        current.setOperador(text);
-                        operadorAsignado = true;
-                    }
+                        case "label":
+                            if (current != null) current.setHorario(text);
+                            break;
 
-                    // Horario
-                    if ("label".equals(localName)) {
-                        current.setHorario(text.trim());
-                    }
+                        case "latitude":
+                            if (inCoordinates && current != null) {
+                                try { current.setLat(Double.parseDouble(text)); }
+                                catch (NumberFormatException ignored) {}
+                            }
+                            break;
 
-                    // Coordenadas
-                    if (inCoordinates) {
-                        if ("latitude".equals(localName)) {
-                            try { current.setLat(Double.parseDouble(text)); }
-                            catch (NumberFormatException ignored) {}
-                        } else if ("longitude".equals(localName)) {
-                            try { current.setLon(Double.parseDouble(text)); }
-                            catch (NumberFormatException ignored) {}
-                        }
-                    }
+                        case "longitude":
+                            if (inCoordinates && current != null) {
+                                try { current.setLon(Double.parseDouble(text)); }
+                                catch (NumberFormatException ignored) {}
+                            }
+                            break;
 
-                    // Dirección — las addressLine vienen como "Dirección: Camí dels Reis 166"
-                    if ("value".equals(localName) && inAddressLine) {
-                        switch (addressOrder) {
-                            case 1: current.setDireccion(stripPrefix(text, "Dirección:")); break;
-                            case 2: current.setMunicipio(stripPrefix(text, "Municipio:")); break;
-                            case 3: current.setProvincia(stripPrefix(text, "Provincia:")); break;
-                        }
-                    }
-
-                    // Conector
-                    if (inConnector && connectorEnCurso != null) {
-                        switch (localName) {
-                            case "connectorType":
+                        case "connectorType":
+                            if (inConnector && connectorEnCurso != null) {
                                 connectorEnCurso = new Electrolinera.Conector(
                                         ConnectorType.fromXmlValue(text),
                                         connectorEnCurso.getModoRecarga(),
                                         connectorEnCurso.getPotenciaW());
-                                break;
-                            case "chargingMode":
+                            }
+                            break;
+
+                        case "chargingMode":
+                            if (inConnector && connectorEnCurso != null) {
                                 connectorEnCurso = new Electrolinera.Conector(
                                         connectorEnCurso.getTipo(),
                                         text,
                                         connectorEnCurso.getPotenciaW());
-                                break;
-                            case "maxPowerAtSocket":
+                            }
+                            break;
+
+                        case "maxPowerAtSocket":
+                            if (inConnector && connectorEnCurso != null) {
                                 try {
                                     connectorEnCurso = new Electrolinera.Conector(
                                             connectorEnCurso.getTipo(),
                                             connectorEnCurso.getModoRecarga(),
                                             Double.parseDouble(text));
                                 } catch (NumberFormatException ignored) {}
-                                break;
-                        }
+                            }
+                            break;
                     }
                 }
 
@@ -238,7 +240,6 @@ public class RemoteDgtDataSource implements ElectrolineraDataSource {
 
         return result;
     }
-
     /**
      * Elimina el prefijo de las líneas de dirección del XML.
      * Ejemplo: "Dirección: Camí dels Reis 166" → "Camí dels Reis 166"
