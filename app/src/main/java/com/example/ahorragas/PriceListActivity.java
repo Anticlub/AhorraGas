@@ -18,6 +18,7 @@ import com.example.ahorragas.data.ElectrolineraRepository;
 import com.example.ahorragas.data.EstacionRepository;
 import com.example.ahorragas.data.GasolineraRepository;
 import com.example.ahorragas.data.RemoteDgtDataSource;
+import com.example.ahorragas.data.RepoError;
 import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.model.Electrolinera;
 import com.example.ahorragas.model.FuelType;
@@ -59,11 +60,12 @@ public class PriceListActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_price_list);
 
-        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(
-                new CachedRemoteApiDataSource(this));
+        CachedRemoteApiDataSource dataSource = new CachedRemoteApiDataSource(this);
+        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(dataSource);
         ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
                 new RemoteDgtDataSource());
-        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo);        locationHelper = new LocationHelper(this);
+        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo, dataSource);
+        locationHelper = new LocationHelper(this);
 
         bindViews();
         setupRecyclerView();
@@ -206,7 +208,12 @@ public class PriceListActivity extends BaseActivity {
                 double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
                 int maxMarkers = RadiusUtils.loadMarkersCount(PriceListActivity.this);
 
-                List<Gasolinera> gasolineras = repository.getEstaciones();
+                List<Gasolinera> gasolineras = new ArrayList<>(repository.getGasolineras());
+                if (selectedFuel == FuelType.ELECTRICO) {
+                    try {
+                        gasolineras.addAll(repository.getElectrolineras());
+                    } catch (RepoError ignored) {}
+                }
                 List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
                 List<Gasolinera> inRadius = GasolineraSorter.getWithinRadius(
                         filtered, lat, lon, radiusMeters, maxMarkers

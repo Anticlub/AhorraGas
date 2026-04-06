@@ -6,10 +6,6 @@ import com.example.ahorragas.model.Gasolinera;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class EstacionRepository {
 
@@ -17,85 +13,101 @@ public class EstacionRepository {
 
     private final GasolineraRepository gasolineraRepository;
     private final ElectrolineraRepository electrolineraRepository;
+    private final CachedRemoteApiDataSource cachedDataSource;
+
+    /**
+     * Callback para notificar actualizaciones en background.
+     */
+    public interface RefreshCallback {
+        void onGasolinerasRefreshed(List<Gasolinera> updated);
+        void onElectrolinerasRefreshed(List<Gasolinera> updated);
+        void onRefreshError(Exception error);
+    }
 
     private EstacionRepository(GasolineraRepository gasolineraRepository,
-                               ElectrolineraRepository electrolineraRepository) {
+                               ElectrolineraRepository electrolineraRepository,
+                               CachedRemoteApiDataSource cachedDataSource) {
         this.gasolineraRepository    = gasolineraRepository;
         this.electrolineraRepository = electrolineraRepository;
+        this.cachedDataSource        = cachedDataSource;
     }
 
     /**
      * Devuelve la instancia única del repositorio unificado.
-     *
-     * @param gasolineraRepository    repositorio de gasolineras
-     * @param electrolineraRepository repositorio de electrolineras
-     * @return instancia singleton de EstacionRepository
      */
     public static synchronized EstacionRepository getInstance(
             GasolineraRepository gasolineraRepository,
-            ElectrolineraRepository electrolineraRepository) {
+            ElectrolineraRepository electrolineraRepository,
+            CachedRemoteApiDataSource cachedDataSource) {
         if (instance == null) {
-            instance = new EstacionRepository(gasolineraRepository, electrolineraRepository);
+            instance = new EstacionRepository(
+                    gasolineraRepository, electrolineraRepository, cachedDataSource);
         }
         return instance;
     }
 
     /**
-     * Descarga gasolineras y electrolineras en paralelo y devuelve
-     * una lista unificada de {@link Gasolinera}.
-     * Las electrolineras se mapean a Gasolinera con isElectric=true.
+     * Devuelve gasolineras desde caché inmediatamente.
+     * Si no hay caché, descarga de red (primera vez).
      *
-     * @return lista combinada de gasolineras y electrolineras
-     * @throws RepoError si ambas fuentes fallan simultáneamente
+     * @return lista de gasolineras
+     * @throws RepoError si hay fallo
      */
-    public List<Gasolinera> getEstaciones() throws RepoError {
-        ExecutorService executor = Executors.newFixedThreadPool(2);
+    public List<Gasolinera> getGasolineras() throws RepoError {
+        return gasolineraRepository.getGasolineras();
+    }
 
-        Future<List<Gasolinera>> futureGasolineras = executor.submit(
-                new Callable<List<Gasolinera>>() {
-                    @Override
-                    public List<Gasolinera> call() throws Exception {
-                        return gasolineraRepository.getGasolineras();
-                    }
-                });
+    /**
+     * Devuelve electrolineras desde caché inmediatamente.
+     * Si no hay caché, descarga de red (primera vez).
+     *
+     * @return lista de electrolineras mapeadas a Gasolinera
+     * @throws RepoError si hay fallo
+     */
+    public List<Gasolinera> getElectrolineras() throws RepoError {
+        List<Electrolinera> electrolineras = electrolineraRepository.getElectrolineras();
+        return mapElectrolinerasToGasolineras(electrolineras);
+    }
 
-        Future<List<Gasolinera>> futureElectrolineras = executor.submit(
-                new Callable<List<Gasolinera>>() {
-                    @Override
-                    public List<Gasolinera> call() throws Exception {
-                        List<Electrolinera> electrolineras =
-                                electrolineraRepository.getElectrolineras();
-                        return mapElectrolinerasToGasolineras(electrolineras);
-                    }
-                });
+    /**
+     * Lanza actualizaciones en background para gasolineras y electrolineras.
+     * Notifica via callback cuando lleguen datos frescos.
+     *
+     * @param refreshElectrolineras true si hay que refrescar también electrolineras
+     * @param callback              notificado con los datos actualizados
+     */
+    public void refreshInBackground(boolean refreshElectrolineras, RefreshCallback callback) {
+        // Refrescar gasolineras en background
+        cachedDataSource.refreshInBackground(new CachedRemoteApiDataSource.RefreshCallback() {
+            @Override
+            public void onRefreshed(List<Gasolinera> updated) {
+                // Actualizar caché del repositorio
+                gasolineraRepository.clearMemoryCache();
+                callback.onGasolinerasRefreshed(updated);
+            }
 
-        executor.shutdown();
+            @Override
+            public void onRefreshError(Exception error) {
+                callback.onRefreshError(error);
+            }
+        });
 
-        List<Gasolinera> result = new ArrayList<>();
-        RepoError gasolineraError   = null;
-        RepoError electrolineraError = null;
+        // Refrescar electrolineras en background si es necesario
+        if (refreshElectrolineras) {
+            electrolineraRepository.refreshInBackground(
+                    new ElectrolineraRepository.RefreshCallback() {
+                        @Override
+                        public void onRefreshed(List<Electrolinera> updated) {
+                            callback.onElectrolinerasRefreshed(
+                                    mapElectrolinerasToGasolineras(updated));
+                        }
 
-        try {
-            result.addAll(futureGasolineras.get());
-        } catch (Exception e) {
-            gasolineraError = new RepoError(RepoError.Type.NETWORK,
-                    "Error cargando gasolineras: " + e.getMessage());
+                        @Override
+                        public void onRefreshError(RepoError error) {
+                            callback.onRefreshError(error);
+                        }
+                    });
         }
-
-        try {
-            result.addAll(futureElectrolineras.get());
-        } catch (Exception e) {
-            electrolineraError = new RepoError(RepoError.Type.NETWORK,
-                    "Error cargando electrolineras: " + e.getMessage());
-        }
-
-        // Solo lanzamos error si AMBAS fuentes han fallado
-        if (gasolineraError != null && electrolineraError != null) {
-            throw new RepoError(RepoError.Type.NETWORK,
-                    "Error cargando gasolineras y electrolineras");
-        }
-
-        return result;
     }
 
     public void clearMemoryCache() {
@@ -106,9 +118,6 @@ public class EstacionRepository {
     /**
      * Mapea una lista de {@link Electrolinera} a una lista de {@link Gasolinera}
      * con los campos eléctricos rellenos e isElectric=true.
-     *
-     * @param electrolineras lista de electrolineras a mapear
-     * @return lista de Gasolinera con datos eléctricos
      */
     private List<Gasolinera> mapElectrolinerasToGasolineras(
             List<Electrolinera> electrolineras) {
@@ -126,11 +135,7 @@ public class EstacionRepository {
             g.setLon(e.getLon());
             g.setElectric(true);
             g.setConectores(e.getConectores());
-
-            // Precio null para todos los FuelType excepto ELECTRICO
-            // que usamos como flag de identificación en el filtrado
             g.setPrecio(FuelType.ELECTRICO, 0.0);
-
             result.add(g);
         }
 
