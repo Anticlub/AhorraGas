@@ -140,7 +140,7 @@ public class MainActivity extends BaseActivity {
         GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(dataSource);
         ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
                 new RemoteDgtDataSource());
-        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo);
+        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo, dataSource);
         locationHelper = new LocationHelper(this);
 
         selectedFuel = FuelType.fromString(
@@ -463,42 +463,86 @@ public class MainActivity extends BaseActivity {
 
     private void loadGasolineras() {
         progressBarSearch.setVisibility(View.VISIBLE);
-
         tvDataStatus.setText(getString(R.string.status_loading_data));
 
         executor.execute(() -> {
             try {
-                List<Gasolinera> loaded = repository.getEstaciones();
+                // Fase 1 — gasolineras desde caché o red (primera vez)
+                List<Gasolinera> gasolineras = new ArrayList<>(repository.getGasolineras());
 
+                // Fase 2 — electrolineras siempre, en paralelo
+                try {
+                    gasolineras.addAll(repository.getElectrolineras());
+                } catch (RepoError ignored) {}
+
+                final List<Gasolinera> toShow = gasolineras;
+
+                // Mostrar inmediatamente sin esperar al índice
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
                     allGasolineras.clear();
-                    allGasolineras.addAll(loaded);
+                    allGasolineras.addAll(toShow);
                     progressBarSearch.setVisibility(View.GONE);
                     updateDisplayForFuel(selectedFuel);
                 });
 
-                buildMunicipioIndexFromList(loaded);
+                // Construir índice en background después de mostrar
+                buildMunicipioIndexFromList(toShow);
+
+                // Fase 3 — refrescar en background
+                repository.refreshInBackground(true,
+                        new EstacionRepository.RefreshCallback() {
+                            @Override
+                            public void onGasolinerasRefreshed(List<Gasolinera> updated) {
+                                mainHandler.post(() -> {
+                                    if (isDestroyed() || isFinishing()) return;
+                                    allGasolineras.removeIf(g -> !g.isElectric());
+                                    allGasolineras.addAll(updated);
+                                    buildMunicipioIndexFromList(toShow);
+                                    if (selectedFuel != FuelType.ELECTRICO) {
+                                        updateDisplayForFuel(selectedFuel);
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void onElectrolinerasRefreshed(List<Gasolinera> updated) {
+                                mainHandler.post(() -> {
+                                    if (isDestroyed() || isFinishing()) return;
+                                    allGasolineras.removeIf(g -> g.isElectric());
+                                    allGasolineras.addAll(updated);
+                                    buildMunicipioIndexFromList(toShow);
+                                    if (selectedFuel == FuelType.ELECTRICO) {
+                                        updateDisplayForFuel(selectedFuel);
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void onRefreshError(Exception error) {
+                                android.util.Log.w("MainActivity",
+                                        "Refresh en background fallido: " + error.getMessage());
+                            }
+                        });
 
             } catch (RepoError error) {
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
                     progressBarSearch.setVisibility(View.GONE);
-                    tvDataStatus.setText(
-                            getString(R.string.error_loading_data) + ": " + buildRepoErrorMessage(error)
-                    );
-                    if (allGasolineras.isEmpty()) {
-                        clearMapMarkers();
-                    }
-                    Toast.makeText(MainActivity.this, buildRepoErrorMessage(error), Toast.LENGTH_LONG).show();
+                    tvDataStatus.setText(getString(R.string.error_loading_data)
+                            + ": " + buildRepoErrorMessage(error));
+                    if (allGasolineras.isEmpty()) clearMapMarkers();
+                    Toast.makeText(MainActivity.this,
+                            buildRepoErrorMessage(error), Toast.LENGTH_LONG).show();
                 });
-
             } catch (Exception error) {
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
                     progressBarSearch.setVisibility(View.GONE);
-                    tvDataStatus.setText(getString(R.string.error_loading_data) + ": " + error.getMessage());
-                    Toast.makeText(MainActivity.this, getString(R.string.error_loading_data), Toast.LENGTH_LONG).show();
+                    tvDataStatus.setText(getString(R.string.error_loading_data)
+                            + ": " + error.getMessage());
+                    Toast.makeText(MainActivity.this,
+                            getString(R.string.error_loading_data), Toast.LENGTH_LONG).show();
                 });
             }
         });
