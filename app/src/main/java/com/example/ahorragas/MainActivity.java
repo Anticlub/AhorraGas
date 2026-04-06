@@ -889,7 +889,11 @@ public class MainActivity extends BaseActivity {
 
             List<Gasolinera> filtered = new ArrayList<>();
             for (Gasolinera g : found) {
-                if (g.hasPrice(selectedFuel)) filtered.add(g);
+                if (g.isElectric() && selectedFuel == FuelType.ELECTRICO) {
+                    filtered.add(g);
+                } else if (!g.isElectric() && g.hasPrice(selectedFuel)) {
+                    filtered.add(g);
+                }
             }
 
             currentPriceRange = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
