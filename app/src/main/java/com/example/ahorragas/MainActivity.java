@@ -460,14 +460,17 @@ public class MainActivity extends BaseActivity {
             try {
                 List<Gasolinera> loaded = repository.getGasolineras();
 
+                // Mostrar gasolineras primero, sin esperar al índice
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
                     allGasolineras.clear();
                     allGasolineras.addAll(loaded);
-                    buildMunicipioIndex();
                     progressBarSearch.setVisibility(View.GONE);
                     updateDisplayForFuel(selectedFuel);
                 });
+
+                // Construir índice en background después de mostrar gasolineras
+                buildMunicipioIndexFromList(loaded);
 
             } catch (RepoError error) {
                 mainHandler.post(() -> {
@@ -832,10 +835,13 @@ public class MainActivity extends BaseActivity {
 
     /**
      * Pre-calcula un índice de municipios normalizados para búsqueda rápida.
+     * Se ejecuta en hilo secundario, nunca en el hilo principal.
+     *
+     * @param gasolineras Lista de gasolineras a indexar.
      */
-    private void buildMunicipioIndex() {
+    private void buildMunicipioIndexFromList(List<Gasolinera> gasolineras) {
         municipioIndex.clear();
-        for (Gasolinera g : allGasolineras) {
+        for (Gasolinera g : gasolineras) {
             String municipio = g.getMunicipio();
             if (municipio == null) continue;
 
