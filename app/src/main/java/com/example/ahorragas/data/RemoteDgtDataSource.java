@@ -133,10 +133,6 @@ public class RemoteDgtDataSource implements ElectrolineraDataSource {
                         case "energyInfrastructureSite":
                             if (current != null &&
                                     GeoValidation.isValidLatLon(current.getLat(), current.getLon())) {
-                                if (result.size() >= 6000 && result.size() < 6020) {
-                                    android.util.Log.d("DGT_NAMES",
-                                            "nombre='" + current.getNombre() + "' operador='" + current.getOperador() + "'");
-                                }
                                 result.add(current);
                             }
                             current = null;
