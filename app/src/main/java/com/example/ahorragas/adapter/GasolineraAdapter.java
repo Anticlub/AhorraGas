@@ -104,7 +104,9 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
                   FuelType fuel,
                   PriceRange priceRange,
                   OnGasolineraClickListener clickListener) {
-            int logoResId = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
+            int logoResId = gasolinera.isElectric()
+                    ? BrandLogoProvider.getLogoResId(gasolinera.getMarca(), gasolinera.getOperador())
+                    : BrandLogoProvider.getLogoResId(gasolinera.getMarca());
             ivBrandLogo.setImageResource(logoResId);
 
             String marca = gasolinera.getMarca();
