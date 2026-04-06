@@ -125,7 +125,9 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
                   OnGasolineraClickListener clickListener,
                   OnAlertClickListener alertListener) {
 
-            int logoResId = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
+            int logoResId = gasolinera.isElectric()
+                    ? BrandLogoProvider.getLogoResId(gasolinera.getMarca(), gasolinera.getOperador())
+                    : BrandLogoProvider.getLogoResId(gasolinera.getMarca());
             ivBrandLogo.setImageResource(logoResId);
 
             String marca = gasolinera.getMarca();

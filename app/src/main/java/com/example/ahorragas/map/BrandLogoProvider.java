@@ -23,6 +23,16 @@ public final class BrandLogoProvider {
         LOGO_MAP.put("ballenoil", R.drawable.logo_ballenoil);
         LOGO_MAP.put("petroprix", R.drawable.logo_petroprix);
         LOGO_MAP.put("plenergy", R.drawable.logo_plenergy);
+        // Electrolineras
+        LOGO_MAP.put("iberdrola",  R.drawable.ic_brand_iberdrola);
+        LOGO_MAP.put("endesa",     R.drawable.ic_brand_endesa);
+        LOGO_MAP.put("ionity",     R.drawable.ic_brand_ionity);
+        LOGO_MAP.put("zunder",     R.drawable.ic_brand_zunder);
+        LOGO_MAP.put("wenea",      R.drawable.ic_brand_wenea);
+        LOGO_MAP.put("lidl",       R.drawable.ic_brand_lidl);
+        LOGO_MAP.put("mercadona",  R.drawable.ic_brand_mercadona);
+        LOGO_MAP.put("ahorramas",  R.drawable.ic_brand_ahorramas);
+        LOGO_MAP.put("acciona", R.drawable.ic_brand_acciona);
     }
 
     private BrandLogoProvider() {
@@ -44,6 +54,20 @@ public final class BrandLogoProvider {
         }
 
         return R.drawable.logo_generic;
+    }
+
+    /**
+     * Devuelve el resource ID del logo buscando primero en la marca y luego en el operador.
+     * Útil para electrolineras donde el nombre del site no contiene la marca comercial.
+     *
+     * @param marca    nombre del site o marca
+     * @param operador operador legal de la estación
+     * @return resource ID del logo o logo genérico si no se encuentra
+     */
+    public static int getLogoResId(String marca, String operador) {
+        int resId = getLogoResId(marca);
+        if (resId != R.drawable.logo_generic) return resId;
+        return getLogoResId(operador);
     }
 
     /**

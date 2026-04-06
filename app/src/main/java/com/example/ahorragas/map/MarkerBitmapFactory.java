@@ -88,7 +88,9 @@ public final class MarkerBitmapFactory {
             bgColor   = getPriceLevelColor(gasolinera.getPriceLevel());
         }
 
-        int logoResId = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
+        int logoResId = gasolinera.isElectric()
+                ? BrandLogoProvider.getLogoResId(gasolinera.getMarca(), gasolinera.getOperador())
+                : BrandLogoProvider.getLogoResId(gasolinera.getMarca());
         String key    = logoResId + "|" + (gasolinera.isElectric() ? "electric" :
                 gasolinera.getPriceLevel().name()) + "|" + priceText;
 
