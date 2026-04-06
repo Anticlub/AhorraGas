@@ -503,7 +503,6 @@ public class MainActivity extends BaseActivity {
             }
         });
     }
-
     private void updateDisplayForFuel(FuelType fuel) {
         selectedFuel = fuel != null ? fuel : FuelType.GASOLEO_A;
         visibleGasolineras = buildVisibleGasolineras(selectedFuel);
