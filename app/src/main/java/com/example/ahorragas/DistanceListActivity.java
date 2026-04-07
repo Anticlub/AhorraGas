@@ -19,6 +19,9 @@ import com.example.ahorragas.data.EstacionRepository;
 import com.example.ahorragas.data.GasolineraRepository;
 import com.example.ahorragas.data.RemoteDgtDataSource;
 import com.example.ahorragas.data.RepoError;
+import com.example.ahorragas.data.RoomElectrolineraDataSource;
+import com.example.ahorragas.data.RoomGasolineraDataSource;
+import com.example.ahorragas.data.local.AppDatabase;
 import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
@@ -57,9 +60,12 @@ public class DistanceListActivity extends BaseActivity {
         setContentView(R.layout.activity_distance_list);
 
         CachedRemoteApiDataSource dataSource = new CachedRemoteApiDataSource(this);
-        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(dataSource);
+        AppDatabase db = AppDatabase.getInstance(this);
+        RoomGasolineraDataSource roomGasolineraDs = new RoomGasolineraDataSource(db);
+        RoomElectrolineraDataSource roomElectrolineraDs = new RoomElectrolineraDataSource(db);
+        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(dataSource, roomGasolineraDs);
         ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
-                new RemoteDgtDataSource(), this);
+                new RemoteDgtDataSource(), roomElectrolineraDs);
         repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo, dataSource);
         locationHelper = new LocationHelper(this);
 
