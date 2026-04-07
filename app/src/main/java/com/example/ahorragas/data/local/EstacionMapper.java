@@ -161,4 +161,35 @@ public final class EstacionMapper {
 
         return g;
     }
+
+    /**
+     * Convierte una {@link EstacionEntity} de electrolinera + sus {@link ConectorEntity}
+     * a modelo de dominio {@link Electrolinera}.
+     *
+     * @param e         entidad de Room
+     * @param conectores lista de conectores asociados
+     * @return electrolinera de dominio
+     */
+    public static Electrolinera toElectrolinera(EstacionEntity e,
+                                                List<ConectorEntity> conectores) {
+        Electrolinera el = new Electrolinera();
+        el.setId(e.stationId);
+        el.setNombre(e.marca);
+        el.setOperador(e.operador);
+        el.setMunicipio(e.municipio);
+        el.setDireccion(e.direccion);
+        el.setHorario(e.horario);
+        el.setLat(e.lat);
+        el.setLon(e.lon);
+
+        if (conectores != null) {
+            for (ConectorEntity ce : conectores) {
+                ConnectorType tipo;
+                try { tipo = ConnectorType.valueOf(ce.tipo); }
+                catch (Exception ex) { tipo = ConnectorType.UNKNOWN; }
+                el.addConector(new Electrolinera.Conector(tipo, ce.modoRecarga, ce.potenciaW));
+            }
+        }
+        return el;
+    }
 }
