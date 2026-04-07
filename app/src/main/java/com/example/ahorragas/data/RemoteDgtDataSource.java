@@ -44,7 +44,7 @@ public class RemoteDgtDataSource implements ElectrolineraDataSource {
             if ("gzip".equalsIgnoreCase(encoding)) {
                 is = new java.util.zip.GZIPInputStream(is);
             }
-            List<Electrolinera> result = parseXml(is);
+            List<Electrolinera> result = parseXmlPublic(is);
 
             if (result.isEmpty()) {
                 throw new RepoError(RepoError.Type.EMPTY_RESPONSE,
@@ -67,7 +67,7 @@ public class RemoteDgtDataSource implements ElectrolineraDataSource {
         }
     }
 
-    private List<Electrolinera> parseXml(InputStream is) throws RepoError {
+    List<Electrolinera> parseXmlPublic(InputStream is) throws RepoError {
         List<Electrolinera> result = new ArrayList<>();
         Electrolinera current = null;
         Electrolinera.Conector connectorEnCurso = null;

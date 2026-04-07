@@ -3,12 +3,14 @@ package com.example.ahorragas.data;
 import com.example.ahorragas.model.Electrolinera;
 
 import java.util.List;
+import android.content.Context;
 
 public class ElectrolineraRepository {
 
     private static ElectrolineraRepository instance;
     private final ElectrolineraDataSource dataSource;
     private List<Electrolinera> memoryCache;
+    private final AssetsElectrolineraDataSource assetsDataSource;
 
     /**
      * Callback para notificar cuando lleguen electrolineras frescas de la red.
@@ -18,8 +20,9 @@ public class ElectrolineraRepository {
         void onRefreshError(RepoError error);
     }
 
-    private ElectrolineraRepository(ElectrolineraDataSource dataSource) {
+    private ElectrolineraRepository(ElectrolineraDataSource dataSource, Context context) {
         this.dataSource = dataSource;
+        this.assetsDataSource = new AssetsElectrolineraDataSource(context);
     }
 
     /**
@@ -29,9 +32,9 @@ public class ElectrolineraRepository {
      * @return instancia singleton de ElectrolineraRepository
      */
     public static synchronized ElectrolineraRepository getInstance(
-            ElectrolineraDataSource dataSource) {
+            ElectrolineraDataSource dataSource, Context context) {
         if (instance == null) {
-            instance = new ElectrolineraRepository(dataSource);
+            instance = new ElectrolineraRepository(dataSource, context);
         }
         return instance;
     }
@@ -46,6 +49,16 @@ public class ElectrolineraRepository {
     public synchronized List<Electrolinera> getElectrolineras() throws RepoError {
         if (memoryCache != null) return memoryCache;
 
+        // 1) Intentar assets precargados (primera instalación)
+        try {
+            List<Electrolinera> fromAssets = assetsDataSource.loadElectrolineras();
+            if (fromAssets != null && !fromAssets.isEmpty()) {
+                memoryCache = fromAssets;
+                return memoryCache;
+            }
+        } catch (Exception ignored) {}
+
+        // 2) Sin assets → descargar de red
         memoryCache = dataSource.loadElectrolineras();
 
         if (memoryCache == null || memoryCache.isEmpty()) {
