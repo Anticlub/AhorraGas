@@ -139,7 +139,7 @@ public class MainActivity extends BaseActivity {
         dataSource = new CachedRemoteApiDataSource(this);
         GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(dataSource);
         ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
-                new RemoteDgtDataSource());
+                new RemoteDgtDataSource(), this);
         repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo, dataSource);
         locationHelper = new LocationHelper(this);
 

@@ -13,6 +13,7 @@ public class CachedRemoteApiDataSource implements GasolineraDataSource {
     private DataSourceOrigin lastOrigin = null;
     private final RemoteApiDataSource remote;
     private final FileJsonCache cache;
+    private final AssetsGasolineraDataSource assetsDataSource;
     private boolean forceRemoteNextLoad = false;
     public interface RefreshCallback {
         void onRefreshed(List<Gasolinera> updated);
@@ -23,6 +24,7 @@ public class CachedRemoteApiDataSource implements GasolineraDataSource {
         Context appContext = context.getApplicationContext();
         this.remote = new RemoteApiDataSource();
         this.cache = new FileJsonCache(appContext, "gasolineras_cache");
+        this.assetsDataSource = new AssetsGasolineraDataSource(appContext);
     }
 
     public synchronized DataSourceOrigin getLastOrigin() {
@@ -44,7 +46,7 @@ public class CachedRemoteApiDataSource implements GasolineraDataSource {
         boolean forceRemote = forceRemoteNextLoad;
         forceRemoteNextLoad = false;
 
-        // Si hay caché (aunque esté caducada) → devolverla inmediatamente
+        // 1) Si hay caché en disco → usarla inmediatamente
         if (!forceRemote && cache.hasCache()) {
             try {
                 lastOrigin = DataSourceOrigin.CACHE;
@@ -52,7 +54,16 @@ public class CachedRemoteApiDataSource implements GasolineraDataSource {
             } catch (Exception ignored) {}
         }
 
-        // Sin caché → descargar de red (primera vez)
+        // 2) Sin caché → intentar assets precargados (primera instalación)
+        try {
+            List<Gasolinera> fromAssets = assetsDataSource.loadGasolineras();
+            if (fromAssets != null && !fromAssets.isEmpty()) {
+                lastOrigin = DataSourceOrigin.CACHE;
+                return fromAssets;
+            }
+        } catch (Exception ignored) {}
+
+        // 3) Sin assets → descargar de red
         String json = remote.downloadJson();
         cache.write(json);
         lastOrigin = DataSourceOrigin.REMOTE;
