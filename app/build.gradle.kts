@@ -45,6 +45,8 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
     implementation(libs.work.runtime)
+    implementation(libs.room.runtime)
+    annotationProcessor(libs.room.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
