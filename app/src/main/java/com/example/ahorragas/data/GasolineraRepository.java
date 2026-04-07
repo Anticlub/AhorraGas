@@ -9,19 +9,24 @@ public class GasolineraRepository {
     private static GasolineraRepository instance;
 
     private GasolineraDataSource primary;
+    private final RoomGasolineraDataSource roomDataSource;
 
-    // Cache en memoria con expiración de 30 minutos
     private static final long MEMORY_CACHE_MAX_AGE_MS = 30L * 60L * 1000L;
     private List<Gasolinera> memoryCache;
     private long memoryCacheTimestamp = 0L;
     private DataSourceOrigin lastOrigin;
-    public GasolineraRepository(GasolineraDataSource primary) {
-        this.primary = primary;
+
+    private GasolineraRepository(GasolineraDataSource primary,
+                                 RoomGasolineraDataSource roomDataSource) {
+        this.primary        = primary;
+        this.roomDataSource = roomDataSource;
     }
 
-    public static synchronized GasolineraRepository getInstance(GasolineraDataSource primary) {
+    public static synchronized GasolineraRepository getInstance(
+            GasolineraDataSource primary,
+            RoomGasolineraDataSource roomDataSource) {
         if (instance == null) {
-            instance = new GasolineraRepository(primary);
+            instance = new GasolineraRepository(primary, roomDataSource);
         } else {
             instance.primary = primary;
         }
@@ -30,22 +35,34 @@ public class GasolineraRepository {
 
     public synchronized List<Gasolinera> getGasolineras() throws RepoError {
 
-        // 1) Si ya está en memoria y no ha expirado, devolver directamente
+        // 1) Caché en memoria válida
         long ageMs = System.currentTimeMillis() - memoryCacheTimestamp;
         if (memoryCache != null && ageMs <= MEMORY_CACHE_MAX_AGE_MS) {
             return memoryCache;
         }
-
-        // Si ha expirado, limpiar para forzar recarga
         memoryCache = null;
 
-        // 2) Cargar desde primary (CachedRemoteApiDataSource ya incluye fallback a cache de archivo)
+        // 2) Room como primera fuente persistente
+        if (roomDataSource.hasData()) {
+            try {
+                List<Gasolinera> fromRoom = roomDataSource.loadGasolineras();
+                if (fromRoom != null && !fromRoom.isEmpty()) {
+                    memoryCache = fromRoom;
+                    memoryCacheTimestamp = System.currentTimeMillis();
+                    lastOrigin = DataSourceOrigin.CACHE;
+                    return memoryCache;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // 3) Sin Room → cargar desde primary (red o assets)
         try {
             memoryCache = primary.loadGasolineras();
             memoryCacheTimestamp = System.currentTimeMillis();
 
             if (memoryCache == null || memoryCache.isEmpty()) {
-                throw new RepoError(RepoError.Type.EMPTY_RESPONSE, "La fuente devolvió datos vacíos");
+                throw new RepoError(RepoError.Type.EMPTY_RESPONSE,
+                        "La fuente devolvió datos vacíos");
             }
 
             if (primary instanceof CachedRemoteApiDataSource) {
@@ -54,18 +71,21 @@ public class GasolineraRepository {
                 lastOrigin = DataSourceOrigin.REMOTE;
             }
 
+            // Persistir en Room en background
+            final List<Gasolinera> toSave = memoryCache;
+            new Thread(() -> {
+                try { roomDataSource.saveAll(toSave); }
+                catch (RepoError ignored) {}
+            }).start();
+
             return memoryCache;
 
         } catch (RepoError e) {
-            // Si el datasource ya lanza RepoError, lo propagamos tal cual
             throw e;
-
         } catch (Exception e) {
-            // Convertimos cualquier excepción genérica a RepoError
-            throw new RepoError(
-                    RepoError.Type.NETWORK,
-                    "Fallo cargando gasolineras: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName())
-            );
+            throw new RepoError(RepoError.Type.NETWORK,
+                    "Fallo cargando gasolineras: " + (e.getMessage() != null
+                            ? e.getMessage() : e.getClass().getSimpleName()));
         }
     }
 
@@ -74,10 +94,7 @@ public class GasolineraRepository {
     }
 
     /**
-     * Invalida la caché en memoria forzando una recarga completa en la siguiente llamada
-     * a {@link #getGasolineras()}. Útil para implementar un botón de "Actualizar" o para
-     * limpiar datos corruptos. Si también se quiere forzar ignorar la caché de fichero,
-     * llamar adicionalmente a {@link CachedRemoteApiDataSource#requestForceRefresh()}.
+     * Invalida la caché en memoria forzando recarga en la siguiente llamada.
      */
     public synchronized void clearMemoryCache() {
         memoryCache = null;
