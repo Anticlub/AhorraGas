@@ -14,8 +14,10 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.example.ahorragas.model.Discount;
 import com.example.ahorragas.model.FuelType;
+import com.example.ahorragas.model.PriceAlert;
 import com.example.ahorragas.model.Vehicle;
 import com.example.ahorragas.util.DiscountPrefs;
+import com.example.ahorragas.util.PriceAlertPrefs;
 import com.example.ahorragas.util.RadiusUtils;
 import com.example.ahorragas.util.VehiclePrefs;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -33,6 +35,9 @@ public class PreferencesActivity extends BaseActivity {
     // ── Descuentos ────────────────────────────────────────────────────────────
     private LinearLayout discountListContainer;
     private List<Discount> discounts;
+
+    // ── Alertas ───────────────────────────────────────────────────────────────
+    private LinearLayout alertListContainer;
 
     // ── Radio de búsqueda ─────────────────────────────────────────────────────
     private SeekBar seekBarRadius;
@@ -56,6 +61,7 @@ public class PreferencesActivity extends BaseActivity {
 
         vehicleListContainer  = findViewById(R.id.vehicleListContainer);
         discountListContainer = findViewById(R.id.discountListContainer);
+        alertListContainer    = findViewById(R.id.alertListContainer);
 
         findViewById(R.id.btnAddVehicle).setOnClickListener(v -> showVehicleDialog(-1, null, false));
         findViewById(R.id.btnAddDiscount).setOnClickListener(v -> showDiscountDialog(-1, null));
@@ -66,6 +72,13 @@ public class PreferencesActivity extends BaseActivity {
         setupMarkersSelector();
         refreshVehicleList();
         refreshDiscountList();
+        refreshAlertList();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshAlertList();
     }
 
     // ─── Marcadores ───────────────────────────────────────────────────────────
@@ -310,7 +323,6 @@ public class PreferencesActivity extends BaseActivity {
         tvName.setTypeface(null, android.graphics.Typeface.BOLD);
         textCol.addView(tvName);
 
-        // Mostrar céntimos como número entero, porcentaje como porcentaje
         String typeLabel = discount.getType() == Discount.Type.PERCENTAGE
                 ? String.format(Locale.getDefault(), "%.1f%%", discount.getValue())
                 : String.format(Locale.getDefault(), "%.0f cts/L", discount.getValue());
@@ -338,6 +350,77 @@ public class PreferencesActivity extends BaseActivity {
                 LinearLayout.LayoutParams.MATCH_PARENT, 1));
         sep.setBackgroundColor(0xFF444455);
         discountListContainer.addView(sep);
+    }
+
+    // ─── UI Alertas ───────────────────────────────────────────────────────────
+
+    private void refreshAlertList() {
+        alertListContainer.removeAllViews();
+        List<PriceAlert> alerts = PriceAlertPrefs.loadAll(this);
+
+        if (alerts.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText("Sin alertas activas. Crea una desde tus favoritas.");
+            empty.setTextColor(0xFFAAAAAA);
+            empty.setPadding(dp(16), dp(24), dp(16), dp(8));
+            alertListContainer.addView(empty);
+            return;
+        }
+
+        for (PriceAlert alert : alerts) {
+            addAlertRow(alert);
+        }
+    }
+
+    private void addAlertRow(PriceAlert alert) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setBackgroundColor(0xFF383848);
+        card.setPadding(dp(16), dp(14), dp(12), dp(14));
+
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.setMargins(0, dp(4), 0, dp(4));
+        card.setLayoutParams(cardParams);
+
+        LinearLayout textCol = new LinearLayout(this);
+        textCol.setOrientation(LinearLayout.VERTICAL);
+        textCol.setLayoutParams(new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView tvName = new TextView(this);
+        tvName.setText(alert.getGasolineraName());
+        tvName.setTextColor(0xFFFFFFFF);
+        tvName.setTextSize(15);
+        tvName.setTypeface(null, android.graphics.Typeface.BOLD);
+        textCol.addView(tvName);
+
+        TextView tvDetail = new TextView(this);
+        tvDetail.setText(alert.getFuelType().displayName()
+                + " · alerta ≤ "
+                + String.format(Locale.getDefault(), "%.3f €/L", alert.getTargetPrice()));
+        tvDetail.setTextColor(0xFFAAAAAA);
+        tvDetail.setTextSize(12);
+        textCol.addView(tvDetail);
+
+        card.addView(textCol);
+
+        TextView btnDelete = makeTextButton("🗑", 0xFFEF5350);
+        btnDelete.setOnClickListener(v -> {
+            PriceAlertPrefs.remove(this, alert.getKey());
+            refreshAlertList();
+        });
+        card.addView(btnDelete);
+
+        alertListContainer.addView(card);
+
+        View sep = new View(this);
+        sep.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 1));
+        sep.setBackgroundColor(0xFF444455);
+        alertListContainer.addView(sep);
     }
 
     // ─── Diálogo Vehículo ─────────────────────────────────────────────────────
@@ -602,11 +685,9 @@ public class PreferencesActivity extends BaseActivity {
         layout.addView(labelValue);
 
         EditText etValue = new EditText(this);
-        // Hint dinámico según tipo
         etValue.setHint("Ej: 6 para 6 cts/L  ó  5 para 5%");
         etValue.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         if (existing != null) {
-            // Al editar, mostrar el valor en céntimos si es CENTS_PER_LITER
             if (existing.getType() == Discount.Type.CENTS_PER_LITER) {
                 etValue.setText(String.format(Locale.getDefault(), "%.0f", existing.getValue()));
             } else {

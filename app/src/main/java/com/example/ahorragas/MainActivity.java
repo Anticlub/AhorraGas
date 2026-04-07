@@ -33,6 +33,7 @@ import com.example.ahorragas.model.PriceRange;
 import com.example.ahorragas.model.Vehicle;
 import com.example.ahorragas.util.DiscountPrefs;
 import com.example.ahorragas.util.GasolineraSorter;
+import com.example.ahorragas.util.PriceAlertScheduler;
 import com.example.ahorragas.util.RadiusUtils;
 import com.example.ahorragas.util.VehiclePrefs;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -74,6 +75,7 @@ public class MainActivity extends BaseActivity {
     private int lastMarkersCount = RadiusUtils.DEFAULT_MARKERS;
     private int lastDiscountsVersion = -1;
     private PriceRange currentPriceRange = new PriceRange(null, null, 0);
+    private boolean vehicleDialogShown = false;
 
     private final List<Gasolinera> allGasolineras = new ArrayList<>();
     private final Map<String, List<Gasolinera>> municipioIndex = new HashMap<>();
@@ -151,6 +153,12 @@ public class MainActivity extends BaseActivity {
 
         loadGasolineras();
         requestLocationPermission();
+        PriceAlertScheduler.schedule(this);
+        // ⚠️ SOLO PRUEBAS — BORRAR ANTES DEL PR ⚠️
+        /*androidx.work.WorkManager.getInstance(this)
+                .enqueue(new androidx.work.OneTimeWorkRequest.Builder(
+                        com.example.ahorragas.worker.PriceAlertWorker.class)
+                        .build());*/
     }
 
     @Override
@@ -166,7 +174,8 @@ public class MainActivity extends BaseActivity {
             bottomNav.setSelectedItemId(R.id.nav_map);
         }
 
-        if (!VehiclePrefs.hasVehicles(this)) {
+        if (!VehiclePrefs.hasVehicles(this) && !vehicleDialogShown) {
+            vehicleDialogShown = true;
             showFirstVehicleDialog();
             return;
         }
@@ -196,7 +205,6 @@ public class MainActivity extends BaseActivity {
             return;
         }
 
-        // ── Detectar cambios en descuentos y refrescar mapa ──────────────────
         int currentDiscountsVersion = DiscountPrefs.getVersion(this);
         if (currentDiscountsVersion != lastDiscountsVersion) {
             lastDiscountsVersion = currentDiscountsVersion;
@@ -351,7 +359,7 @@ public class MainActivity extends BaseActivity {
             selectedFuel = selectedFuelLocal[0];
             MarkerBitmapFactory.clearCache();
             updateDisplayForFuel(selectedFuel);
-
+            vehicleDialogShown = false;
             dialog.dismiss();
         });
     }
@@ -460,7 +468,6 @@ public class MainActivity extends BaseActivity {
             try {
                 List<Gasolinera> loaded = repository.getGasolineras();
 
-                // Mostrar gasolineras primero, sin esperar al índice
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
                     allGasolineras.clear();
@@ -469,7 +476,6 @@ public class MainActivity extends BaseActivity {
                     updateDisplayForFuel(selectedFuel);
                 });
 
-                // Construir índice en background después de mostrar gasolineras
                 buildMunicipioIndexFromList(loaded);
 
             } catch (RepoError error) {
@@ -835,7 +841,6 @@ public class MainActivity extends BaseActivity {
 
     /**
      * Pre-calcula un índice de municipios normalizados para búsqueda rápida.
-     * Se ejecuta en hilo secundario, nunca en el hilo principal.
      *
      * @param gasolineras Lista de gasolineras a indexar.
      */
