@@ -16,6 +16,8 @@ import com.example.ahorragas.R;
 import com.example.ahorragas.data.CachedRemoteApiDataSource;
 import com.example.ahorragas.data.GasolineraRepository;
 import com.example.ahorragas.data.RepoError;
+import com.example.ahorragas.data.RoomGasolineraDataSource;
+import com.example.ahorragas.data.local.AppDatabase;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceAlert;
 import com.example.ahorragas.util.PriceAlertPrefs;
@@ -42,8 +44,10 @@ public class PriceAlertWorker extends Worker {
 
         createNotificationChannel(ctx);
 
+        AppDatabase db = AppDatabase.getInstance(ctx);
         GasolineraRepository repo = GasolineraRepository.getInstance(
-                new CachedRemoteApiDataSource(ctx)
+                new CachedRemoteApiDataSource(ctx),
+                new RoomGasolineraDataSource(db)
         );
 
         List<Gasolinera> gasolineras;
