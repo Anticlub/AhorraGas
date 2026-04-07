@@ -287,6 +287,29 @@
                     android:paddingHorizontal="12dp"
                     android:paddingTop="8dp" />
 
+                <!-- ══════════════════════════════════════════════════ -->
+                <!-- SECCIÓN: Mis alertas de precio                    -->
+                <!-- ══════════════════════════════════════════════════ -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Mis alertas de precio"
+                    android:textColor="#4DB6AC"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="10dp"
+                    android:background="#383848" />
+
+                <LinearLayout
+                    android:id="@+id/alertListContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="12dp"
+                    android:paddingTop="8dp" />
+
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 
