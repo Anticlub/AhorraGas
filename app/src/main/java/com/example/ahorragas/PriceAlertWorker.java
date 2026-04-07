@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 public class PriceAlertWorker extends Worker {
 
     private static final String CHANNEL_ID      = "price_alerts";
-    private static final long   MIN_INTERVAL_MS = 0;
+    private static final long   MIN_INTERVAL_MS =TimeUnit.HOURS.toMillis(24);
 
     public PriceAlertWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
