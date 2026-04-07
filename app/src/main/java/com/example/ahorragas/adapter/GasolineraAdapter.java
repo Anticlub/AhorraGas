@@ -29,10 +29,15 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
         void onGasolineraClick(Gasolinera gasolinera);
     }
 
+    public interface OnAlertClickListener {
+        void onAlertClick(Gasolinera gasolinera);
+    }
+
     private List<Gasolinera> gasolineras;
     private FuelType currentFuel;
     private PriceRange currentPriceRange;
     private final OnGasolineraClickListener clickListener;
+    private OnAlertClickListener alertListener;
 
     public GasolineraAdapter(List<Gasolinera> gasolineras,
                              FuelType fuel,
@@ -41,6 +46,17 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
         this.currentFuel = fuel;
         this.currentPriceRange = new PriceRange(null, null, 0);
         this.clickListener = clickListener;
+    }
+
+    /**
+     * Establece el listener para el botón de alerta. Si se llama con un
+     * listener no nulo, el botón 🔔 se muestra en cada fila.
+     *
+     * @param listener Listener a invocar al pulsar el botón de alerta.
+     */
+    public void setOnAlertClickListener(OnAlertClickListener listener) {
+        this.alertListener = listener;
+        notifyDataSetChanged();
     }
 
     /**
@@ -74,7 +90,8 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.bind(gasolineras.get(position), currentFuel, currentPriceRange, clickListener);
+        holder.bind(gasolineras.get(position), currentFuel, currentPriceRange,
+                clickListener, alertListener);
     }
 
     @Override
@@ -83,12 +100,13 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        private final View vPriceStripe;
+        private final View      vPriceStripe;
         private final ImageView ivBrandLogo;
-        private final TextView tvBrandName;
-        private final TextView tvAddress;
-        private final TextView tvPrice;
-        private final TextView tvDistance;
+        private final TextView  tvBrandName;
+        private final TextView  tvAddress;
+        private final TextView  tvPrice;
+        private final TextView  tvDistance;
+        private final TextView  btnAlert;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -98,12 +116,14 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
             tvAddress    = itemView.findViewById(R.id.tvAddress);
             tvPrice      = itemView.findViewById(R.id.tvPrice);
             tvDistance   = itemView.findViewById(R.id.tvDistance);
+            btnAlert     = itemView.findViewById(R.id.btnAlert);
         }
 
         void bind(Gasolinera gasolinera,
                   FuelType fuel,
                   PriceRange priceRange,
-                  OnGasolineraClickListener clickListener) {
+                  OnGasolineraClickListener clickListener,
+                  OnAlertClickListener alertListener) {
 
             Context ctx = itemView.getContext();
 
@@ -138,6 +158,14 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
             // ── Distancia ─────────────────────────────────────────────────────
             String distance = gasolinera.getFormattedDistance();
             tvDistance.setText(distance.isEmpty() ? "" : "\uD83D\uDCCD " + distance);
+
+            // ── Botón alerta ──────────────────────────────────────────────────
+            if (alertListener != null) {
+                btnAlert.setVisibility(View.VISIBLE);
+                btnAlert.setOnClickListener(v -> alertListener.onAlertClick(gasolinera));
+            } else {
+                btnAlert.setVisibility(View.GONE);
+            }
 
             itemView.setOnClickListener(v -> clickListener.onGasolineraClick(gasolinera));
         }
