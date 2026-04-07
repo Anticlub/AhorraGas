@@ -3,6 +3,9 @@ package com.example.ahorragas;
 import com.example.ahorragas.data.ElectrolineraRepository;
 import com.example.ahorragas.data.EstacionRepository;
 import com.example.ahorragas.data.RemoteDgtDataSource;
+import com.example.ahorragas.data.RoomElectrolineraDataSource;
+import com.example.ahorragas.data.RoomGasolineraDataSource;
+import com.example.ahorragas.data.local.AppDatabase;
 import com.example.ahorragas.detail.StationDetailActivity;
 import com.example.ahorragas.model.Discount;
 import android.Manifest;
@@ -137,9 +140,12 @@ public class MainActivity extends BaseActivity {
         setContentView(R.layout.activity_main);
 
         dataSource = new CachedRemoteApiDataSource(this);
-        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(dataSource);
+        AppDatabase db = AppDatabase.getInstance(this);
+        RoomGasolineraDataSource roomGasolineraDs = new RoomGasolineraDataSource(db);
+        RoomElectrolineraDataSource roomElectrolineraDs = new RoomElectrolineraDataSource(db);
+        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(dataSource, roomGasolineraDs);
         ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
-                new RemoteDgtDataSource(), this);
+                new RemoteDgtDataSource(), roomElectrolineraDs);
         repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo, dataSource);
         locationHelper = new LocationHelper(this);
 
