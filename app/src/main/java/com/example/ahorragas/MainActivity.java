@@ -157,7 +157,7 @@ public class MainActivity extends BaseActivity {
         // ⚠️ SOLO PRUEBAS — BORRAR ANTES DEL PR ⚠️
         /*androidx.work.WorkManager.getInstance(this)
                 .enqueue(new androidx.work.OneTimeWorkRequest.Builder(
-                        com.example.ahorragas.worker.PriceAlertWorker.class)
+                        com.example.ahorragas.PriceAlertWorker.class)
                         .build());*/
     }
 
