@@ -88,5 +88,19 @@
                 android:textSize="11sp"
                 android:textColor="@color/text_secondary" />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/btnAlert"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="🔔"
+            android:textSize="20sp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Crear alerta"
+            android:visibility="gone"
+            android:clickable="true"
+            android:focusable="true" />
+
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
