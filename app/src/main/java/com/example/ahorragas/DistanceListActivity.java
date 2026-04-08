@@ -190,16 +190,18 @@ public class DistanceListActivity extends BaseActivity {
                 double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
                 int maxMarkers = RadiusUtils.loadMarkersCount(DistanceListActivity.this);
 
-                List<Gasolinera> gasolineras = new ArrayList<>(repository.getGasolineras());
+                List<Gasolinera> gasolineras;
                 if (selectedFuel == FuelType.ELECTRICO) {
-                    try {
-                        gasolineras.addAll(repository.getElectrolineras());
-                    } catch (RepoError ignored) {}
+                    gasolineras = new ArrayList<>(
+                            repository.getElectrolinerasByRadius(lat, lon, radiusMeters));
+                } else {
+                    gasolineras = new ArrayList<>(
+                            repository.getGasolinerasByRadius(lat, lon, radiusMeters));
                 }
+
                 List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
                 List<Gasolinera> sorted = GasolineraSorter.getWithinRadius(
-                        filtered, lat, lon, radiusMeters, maxMarkers
-                );
+                        filtered, lat, lon, radiusMeters, maxMarkers);
 
                 PriceRange range = GasolineraSorter.calculatePriceRange(sorted, selectedFuel);
                 for (Gasolinera g : sorted) {

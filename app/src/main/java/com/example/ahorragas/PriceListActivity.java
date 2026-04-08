@@ -214,19 +214,20 @@ public class PriceListActivity extends BaseActivity {
                 double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
                 int maxMarkers = RadiusUtils.loadMarkersCount(PriceListActivity.this);
 
-                List<Gasolinera> gasolineras = new ArrayList<>(repository.getGasolineras());
+                List<Gasolinera> gasolineras;
                 if (selectedFuel == FuelType.ELECTRICO) {
-                    try {
-                        gasolineras.addAll(repository.getElectrolineras());
-                    } catch (RepoError ignored) {}
+                    gasolineras = new ArrayList<>(
+                            repository.getElectrolinerasByRadius(lat, lon, radiusMeters));
+                } else {
+                    gasolineras = new ArrayList<>(
+                            repository.getGasolinerasByRadius(lat, lon, radiusMeters));
                 }
+
                 List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
                 List<Gasolinera> inRadius = GasolineraSorter.getWithinRadius(
-                        filtered, lat, lon, radiusMeters, maxMarkers
-                );
+                        filtered, lat, lon, radiusMeters, maxMarkers);
 
                 if (selectedFuel == FuelType.ELECTRICO) {
-                    // Electrolineras: ordenar por potencia máxima descendente
                     inRadius.sort((a, b) -> {
                         double potA = getMaxPotencia(a);
                         double potB = getMaxPotencia(b);
