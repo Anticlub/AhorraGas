@@ -18,9 +18,7 @@ import android.widget.TextView;
 
 public class StationDetailActivity extends AppCompatActivity {
 
-    private static final String[] TAB_TITLES = {"General", "Ubicación", "Precios", "Histórico", "Promociones"};
-    public static final String EXTRA_GASOLINERA = "extra_gasolinera";
-
+    private static final String[] TAB_TITLES = {"General", "Ubicación", "Precios", "Histórico", "Promociones"};    public static final String EXTRA_GASOLINERA = "extra_gasolinera";
     private Gasolinera gasolinera;
 
     @Override
@@ -62,11 +60,12 @@ public class StationDetailActivity extends AppCompatActivity {
         ViewPager2 viewPager = findViewById(R.id.viewPager);
         TabLayout tabLayout  = findViewById(R.id.tabLayout);
 
+        String preciosTab = gasolinera.isElectric() ? "Cargadores" : "Precios";
+        String[] tabTitles = {"General", "Ubicación", preciosTab, "Histórico", "Promociones"};
+
         viewPager.setAdapter(new FragmentStateAdapter(this) {
             @Override
-            public int getItemCount() {
-                return TAB_TITLES.length;
-            }
+            public int getItemCount() { return tabTitles.length; }
 
             @Override
             public Fragment createFragment(int position) {
@@ -75,14 +74,14 @@ public class StationDetailActivity extends AppCompatActivity {
                     case 1: return LocationFragment.newInstance(gasolinera);
                     case 2: return PricesFragment.newInstance(gasolinera);
                     case 3: return ComingSoonFragment.newInstance("Histórico");
-                    case 4: return PromotionsFragment.newInstance(gasolinera.getMarca());
+                    case 4: return ComingSoonFragment.newInstance("Promociones");
                     default: return ComingSoonFragment.newInstance("");
                 }
             }
         });
 
         new TabLayoutMediator(tabLayout, viewPager,
-                (tab, position) -> tab.setText(TAB_TITLES[position])
+                (tab, position) -> tab.setText(tabTitles[position])
         ).attach();
     }
 }

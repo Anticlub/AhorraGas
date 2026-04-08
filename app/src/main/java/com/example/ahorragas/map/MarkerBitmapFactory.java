@@ -55,19 +55,11 @@ public final class MarkerBitmapFactory {
             default:        return Color.parseColor("#757575");
         }
     }
-
     /**
-     * Crea el bitmap del marcador usando el PriceLevel original de la gasolinera.
-     *
-     * @param context    Contexto de la aplicación.
-     * @param gasolinera Gasolinera a representar.
-     * @param fuelType   Tipo de combustible seleccionado.
-     * @return Bitmap del marcador.
+     * Devuelve el color azul eléctrico para marcadores de electrolineras.
      */
-    public static Bitmap createMarker(Context context,
-                                      Gasolinera gasolinera,
-                                      FuelType fuelType) {
-        return createMarker(context, gasolinera, fuelType, null, gasolinera.getPriceLevel());
+    public static int getElectricColor() {
+        return Color.parseColor("#1565C0");
     }
 
     /**
@@ -83,28 +75,57 @@ public final class MarkerBitmapFactory {
      */
     public static Bitmap createMarker(Context context,
                                       Gasolinera gasolinera,
-                                      FuelType fuelType,
-                                      String overridePriceText,
-                                      PriceLevel priceLevel) {
-        String priceText = overridePriceText != null
-                ? overridePriceText
-                : gasolinera.getFormattedPrice(fuelType);
-        int logoResId = BrandLogoProvider.getLogoResId(gasolinera.getMarca());
-        PriceLevel levelToUse = priceLevel != null ? priceLevel : gasolinera.getPriceLevel();
-        String key = gasolinera.getId() + "|" + levelToUse.name() + "|" + priceText;
+                                      FuelType fuelType) {
+        String priceText;
+        int bgColor;
+
+        if (gasolinera.isElectric()) {
+            // Para electrolineras mostramos la potencia máxima
+            priceText = getMaxPotenciaLabel(gasolinera);
+            bgColor   = getElectricColor();
+        } else {
+            priceText = gasolinera.getFormattedPrice(fuelType);
+            bgColor   = getPriceLevelColor(gasolinera.getPriceLevel());
+        }
+
+        int logoResId = gasolinera.isElectric()
+                ? BrandLogoProvider.getLogoResId(gasolinera.getMarca(), gasolinera.getOperador())
+                : BrandLogoProvider.getLogoResId(gasolinera.getMarca());
+        String key    = logoResId + "|" + (gasolinera.isElectric() ? "electric" :
+                gasolinera.getPriceLevel().name()) + "|" + priceText;
 
         Bitmap cached = CACHE.get(key);
         if (cached != null && !cached.isRecycled()) return cached;
 
-        Bitmap rendered = renderMarker(context, priceText, logoResId, levelToUse);
+        Bitmap rendered = renderMarker(context, gasolinera, priceText, logoResId, bgColor);
         CACHE.put(key, rendered);
         return rendered;
     }
 
+    /**
+     * Devuelve la potencia máxima de una electrolinera formateada para el marcador.
+     * Ejemplo: "350kW"
+     *
+     * @param gasolinera electrolinera de la que obtener la potencia
+     * @return string con la potencia o "EV" si no hay datos
+     */
+    private static String getMaxPotenciaLabel(Gasolinera gasolinera) {
+        if (gasolinera.getConectores() == null || gasolinera.getConectores().isEmpty()) return "EV";
+        double maxW = 0;
+        for (com.example.ahorragas.model.Electrolinera.Conector c : gasolinera.getConectores()) {
+            if (c.getPotenciaW() != null && c.getPotenciaW() > maxW) {
+                maxW = c.getPotenciaW();
+            }
+        }
+        if (maxW <= 0) return "EV";
+        return String.format(java.util.Locale.getDefault(), "%.0fkW", maxW / 1000.0);
+    }
+
     private static Bitmap renderMarker(Context context,
+                                       Gasolinera gasolinera,
                                        String priceText,
                                        int logoResId,
-                                       PriceLevel priceLevel) {
+                                       int bgColor) {
         float density = context.getResources().getDisplayMetrics().density;
 
         int width        = px(density, 52);
@@ -112,8 +133,6 @@ public final class MarkerBitmapFactory {
         int pinHeight    = px(density, 10);
         int height       = bubbleHeight + pinHeight;
         int corner       = px(density, 8);
-
-        int bgColor = getPriceLevelColor(priceLevel);
 
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);

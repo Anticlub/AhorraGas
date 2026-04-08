@@ -1,7 +1,12 @@
 package com.example.ahorragas;
 
+import com.example.ahorragas.data.ElectrolineraRepository;
+import com.example.ahorragas.data.EstacionRepository;
+import com.example.ahorragas.data.RemoteDgtDataSource;
+import com.example.ahorragas.data.RoomElectrolineraDataSource;
+import com.example.ahorragas.data.RoomGasolineraDataSource;
+import com.example.ahorragas.data.local.AppDatabase;
 import com.example.ahorragas.detail.StationDetailActivity;
-import com.example.ahorragas.model.Discount;
 import android.Manifest;
 import android.content.Intent;
 import android.location.Location;
@@ -20,7 +25,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.PreferenceManager;
 
-import com.example.ahorragas.data.CachedRemoteApiDataSource;
 import com.example.ahorragas.data.DataSourceOrigin;
 import com.example.ahorragas.data.GasolineraRepository;
 import com.example.ahorragas.data.RepoError;
@@ -33,6 +37,7 @@ import com.example.ahorragas.model.PriceRange;
 import com.example.ahorragas.model.Vehicle;
 import com.example.ahorragas.util.DiscountPrefs;
 import com.example.ahorragas.util.GasolineraSorter;
+import com.example.ahorragas.util.GeoUtils;
 import com.example.ahorragas.util.PriceAlertScheduler;
 import com.example.ahorragas.util.RadiusUtils;
 import com.example.ahorragas.util.VehiclePrefs;
@@ -49,7 +54,6 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +82,6 @@ public class MainActivity extends BaseActivity {
     private boolean vehicleDialogShown = false;
 
     private final List<Gasolinera> allGasolineras = new ArrayList<>();
-    private final Map<String, List<Gasolinera>> municipioIndex = new HashMap<>();
     private List<Gasolinera> searchGasolineras = null;
     private String lastSearchQuery = null;
     private List<Gasolinera> visibleGasolineras = new ArrayList<>();
@@ -88,8 +91,7 @@ public class MainActivity extends BaseActivity {
     private final Map<Integer, Marker> markerMap = new HashMap<>();
     private MyLocationNewOverlay locationOverlay;
 
-    private CachedRemoteApiDataSource dataSource;
-    private GasolineraRepository repository;
+    private EstacionRepository repository;
     private LocationHelper locationHelper;
     private final java.util.concurrent.ExecutorService executor =
             java.util.concurrent.Executors.newSingleThreadExecutor();
@@ -133,8 +135,13 @@ public class MainActivity extends BaseActivity {
 
         setContentView(R.layout.activity_main);
 
-        dataSource = new CachedRemoteApiDataSource(this);
-        repository = GasolineraRepository.getInstance(dataSource);
+        AppDatabase db = AppDatabase.getInstance(this);
+        RoomGasolineraDataSource roomGasolineraDs = new RoomGasolineraDataSource(db);
+        RoomElectrolineraDataSource roomElectrolineraDs = new RoomElectrolineraDataSource(db);
+        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(roomGasolineraDs);
+        ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
+                new RemoteDgtDataSource(), roomElectrolineraDs);
+        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo);
         locationHelper = new LocationHelper(this);
 
         selectedFuel = FuelType.fromString(
@@ -154,6 +161,7 @@ public class MainActivity extends BaseActivity {
         loadGasolineras();
         requestLocationPermission();
         PriceAlertScheduler.schedule(this);
+        SyncWorker.schedule(this);
         // ⚠️ SOLO PRUEBAS — BORRAR ANTES DEL PR ⚠️
         /*androidx.work.WorkManager.getInstance(this)
                 .enqueue(new androidx.work.OneTimeWorkRequest.Builder(
@@ -185,23 +193,21 @@ public class MainActivity extends BaseActivity {
                         .getString(PREF_SELECTED_FUEL, FuelType.GASOLEO_A.name())
         );
         if (savedFuel != selectedFuel) {
-            selectedFuel = savedFuel;
             MarkerBitmapFactory.clearCache();
-            updateDisplayForFuel(selectedFuel);
+            updateDisplayForFuel(savedFuel);
             return;
         }
 
         int currentRadius = RadiusUtils.loadRadiusKm(this);
-        if (currentRadius != lastRadiusKm) {
-            lastRadiusKm = currentRadius;
-            updateDisplayForFuel(selectedFuel);
-            return;
-        }
-
         int currentMarkers = RadiusUtils.loadMarkersCount(this);
-        if (currentMarkers != lastMarkersCount) {
+        if (currentRadius != lastRadiusKm || currentMarkers != lastMarkersCount) {
+            lastRadiusKm = currentRadius;
             lastMarkersCount = currentMarkers;
-            updateDisplayForFuel(selectedFuel);
+            if (lastSearchQuery == null && userLocation != null) {
+                loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
+            } else if (lastSearchQuery != null) {
+                filterMarkersByMunicipio(lastSearchQuery);
+            }
             return;
         }
 
@@ -358,7 +364,13 @@ public class MainActivity extends BaseActivity {
 
             selectedFuel = selectedFuelLocal[0];
             MarkerBitmapFactory.clearCache();
-            updateDisplayForFuel(selectedFuel);
+            if (userLocation != null) {
+                loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
+            } else {
+                // La ubicación llegará después y applyUserLocation lanzará loadByRadius
+                // con selectedFuel ya actualizado
+                updateDisplayForFuel(selectedFuel);
+            }
             vehicleDialogShown = false;
             dialog.dismiss();
         });
@@ -452,58 +464,87 @@ public class MainActivity extends BaseActivity {
                 location.getLongitude()
         ));
 
-        updateDisplayForFuel(selectedFuel);
+        loadByRadius(location.getLatitude(), location.getLongitude());
     }
 
     private void loadGasolineras() {
         progressBarSearch.setVisibility(View.VISIBLE);
+        tvDataStatus.setText(getString(R.string.status_loading_data));
 
-        tvDataStatus.setText(
-                repository.getLastOrigin() == null
-                        ? getString(R.string.status_loading_data)
-                        : getString(R.string.status_refreshing_data)
-        );
+        if (userLocation != null) {
+            loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
+        } else {
+            // Sin ubicación aún — esperamos a que llegue, se llamará desde applyUserLocation
+            progressBarSearch.setVisibility(View.GONE);
+            tvDataStatus.setText(getString(R.string.status_location_pending));
+        }
+    }
+    private void loadByRadius(double lat, double lon) {
+        progressBarSearch.setVisibility(View.VISIBLE);
+        int radiusKm = RadiusUtils.loadRadiusKm(this);
+        double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
 
         executor.execute(() -> {
             try {
-                List<Gasolinera> loaded = repository.getGasolineras();
+                List<Gasolinera> result = new ArrayList<>();
+                if (selectedFuel == FuelType.ELECTRICO) {
+                    result.addAll(repository.getElectrolinerasByRadius(lat, lon, radiusMeters));
+                } else {
+                    result.addAll(repository.getGasolinerasByRadius(lat, lon, radiusMeters));
+                }
+
+                // Calcular distancias
+                for (Gasolinera g : result) {
+                    g.setDistanceMeters(GeoUtils.distanceMeters(
+                            lat, lon, g.getLat(), g.getLon()));
+                }
+
+                // Ordenar por distancia
+                result.sort(java.util.Comparator.comparingDouble(g ->
+                        g.getDistanceMeters() == null ? Double.MAX_VALUE : g.getDistanceMeters()));
+
+                // Limitar al máximo configurado
+                int maxMarkers = RadiusUtils.loadMarkersCount(this);
+                if (result.size() > maxMarkers) {
+                    result = result.subList(0, maxMarkers);
+                }
+
+                final List<Gasolinera> toShow = new ArrayList<>(result);
 
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
                     allGasolineras.clear();
-                    allGasolineras.addAll(loaded);
+                    allGasolineras.addAll(toShow);
                     progressBarSearch.setVisibility(View.GONE);
                     updateDisplayForFuel(selectedFuel);
+                    renderMetaStatus();
                 });
 
-                buildMunicipioIndexFromList(loaded);
-
-            } catch (RepoError error) {
+            } catch (RepoError e) {
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
                     progressBarSearch.setVisibility(View.GONE);
-                    tvDataStatus.setText(
-                            getString(R.string.error_loading_data) + ": " + buildRepoErrorMessage(error)
-                    );
-                    if (allGasolineras.isEmpty()) {
-                        clearMapMarkers();
-                    }
-                    Toast.makeText(MainActivity.this, buildRepoErrorMessage(error), Toast.LENGTH_LONG).show();
-                });
-
-            } catch (Exception error) {
-                mainHandler.post(() -> {
-                    if (isDestroyed() || isFinishing()) return;
-                    progressBarSearch.setVisibility(View.GONE);
-                    tvDataStatus.setText(getString(R.string.error_loading_data) + ": " + error.getMessage());
-                    Toast.makeText(MainActivity.this, getString(R.string.error_loading_data), Toast.LENGTH_LONG).show();
+                    tvDataStatus.setText(getString(R.string.error_loading_data)
+                            + ": " + buildRepoErrorMessage(e));
                 });
             }
         });
     }
-
     private void updateDisplayForFuel(FuelType fuel) {
+        FuelType previous = selectedFuel;
         selectedFuel = fuel != null ? fuel : FuelType.GASOLEO_A;
+
+        // Si cambió entre eléctrico y combustión, recargar desde Room
+        boolean fuelTypeChanged = (previous == FuelType.ELECTRICO) != (selectedFuel == FuelType.ELECTRICO);
+        if (fuelTypeChanged && lastSearchQuery == null) {
+            Location ref = userLocation;
+            if (ref != null) {
+                MarkerBitmapFactory.clearCache();
+                loadByRadius(ref.getLatitude(), ref.getLongitude());
+                return;
+            }
+        }
+
         visibleGasolineras = buildVisibleGasolineras(selectedFuel);
 
         currentPriceRange = GasolineraSorter.calculatePriceRange(visibleGasolineras, selectedFuel);
@@ -535,41 +576,16 @@ public class MainActivity extends BaseActivity {
     }
 
     private List<Gasolinera> buildVisibleGasolineras(FuelType fuel) {
-        List<Gasolinera> filtered = GasolineraSorter.filterByFuel(allGasolineras, fuel);
-
-        if (userLocation != null) {
-            int radiusKm = RadiusUtils.loadRadiusKm(this);
-            double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
-            return GasolineraSorter.getForMap(
-                    filtered,
-                    userLocation.getLatitude(),
-                    userLocation.getLongitude(),
-                    radiusMeters,
-                    RadiusUtils.loadMarkersCount(this)
-            );
+        List<Gasolinera> result = new ArrayList<>();
+        for (Gasolinera g : allGasolineras) {
+            if (fuel == FuelType.ELECTRICO && g.isElectric()) result.add(g);
+            else if (fuel != FuelType.ELECTRICO && !g.isElectric() && g.hasPrice(fuel)) result.add(g);
         }
-
-        for (Gasolinera gasolinera : filtered) {
-            gasolinera.setDistanceMeters(null);
-        }
-
-        filtered.sort(
-                Comparator
-                        .comparing(
-                                (Gasolinera g) -> g.getPrecio(fuel),
-                                Comparator.nullsLast(Double::compareTo)
-                        )
-                        .thenComparing(
-                                g -> safeText(g.getMarca()),
-                                String.CASE_INSENSITIVE_ORDER
-                        )
-        );
-
-        return filtered;
+        return result;
     }
 
     private void renderMetaStatus() {
-        String originText = getOriginLabel(repository.getLastOrigin());
+        String originText = getOriginLabel(null);
         String orderText = userLocation != null
                 ? getString(R.string.order_by_distance)
                 : getString(R.string.order_by_price);
@@ -587,11 +603,52 @@ public class MainActivity extends BaseActivity {
     private void showStationsOnMap(int count) {
         MarkerBitmapFactory.clearCache();
         clearMapMarkers();
-        int toShow = Math.min(count, visibleGasolineras.size());
-        for (int i = 0; i < toShow; i++) {
-            addMarker(visibleGasolineras.get(i));
-        }
-        mapView.invalidate();
+        final List<Gasolinera> toRender = new ArrayList<>(
+                visibleGasolineras.subList(0, Math.min(count, visibleGasolineras.size()))
+        );
+        final FuelType fuelSnapshot = selectedFuel;
+        final PriceRange rangeSnapshot = currentPriceRange;
+
+        new Thread(() -> {
+            final java.util.LinkedHashMap<Gasolinera, android.graphics.Bitmap> bitmaps =
+                    new java.util.LinkedHashMap<>();
+            for (Gasolinera g : toRender) {
+                if (g.getLat() == null || g.getLon() == null) continue;
+                if (!g.isElectric() && g.getPrecio(fuelSnapshot) != null
+                        && g.getPrecio(fuelSnapshot) > 0) {
+                    double discounted = DiscountPrefs.applyAllDiscounts(
+                            getApplicationContext(), g.getMarca(), g.getPrecio(fuelSnapshot));
+                    g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, rangeSnapshot));
+                    g.setPrecio(fuelSnapshot, discounted);
+                }
+                bitmaps.put(g, MarkerBitmapFactory.createMarker(
+                        getApplicationContext(), g, fuelSnapshot));
+            }
+
+            mainHandler.post(() -> {
+                if (isDestroyed() || isFinishing()) return;
+                clearMapMarkers();
+                for (java.util.Map.Entry<Gasolinera, android.graphics.Bitmap> entry
+                        : bitmaps.entrySet()) {
+                    Gasolinera g = entry.getKey();
+                    Marker marker = new Marker(mapView);
+                    marker.setPosition(new GeoPoint(g.getLat(), g.getLon()));
+                    marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                    marker.setInfoWindow(null);
+                    marker.setIcon(new android.graphics.drawable.BitmapDrawable(
+                            getResources(), entry.getValue()));
+                    marker.setOnMarkerClickListener((m, mv) -> {
+                        Intent intent = new Intent(this, StationDetailActivity.class);
+                        intent.putExtra(StationDetailActivity.EXTRA_GASOLINERA, g);
+                        startActivity(intent);
+                        return true;
+                    });
+                    mapView.getOverlays().add(marker);
+                    markerMap.put(g.getId(), marker);
+                }
+                mapView.invalidate();
+            });
+        }).start();
     }
 
     private void addMarker(Gasolinera gasolinera) {
@@ -618,7 +675,7 @@ public class MainActivity extends BaseActivity {
 
         marker.setIcon(new android.graphics.drawable.BitmapDrawable(
                 getResources(),
-                MarkerBitmapFactory.createMarker(this, gasolinera, selectedFuel, priceText, priceLevel)
+                MarkerBitmapFactory.createMarker(this, gasolinera, selectedFuel)
         ));
 
         marker.setOnMarkerClickListener((clickedMarker, ignoredMapView) -> {
@@ -814,74 +871,6 @@ public class MainActivity extends BaseActivity {
                 .toLowerCase(java.util.Locale.getDefault());
     }
 
-    /**
-     * Comprueba si el municipio coincide con la búsqueda.
-     *
-     * @param normalizedMunicipio Municipio ya normalizado.
-     * @param normalizedQuery     Búsqueda ya normalizada.
-     * @return true si el municipio coincide con la búsqueda.
-     */
-    private boolean matchesMunicipio(String normalizedMunicipio, String normalizedQuery) {
-        if (normalizedMunicipio.equals(normalizedQuery)) return true;
-
-        java.util.regex.Matcher m = MUNICIPIO_ARTICLE_PATTERN.matcher(normalizedMunicipio);
-        if (m.matches()) {
-            String reordered = m.group(2).trim() + " " + m.group(1).trim();
-            if (reordered.equals(normalizedQuery)) return true;
-        }
-
-        for (String separator : new String[]{"/", "-"}) {
-            for (String part : normalizedMunicipio.split(java.util.regex.Pattern.quote(separator))) {
-                if (part.trim().equals(normalizedQuery)) return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Pre-calcula un índice de municipios normalizados para búsqueda rápida.
-     *
-     * @param gasolineras Lista de gasolineras a indexar.
-     */
-    private void buildMunicipioIndexFromList(List<Gasolinera> gasolineras) {
-        municipioIndex.clear();
-        for (Gasolinera g : gasolineras) {
-            String municipio = g.getMunicipio();
-            if (municipio == null) continue;
-
-            addToIndex(normalize(municipio), g);
-
-            java.util.regex.Matcher m = MUNICIPIO_ARTICLE_PATTERN.matcher(normalize(municipio));
-            if (m.matches()) {
-                String reordered = m.group(2).trim() + " " + m.group(1).trim();
-                addToIndex(reordered, g);
-            }
-
-            for (String separator : new String[]{"/", "-"}) {
-                String[] parts = normalize(municipio).split(java.util.regex.Pattern.quote(separator));
-                if (parts.length > 1) {
-                    for (String part : parts) {
-                        addToIndex(part.trim(), g);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Añade una gasolinera al índice bajo la clave dada.
-     *
-     * @param key        Clave normalizada del municipio.
-     * @param gasolinera Gasolinera a indexar.
-     */
-    private void addToIndex(String key, Gasolinera gasolinera) {
-        if (key == null || key.isEmpty()) return;
-        if (!municipioIndex.containsKey(key)) {
-            municipioIndex.put(key, new ArrayList<>());
-        }
-        municipioIndex.get(key).add(gasolinera);
-    }
 
     /**
      * Filtra los markers del mapa usando el índice pre-calculado de municipios.
@@ -891,35 +880,66 @@ public class MainActivity extends BaseActivity {
     private void filterMarkersByMunicipio(String query) {
         lastSearchQuery = query;
         clearMapMarkers();
-        String normalizedQuery = normalize(query);
+        progressBarSearch.setVisibility(View.VISIBLE);
 
         executor.execute(() -> {
-            List<Gasolinera> found = municipioIndex.getOrDefault(normalizedQuery, new ArrayList<>());
+            try {
+                // Normalizar query: eliminar artículos iniciales para cubrir
+                // formatos como "Casar (El)" cuando el usuario escribe "El Casar"
+                String normalizedQuery = normalizeMunicipioQuery(query);
 
-            List<Gasolinera> filtered = new ArrayList<>();
-            for (Gasolinera g : found) {
-                if (g.hasPrice(selectedFuel)) filtered.add(g);
-            }
+                List<Gasolinera> result = new ArrayList<>();
+                if (selectedFuel == FuelType.ELECTRICO) {
+                    result.addAll(repository.getElectrolinerasByMunicipio(normalizedQuery));
+                } else {
+                    result.addAll(repository.getGasolinerasByMunicipio(normalizedQuery));
+                }
 
-            currentPriceRange = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
-            for (Gasolinera g : filtered) {
-                g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), currentPriceRange));
-            }
+                // Calcular distancias si hay ubicación
+                Location ref = searchLocation != null ? searchLocation : userLocation;
+                if (ref != null) {
+                    for (Gasolinera g : result) {
+                        g.setDistanceMeters(GeoUtils.distanceMeters(
+                                ref.getLatitude(), ref.getLongitude(),
+                                g.getLat(), g.getLon()));
+                    }
+                    result.sort(java.util.Comparator.comparingDouble(g ->
+                            g.getDistanceMeters() == null
+                                    ? Double.MAX_VALUE : g.getDistanceMeters()));
+                }
 
-            mainHandler.post(() -> {
-                if (isDestroyed() || isFinishing()) return;
-                searchGasolineras = filtered;
-                progressBarSearch.setVisibility(View.GONE);
+                final List<Gasolinera> filtered = GasolineraSorter.filterByFuel(result, selectedFuel);
+                currentPriceRange = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
                 for (Gasolinera g : filtered) {
-                    addMarker(g);
+                    g.setPriceLevel(GasolineraSorter.getPriceLevel(
+                            g.getPrecio(selectedFuel), currentPriceRange));
                 }
-                mapView.invalidate();
 
-                if (filtered.isEmpty()) {
+                mainHandler.post(() -> {
+                    if (isDestroyed() || isFinishing()) return;
+                    searchGasolineras = filtered;
+                    allGasolineras.clear();
+                    allGasolineras.addAll(filtered);
+                    progressBarSearch.setVisibility(View.GONE);
+                    for (Gasolinera g : filtered) {
+                        addMarker(g);
+                    }
+                    mapView.invalidate();
+
+                    if (filtered.isEmpty()) {
+                        Toast.makeText(this,
+                                "No hay estaciones en esa localidad", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+            } catch (RepoError e) {
+                mainHandler.post(() -> {
+                    if (isDestroyed() || isFinishing()) return;
+                    progressBarSearch.setVisibility(View.GONE);
                     Toast.makeText(this,
-                            "No hay gasolineras en esa localidad", Toast.LENGTH_SHORT).show();
-                }
-            });
+                            "Error buscando estaciones", Toast.LENGTH_SHORT).show();
+                });
+            }
         });
     }
 
@@ -939,7 +959,7 @@ public class MainActivity extends BaseActivity {
                 );
                 mapView.getController().animateTo(point);
                 mapView.getController().setZoom(ZOOM_USER);
-                updateDisplayForFuel(selectedFuel);
+                loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
             } else {
                 requestLocationPermission();
             }
@@ -972,5 +992,24 @@ public class MainActivity extends BaseActivity {
 
     private int dp(int dp) {
         return Math.round(getResources().getDisplayMetrics().density * dp);
+    }
+    /**
+     * Normaliza el nombre de un municipio para la búsqueda en Room.
+     * Elimina artículos iniciales (el, la, los, las, de, del) para cubrir
+     * formatos como "Casar (El)" cuando el usuario escribe "El Casar".
+     *
+     * @param query texto introducido por el usuario
+     * @return palabra principal del municipio para buscar en Room
+     */
+    private String normalizeMunicipioQuery(String query) {
+        if (query == null) return "";
+        String[] articles = {"el ", "la ", "los ", "las ", "de ", "del "};
+        String lower = query.trim().toLowerCase(java.util.Locale.getDefault());
+        for (String article : articles) {
+            if (lower.startsWith(article)) {
+                return query.trim().substring(article.length()).trim();
+            }
+        }
+        return query.trim();
     }
 }
