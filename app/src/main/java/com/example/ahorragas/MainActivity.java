@@ -619,6 +619,7 @@ public class MainActivity extends BaseActivity {
                     double discounted = DiscountPrefs.applyAllDiscounts(
                             getApplicationContext(), g.getMarca(), g.getPrecio(fuelSnapshot));
                     g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, rangeSnapshot));
+                    g.setPrecio(fuelSnapshot, discounted);
                 }
                 bitmaps.put(g, MarkerBitmapFactory.createMarker(
                         getApplicationContext(), g, fuelSnapshot));
