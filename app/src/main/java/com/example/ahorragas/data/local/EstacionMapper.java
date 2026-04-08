@@ -105,6 +105,8 @@ public final class EstacionMapper {
      */
     public static Gasolinera toGasolinera(EstacionEntity e) {
         Gasolinera g = new Gasolinera();
+        try { g.setId(Integer.parseInt(e.stationId)); }
+        catch (NumberFormatException ignored) {}
         g.setMarca(e.marca);
         g.setMunicipio(e.municipio);
         g.setDireccion(e.direccion);

@@ -26,6 +26,21 @@ public final class FavoritesPrefs {
     private FavoritesPrefs() {}
 
     /**
+     * Devuelve una clave única para identificar una estación.
+     * Para gasolineras usa el ID del Ministerio.
+     * Para electrolineras (id=0) usa lat+lon como identificador.
+     *
+     * @param gasolinera estación a identificar
+     * @return clave única como string
+     */
+    private static String uniqueKey(Gasolinera gasolinera) {
+        if (gasolinera.getId() != 0) {
+            return "id:" + gasolinera.getId();
+        }
+        return "ll:" + gasolinera.getLat() + "," + gasolinera.getLon();
+    }
+
+    /**
      * Añade una gasolinera a favoritos. Si ya existe, no la duplica.
      *
      * @param ctx        Contexto de la aplicación.
@@ -33,33 +48,63 @@ public final class FavoritesPrefs {
      */
     public static void add(Context ctx, Gasolinera gasolinera) {
         List<Gasolinera> list = loadAll(ctx);
+        String key = uniqueKey(gasolinera);
         for (Gasolinera g : list) {
-            if (g.getId() == gasolinera.getId()) return; // ya existe
+            if (uniqueKey(g).equals(key)) return;
         }
         list.add(gasolinera);
         saveAll(ctx, list);
     }
 
     /**
-     * Elimina una gasolinera de favoritos por su ID.
+     * Elimina una gasolinera de favoritos.
+     *
+     * @param ctx        Contexto de la aplicación.
+     * @param gasolinera Gasolinera a eliminar.
+     */
+    public static void remove(Context ctx, Gasolinera gasolinera) {
+        String key = uniqueKey(gasolinera);
+        List<Gasolinera> list = loadAll(ctx);
+        list.removeIf(g -> uniqueKey(g).equals(key));
+        saveAll(ctx, list);
+    }
+
+    /**
+     * Elimina una gasolinera de favoritos por su ID (solo gasolineras con ID válido).
      *
      * @param ctx Contexto de la aplicación.
      * @param id  ID de la gasolinera a eliminar.
      */
     public static void remove(Context ctx, int id) {
         List<Gasolinera> list = loadAll(ctx);
-        list.removeIf(g -> g.getId() == id);
+        list.removeIf(g -> g.getId() == id && id != 0);
         saveAll(ctx, list);
     }
 
     /**
      * Comprueba si una gasolinera está en favoritos.
      *
+     * @param ctx        Contexto de la aplicación.
+     * @param gasolinera Gasolinera a comprobar.
+     * @return true si está en favoritos.
+     */
+    public static boolean isFavorite(Context ctx, Gasolinera gasolinera) {
+        String key = uniqueKey(gasolinera);
+        for (Gasolinera g : loadAll(ctx)) {
+            if (uniqueKey(g).equals(key)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Comprueba si una gasolinera está en favoritos por ID (solo gasolineras con ID válido).
+     *
      * @param ctx Contexto de la aplicación.
      * @param id  ID de la gasolinera.
      * @return true si está en favoritos.
      */
     public static boolean isFavorite(Context ctx, int id) {
+        if (id == 0) return false;
         for (Gasolinera g : loadAll(ctx)) {
             if (g.getId() == id) return true;
         }
@@ -91,6 +136,7 @@ public final class FavoritesPrefs {
                         null
                 );
                 g.setHorario(obj.optString("horario"));
+                g.setElectric(obj.optBoolean("electric", false));
 
                 JSONObject prices = obj.optJSONObject("prices");
                 if (prices != null) {
@@ -123,6 +169,7 @@ public final class FavoritesPrefs {
                 obj.put("lat",       g.getLat() != null ? g.getLat() : 0.0);
                 obj.put("lon",       g.getLon() != null ? g.getLon() : 0.0);
                 obj.put("horario",   g.getHorario());
+                obj.put("electric",  g.isElectric());
 
                 JSONObject prices = new JSONObject();
                 for (FuelType fuel : FuelType.values()) {
