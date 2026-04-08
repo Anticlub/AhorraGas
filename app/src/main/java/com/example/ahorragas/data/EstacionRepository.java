@@ -86,4 +86,55 @@ public class EstacionRepository {
         }
         return result;
     }
+    /**
+     * Devuelve gasolineras dentro de un radio desde Room.
+     *
+     * @param lat          latitud del centro
+     * @param lon          longitud del centro
+     * @param radiusMeters radio en metros
+     * @return lista de gasolineras en el radio
+     * @throws RepoError si hay fallo
+     */
+    public List<Gasolinera> getGasolinerasByRadius(double lat, double lon,
+                                                   double radiusMeters) throws RepoError {
+        return gasolineraRepository.getByRadius(lat, lon, radiusMeters);
+    }
+
+    /**
+     * Devuelve electrolineras dentro de un radio desde Room.
+     *
+     * @param lat          latitud del centro
+     * @param lon          longitud del centro
+     * @param radiusMeters radio en metros
+     * @return lista de electrolineras mapeadas en el radio
+     * @throws RepoError si hay fallo
+     */
+    public List<Gasolinera> getElectrolinerasByRadius(double lat, double lon,
+                                                      double radiusMeters) throws RepoError {
+        return mapElectrolinerasToGasolineras(
+                electrolineraRepository.getByRadius(lat, lon, radiusMeters));
+    }
+
+    /**
+     * Devuelve gasolineras de un municipio concreto desde Room.
+     *
+     * @param municipio nombre exacto del municipio
+     * @return lista de gasolineras del municipio
+     * @throws RepoError si hay fallo
+     */
+    public List<Gasolinera> getGasolinerasByMunicipio(String municipio) throws RepoError {
+        return gasolineraRepository.getByMunicipio(municipio);
+    }
+
+    /**
+     * Devuelve electrolineras de un municipio concreto desde Room, mapeadas a Gasolinera.
+     *
+     * @param municipio nombre exacto del municipio
+     * @return lista de electrolineras mapeadas del municipio
+     * @throws RepoError si hay fallo
+     */
+    public List<Gasolinera> getElectrolinerasByMunicipio(String municipio) throws RepoError {
+        return mapElectrolinerasToGasolineras(
+                electrolineraRepository.getByMunicipio(municipio));
+    }
 }

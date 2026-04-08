@@ -105,4 +105,29 @@ public class GasolineraRepository {
         memoryCache = null;
         memoryCacheTimestamp = 0L;
     }
+
+    /**
+     * Devuelve gasolineras dentro de un radio desde Room.
+     *
+     * @param lat          latitud del centro
+     * @param lon          longitud del centro
+     * @param radiusMeters radio en metros
+     * @return lista de gasolineras en el radio
+     * @throws RepoError si hay fallo
+     */
+    public List<Gasolinera> getByRadius(double lat, double lon,
+                                        double radiusMeters) throws RepoError {
+        return roomDataSource.loadByRadius(lat, lon, radiusMeters);
+    }
+
+    /**
+     * Devuelve gasolineras de un municipio concreto desde Room.
+     *
+     * @param municipio nombre exacto del municipio
+     * @return lista de gasolineras del municipio
+     * @throws RepoError si hay fallo
+     */
+    public List<Gasolinera> getByMunicipio(String municipio) throws RepoError {
+        return roomDataSource.loadByMunicipio(municipio);
+    }
 }
