@@ -11,7 +11,8 @@ public enum FuelType {
     BIODIESEL("Precio Biodiesel", "Biodiesel"),
     BIOETANOL("Precio Bioetanol", "Bioetanol"),
     GLP("Precio Gases licuados del petróleo", "GLP (Gas Licuado de Petróleo)"),
-    GNC("Precio Gas Natural Comprimido", "GNC (Gas Natural Comprimision)");
+    GNC("Precio Gas Natural Comprimido", "GNC (Gas Natural Comprimision)"),
+    ELECTRICO("", "Eléctrico");
 
     private final String apiKey;
     private final String displayName;
