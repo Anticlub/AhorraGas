@@ -367,7 +367,13 @@ public class MainActivity extends BaseActivity {
 
             selectedFuel = selectedFuelLocal[0];
             MarkerBitmapFactory.clearCache();
-            updateDisplayForFuel(selectedFuel);
+            if (userLocation != null) {
+                loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
+            } else {
+                // La ubicación llegará después y applyUserLocation lanzará loadByRadius
+                // con selectedFuel ya actualizado
+                updateDisplayForFuel(selectedFuel);
+            }
             vehicleDialogShown = false;
             dialog.dismiss();
         });
