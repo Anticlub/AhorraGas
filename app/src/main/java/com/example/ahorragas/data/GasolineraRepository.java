@@ -33,6 +33,12 @@ public class GasolineraRepository {
         return instance;
     }
 
+    /**
+     * Devuelve gasolineras desde caché en memoria, Room, o red (en ese orden).
+     *
+     * @return lista de gasolineras
+     * @throws RepoError si hay fallo en todas las fuentes
+     */
     public synchronized List<Gasolinera> getGasolineras() throws RepoError {
 
         // 1) Caché en memoria válida
@@ -55,7 +61,7 @@ public class GasolineraRepository {
             } catch (Exception ignored) {}
         }
 
-        // 3) Sin Room → cargar desde primary (red o assets)
+        // 3) Sin Room → cargar desde red y persistir
         try {
             memoryCache = primary.loadGasolineras();
             memoryCacheTimestamp = System.currentTimeMillis();
@@ -71,7 +77,6 @@ public class GasolineraRepository {
                 lastOrigin = DataSourceOrigin.REMOTE;
             }
 
-            // Persistir en Room en background
             final List<Gasolinera> toSave = memoryCache;
             new Thread(() -> {
                 try { roomDataSource.saveAll(toSave); }

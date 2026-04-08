@@ -66,7 +66,7 @@ public class DistanceListActivity extends BaseActivity {
         GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(dataSource, roomGasolineraDs);
         ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
                 new RemoteDgtDataSource(), roomElectrolineraDs);
-        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo, dataSource);
+        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo);
         locationHelper = new LocationHelper(this);
 
         bindViews();
