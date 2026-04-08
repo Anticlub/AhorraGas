@@ -916,7 +916,7 @@ public class MainActivity extends BaseActivity {
                 );
                 mapView.getController().animateTo(point);
                 mapView.getController().setZoom(ZOOM_USER);
-                updateDisplayForFuel(selectedFuel);
+                loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
             } else {
                 requestLocationPermission();
             }
