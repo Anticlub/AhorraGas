@@ -202,16 +202,15 @@ public class MainActivity extends BaseActivity {
         }
 
         int currentRadius = RadiusUtils.loadRadiusKm(this);
-        if (currentRadius != lastRadiusKm) {
-            lastRadiusKm = currentRadius;
-            updateDisplayForFuel(selectedFuel);
-            return;
-        }
-
         int currentMarkers = RadiusUtils.loadMarkersCount(this);
-        if (currentMarkers != lastMarkersCount) {
+        if (currentRadius != lastRadiusKm || currentMarkers != lastMarkersCount) {
+            lastRadiusKm = currentRadius;
             lastMarkersCount = currentMarkers;
-            updateDisplayForFuel(selectedFuel);
+            if (lastSearchQuery == null && userLocation != null) {
+                loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
+            } else if (lastSearchQuery != null) {
+                filterMarkersByMunicipio(lastSearchQuery);
+            }
             return;
         }
 
