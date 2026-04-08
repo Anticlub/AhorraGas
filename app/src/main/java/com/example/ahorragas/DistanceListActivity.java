@@ -13,8 +13,13 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ahorragas.adapter.GasolineraAdapter;
-import com.example.ahorragas.data.CachedRemoteApiDataSource;
+import com.example.ahorragas.data.ElectrolineraRepository;
+import com.example.ahorragas.data.EstacionRepository;
 import com.example.ahorragas.data.GasolineraRepository;
+import com.example.ahorragas.data.RemoteDgtDataSource;
+import com.example.ahorragas.data.RoomElectrolineraDataSource;
+import com.example.ahorragas.data.RoomGasolineraDataSource;
+import com.example.ahorragas.data.local.AppDatabase;
 import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
@@ -28,7 +33,7 @@ import java.util.List;
 
 public class DistanceListActivity extends BaseActivity {
 
-    private GasolineraRepository repository;
+    private EstacionRepository repository;
     private LocationHelper locationHelper;
     private GasolineraAdapter adapter;
     private FuelType selectedFuel;
@@ -52,7 +57,13 @@ public class DistanceListActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_distance_list);
 
-        repository = GasolineraRepository.getInstance(new CachedRemoteApiDataSource(this));
+        AppDatabase db = AppDatabase.getInstance(this);
+        RoomGasolineraDataSource roomGasolineraDs = new RoomGasolineraDataSource(db);
+        RoomElectrolineraDataSource roomElectrolineraDs = new RoomElectrolineraDataSource(db);
+        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(roomGasolineraDs);
+        ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
+                new RemoteDgtDataSource(), roomElectrolineraDs);
+        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo);
         locationHelper = new LocationHelper(this);
 
         bindViews();
@@ -176,11 +187,18 @@ public class DistanceListActivity extends BaseActivity {
                 double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
                 int maxMarkers = RadiusUtils.loadMarkersCount(DistanceListActivity.this);
 
-                List<Gasolinera> gasolineras = repository.getGasolineras();
+                List<Gasolinera> gasolineras;
+                if (selectedFuel == FuelType.ELECTRICO) {
+                    gasolineras = new ArrayList<>(
+                            repository.getElectrolinerasByRadius(lat, lon, radiusMeters));
+                } else {
+                    gasolineras = new ArrayList<>(
+                            repository.getGasolinerasByRadius(lat, lon, radiusMeters));
+                }
+
                 List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
                 List<Gasolinera> sorted = GasolineraSorter.getWithinRadius(
-                        filtered, lat, lon, radiusMeters, maxMarkers
-                );
+                        filtered, lat, lon, radiusMeters, maxMarkers);
 
                 PriceRange range = GasolineraSorter.calculatePriceRange(sorted, selectedFuel);
                 for (Gasolinera g : sorted) {
