@@ -143,7 +143,15 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
                 tvPrice.setTextColor(MarkerBitmapFactory.getElectricColor());
                 vPriceStripe.setBackgroundColor(MarkerBitmapFactory.getElectricColor());
             } else {
-                tvPrice.setText(gasolinera.getFormattedPrice(fuel));
+                Double originalPrice = gasolinera.getPrecio(fuel);
+                if (originalPrice != null && originalPrice > 0) {
+                    double discounted = DiscountPrefs.applyAllDiscounts(
+                            itemView.getContext(), gasolinera.getMarca(), originalPrice);
+                    tvPrice.setText(String.format(java.util.Locale.getDefault(),
+                            "%.3f €", discounted));
+                } else {
+                    tvPrice.setText(gasolinera.getFormattedPrice(fuel));
+                }
                 int priceColor = MarkerBitmapFactory.getPriceLevelColor(gasolinera.getPriceLevel());
                 tvPrice.setTextColor(priceColor);
                 vPriceStripe.setBackgroundColor(priceColor);
