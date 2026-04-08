@@ -168,16 +168,27 @@ public class GeneralFragment extends Fragment {
             }
 
             // ── Descuento ────────────────────────────────────────────────────────
+            // ── Descuento ────────────────────────────────────────────────────────
             List<Discount> discounts = DiscountPrefs.findAllForBrand(requireContext(), g.getMarca());
-            Discount discount = discounts.isEmpty() ? null : discounts.get(0);
-            if (discount != null && price != null && price > 0) {
-                double discountedPrice = discount.applyTo(price);
+            if (!discounts.isEmpty() && price != null && price > 0) {
+                double discountedPrice = DiscountPrefs.applyAllDiscounts(
+                        requireContext(), g.getMarca(), price);
 
-                String typeLabel = discount.getType() == Discount.Type.PERCENTAGE
-                        ? String.format(java.util.Locale.getDefault(), "-%.1f%%", discount.getValue())
-                        : String.format(java.util.Locale.getDefault(), "-%.3f €/L", discount.getValue());
+                // Construir etiqueta con todos los descuentos aplicados
+                StringBuilder typeLabel = new StringBuilder();
+                for (int i = 0; i < discounts.size(); i++) {
+                    if (i > 0) typeLabel.append(" + ");
+                    Discount d = discounts.get(i);
+                    if (d.getType() == Discount.Type.PERCENTAGE) {
+                        typeLabel.append(String.format(java.util.Locale.getDefault(),
+                                "-%.1f%%", d.getValue()));
+                    } else {
+                        typeLabel.append(String.format(java.util.Locale.getDefault(),
+                                "-%.3f €/L", d.getValue() / 100.0));
+                    }
+                }
 
-                tvDiscountLabel.setText("Precio con descuento " + discount.getBrandName()
+                tvDiscountLabel.setText("Precio con descuento " + discounts.get(0).getBrandName()
                         + " (" + typeLabel + ")");
                 tvDiscountPrice.setText(String.format(java.util.Locale.getDefault(),
                         "%.3f €", discountedPrice));
@@ -210,14 +221,14 @@ public class GeneralFragment extends Fragment {
 
         // ── Botón favorito ───────────────────────────────────────────────────
         Button btnFavorite = view.findViewById(R.id.btnFavorite);
-        boolean isFav = FavoritesPrefs.isFavorite(requireContext(), g.getId());
+        boolean isFav = FavoritesPrefs.isFavorite(requireContext(), g);
         btnFavorite.setText(isFav ? "❤️ Quitar de favoritos" : "🤍 Añadir a favoritos");
 
         final Gasolinera finalG = g;
         btnFavorite.setOnClickListener(v -> {
-            boolean nowFav = FavoritesPrefs.isFavorite(requireContext(), finalG.getId());
+            boolean nowFav = FavoritesPrefs.isFavorite(requireContext(), finalG);
             if (nowFav) {
-                FavoritesPrefs.remove(requireContext(), finalG.getId());
+                FavoritesPrefs.remove(requireContext(), finalG);
                 btnFavorite.setText("🤍 Añadir a favoritos");
             } else {
                 FavoritesPrefs.add(requireContext(), finalG);
