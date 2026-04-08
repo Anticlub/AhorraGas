@@ -603,11 +603,51 @@ public class MainActivity extends BaseActivity {
     private void showStationsOnMap(int count) {
         MarkerBitmapFactory.clearCache();
         clearMapMarkers();
-        int toShow = Math.min(count, visibleGasolineras.size());
-        for (int i = 0; i < toShow; i++) {
-            addMarker(visibleGasolineras.get(i));
-        }
-        mapView.invalidate();
+        final List<Gasolinera> toRender = new ArrayList<>(
+                visibleGasolineras.subList(0, Math.min(count, visibleGasolineras.size()))
+        );
+        final FuelType fuelSnapshot = selectedFuel;
+        final PriceRange rangeSnapshot = currentPriceRange;
+
+        new Thread(() -> {
+            final java.util.LinkedHashMap<Gasolinera, android.graphics.Bitmap> bitmaps =
+                    new java.util.LinkedHashMap<>();
+            for (Gasolinera g : toRender) {
+                if (g.getLat() == null || g.getLon() == null) continue;
+                if (!g.isElectric() && g.getPrecio(fuelSnapshot) != null
+                        && g.getPrecio(fuelSnapshot) > 0) {
+                    double discounted = DiscountPrefs.applyAllDiscounts(
+                            getApplicationContext(), g.getMarca(), g.getPrecio(fuelSnapshot));
+                    g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, rangeSnapshot));
+                }
+                bitmaps.put(g, MarkerBitmapFactory.createMarker(
+                        getApplicationContext(), g, fuelSnapshot));
+            }
+
+            mainHandler.post(() -> {
+                if (isDestroyed() || isFinishing()) return;
+                clearMapMarkers();
+                for (java.util.Map.Entry<Gasolinera, android.graphics.Bitmap> entry
+                        : bitmaps.entrySet()) {
+                    Gasolinera g = entry.getKey();
+                    Marker marker = new Marker(mapView);
+                    marker.setPosition(new GeoPoint(g.getLat(), g.getLon()));
+                    marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                    marker.setInfoWindow(null);
+                    marker.setIcon(new android.graphics.drawable.BitmapDrawable(
+                            getResources(), entry.getValue()));
+                    marker.setOnMarkerClickListener((m, mv) -> {
+                        Intent intent = new Intent(this, StationDetailActivity.class);
+                        intent.putExtra(StationDetailActivity.EXTRA_GASOLINERA, g);
+                        startActivity(intent);
+                        return true;
+                    });
+                    mapView.getOverlays().add(marker);
+                    markerMap.put(g.getId(), marker);
+                }
+                mapView.invalidate();
+            });
+        }).start();
     }
 
     private void addMarker(Gasolinera gasolinera) {
