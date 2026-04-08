@@ -79,4 +79,29 @@ public class ElectrolineraRepository {
     public synchronized void clearMemoryCache() {
         memoryCache = null;
     }
+
+    /**
+     * Devuelve electrolineras dentro de un radio desde Room.
+     *
+     * @param lat          latitud del centro
+     * @param lon          longitud del centro
+     * @param radiusMeters radio en metros
+     * @return lista de electrolineras en el radio
+     * @throws RepoError si hay fallo
+     */
+    public List<Electrolinera> getByRadius(double lat, double lon,
+                                           double radiusMeters) throws RepoError {
+        return roomDataSource.loadByRadius(lat, lon, radiusMeters);
+    }
+
+    /**
+     * Devuelve electrolineras de un municipio concreto desde Room.
+     *
+     * @param municipio nombre exacto del municipio
+     * @return lista de electrolineras del municipio
+     * @throws RepoError si hay fallo
+     */
+    public List<Electrolinera> getByMunicipio(String municipio) throws RepoError {
+        return roomDataSource.loadByMunicipio(municipio);
+    }
 }
