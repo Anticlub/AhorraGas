@@ -146,7 +146,7 @@ public class MainActivity extends BaseActivity {
         GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(dataSource, roomGasolineraDs);
         ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
                 new RemoteDgtDataSource(), roomElectrolineraDs);
-        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo, dataSource);
+        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo);
         locationHelper = new LocationHelper(this);
 
         selectedFuel = FuelType.fromString(
@@ -166,6 +166,7 @@ public class MainActivity extends BaseActivity {
         loadGasolineras();
         requestLocationPermission();
         PriceAlertScheduler.schedule(this);
+        SyncWorker.schedule(this);
         // ⚠️ SOLO PRUEBAS — BORRAR ANTES DEL PR ⚠️
         /*androidx.work.WorkManager.getInstance(this)
                 .enqueue(new androidx.work.OneTimeWorkRequest.Builder(
@@ -494,42 +495,6 @@ public class MainActivity extends BaseActivity {
 
                 // Construir índice en background después de mostrar
                 buildMunicipioIndexFromList(toShow);
-
-                // Fase 3 — refrescar en background
-                repository.refreshInBackground(true,
-                        new EstacionRepository.RefreshCallback() {
-                            @Override
-                            public void onGasolinerasRefreshed(List<Gasolinera> updated) {
-                                mainHandler.post(() -> {
-                                    if (isDestroyed() || isFinishing()) return;
-                                    allGasolineras.removeIf(g -> !g.isElectric());
-                                    allGasolineras.addAll(updated);
-                                    buildMunicipioIndexFromList(toShow);
-                                    if (selectedFuel != FuelType.ELECTRICO) {
-                                        updateDisplayForFuel(selectedFuel);
-                                    }
-                                });
-                            }
-
-                            @Override
-                            public void onElectrolinerasRefreshed(List<Gasolinera> updated) {
-                                mainHandler.post(() -> {
-                                    if (isDestroyed() || isFinishing()) return;
-                                    allGasolineras.removeIf(g -> g.isElectric());
-                                    allGasolineras.addAll(updated);
-                                    buildMunicipioIndexFromList(toShow);
-                                    if (selectedFuel == FuelType.ELECTRICO) {
-                                        updateDisplayForFuel(selectedFuel);
-                                    }
-                                });
-                            }
-
-                            @Override
-                            public void onRefreshError(Exception error) {
-                                android.util.Log.w("MainActivity",
-                                        "Refresh en background fallido: " + error.getMessage());
-                            }
-                        });
 
             } catch (RepoError error) {
                 mainHandler.post(() -> {
