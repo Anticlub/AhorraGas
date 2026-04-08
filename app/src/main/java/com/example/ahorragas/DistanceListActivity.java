@@ -13,12 +13,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ahorragas.adapter.GasolineraAdapter;
-import com.example.ahorragas.data.CachedRemoteApiDataSource;
 import com.example.ahorragas.data.ElectrolineraRepository;
 import com.example.ahorragas.data.EstacionRepository;
 import com.example.ahorragas.data.GasolineraRepository;
 import com.example.ahorragas.data.RemoteDgtDataSource;
-import com.example.ahorragas.data.RepoError;
 import com.example.ahorragas.data.RoomElectrolineraDataSource;
 import com.example.ahorragas.data.RoomGasolineraDataSource;
 import com.example.ahorragas.data.local.AppDatabase;
@@ -59,11 +57,10 @@ public class DistanceListActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_distance_list);
 
-        CachedRemoteApiDataSource dataSource = new CachedRemoteApiDataSource(this);
         AppDatabase db = AppDatabase.getInstance(this);
         RoomGasolineraDataSource roomGasolineraDs = new RoomGasolineraDataSource(db);
         RoomElectrolineraDataSource roomElectrolineraDs = new RoomElectrolineraDataSource(db);
-        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(dataSource, roomGasolineraDs);
+        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(roomGasolineraDs);
         ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
                 new RemoteDgtDataSource(), roomElectrolineraDs);
         repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo);

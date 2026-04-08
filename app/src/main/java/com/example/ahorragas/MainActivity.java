@@ -25,7 +25,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.PreferenceManager;
 
-import com.example.ahorragas.data.CachedRemoteApiDataSource;
 import com.example.ahorragas.data.DataSourceOrigin;
 import com.example.ahorragas.data.GasolineraRepository;
 import com.example.ahorragas.data.RepoError;
@@ -92,7 +91,6 @@ public class MainActivity extends BaseActivity {
     private final Map<Integer, Marker> markerMap = new HashMap<>();
     private MyLocationNewOverlay locationOverlay;
 
-    private CachedRemoteApiDataSource dataSource;
     private EstacionRepository repository;
     private LocationHelper locationHelper;
     private final java.util.concurrent.ExecutorService executor =
@@ -137,11 +135,10 @@ public class MainActivity extends BaseActivity {
 
         setContentView(R.layout.activity_main);
 
-        dataSource = new CachedRemoteApiDataSource(this);
         AppDatabase db = AppDatabase.getInstance(this);
         RoomGasolineraDataSource roomGasolineraDs = new RoomGasolineraDataSource(db);
         RoomElectrolineraDataSource roomElectrolineraDs = new RoomElectrolineraDataSource(db);
-        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(dataSource, roomGasolineraDs);
+        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(roomGasolineraDs);
         ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
                 new RemoteDgtDataSource(), roomElectrolineraDs);
         repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo);
