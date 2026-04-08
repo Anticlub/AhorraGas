@@ -196,9 +196,8 @@ public class MainActivity extends BaseActivity {
                         .getString(PREF_SELECTED_FUEL, FuelType.GASOLEO_A.name())
         );
         if (savedFuel != selectedFuel) {
-            selectedFuel = savedFuel;
             MarkerBitmapFactory.clearCache();
-            updateDisplayForFuel(selectedFuel);
+            updateDisplayForFuel(savedFuel);
             return;
         }
 
@@ -530,7 +529,20 @@ public class MainActivity extends BaseActivity {
         });
     }
     private void updateDisplayForFuel(FuelType fuel) {
+        FuelType previous = selectedFuel;
         selectedFuel = fuel != null ? fuel : FuelType.GASOLEO_A;
+
+        // Si cambió entre eléctrico y combustión, recargar desde Room
+        boolean fuelTypeChanged = (previous == FuelType.ELECTRICO) != (selectedFuel == FuelType.ELECTRICO);
+        if (fuelTypeChanged && lastSearchQuery == null) {
+            Location ref = userLocation;
+            if (ref != null) {
+                MarkerBitmapFactory.clearCache();
+                loadByRadius(ref.getLatitude(), ref.getLongitude());
+                return;
+            }
+        }
+
         visibleGasolineras = buildVisibleGasolineras(selectedFuel);
 
         currentPriceRange = GasolineraSorter.calculatePriceRange(visibleGasolineras, selectedFuel);
@@ -829,11 +841,15 @@ public class MainActivity extends BaseActivity {
 
         executor.execute(() -> {
             try {
+                // Normalizar query: eliminar artículos iniciales para cubrir
+                // formatos como "Casar (El)" cuando el usuario escribe "El Casar"
+                String normalizedQuery = normalizeMunicipioQuery(query);
+
                 List<Gasolinera> result = new ArrayList<>();
                 if (selectedFuel == FuelType.ELECTRICO) {
-                    result.addAll(repository.getElectrolinerasByMunicipio(query));
+                    result.addAll(repository.getElectrolinerasByMunicipio(normalizedQuery));
                 } else {
-                    result.addAll(repository.getGasolinerasByMunicipio(query));
+                    result.addAll(repository.getGasolinerasByMunicipio(normalizedQuery));
                 }
 
                 // Calcular distancias si hay ubicación
@@ -933,5 +949,24 @@ public class MainActivity extends BaseActivity {
 
     private int dp(int dp) {
         return Math.round(getResources().getDisplayMetrics().density * dp);
+    }
+    /**
+     * Normaliza el nombre de un municipio para la búsqueda en Room.
+     * Elimina artículos iniciales (el, la, los, las, de, del) para cubrir
+     * formatos como "Casar (El)" cuando el usuario escribe "El Casar".
+     *
+     * @param query texto introducido por el usuario
+     * @return palabra principal del municipio para buscar en Room
+     */
+    private String normalizeMunicipioQuery(String query) {
+        if (query == null) return "";
+        String[] articles = {"el ", "la ", "los ", "las ", "de ", "del "};
+        String lower = query.trim().toLowerCase(java.util.Locale.getDefault());
+        for (String article : articles) {
+            if (lower.startsWith(article)) {
+                return query.trim().substring(article.length()).trim();
+            }
+        }
+        return query.trim();
     }
 }
