@@ -12,11 +12,6 @@ public class ElectrolineraRepository {
     private final RoomElectrolineraDataSource roomDataSource;
     private List<Electrolinera> memoryCache;
 
-    public interface RefreshCallback {
-        void onRefreshed(List<Electrolinera> updated);
-        void onRefreshError(RepoError error);
-    }
-
     private ElectrolineraRepository(ElectrolineraDataSource remoteDataSource,
                                     RoomElectrolineraDataSource roomDataSource) {
         this.remoteDataSource = remoteDataSource;
@@ -61,7 +56,7 @@ public class ElectrolineraRepository {
             } catch (Exception ignored) {}
         }
 
-        // 3) Sin Room → descargar de red
+        // 3) Sin Room → descargar de red y persistir
         memoryCache = remoteDataSource.loadElectrolineras();
 
         if (memoryCache == null || memoryCache.isEmpty()) {
@@ -69,7 +64,6 @@ public class ElectrolineraRepository {
                     "Sin datos de electrolineras");
         }
 
-        // Persistir en Room en background
         final List<Electrolinera> toSave = memoryCache;
         new Thread(() -> {
             try { roomDataSource.saveAll(toSave); }
@@ -80,30 +74,8 @@ public class ElectrolineraRepository {
     }
 
     /**
-     * Descarga electrolineras frescas de la red en background y notifica via callback.
-     *
-     * @param callback notificado cuando lleguen datos frescos o haya error
+     * Invalida la caché en memoria forzando recarga en la siguiente llamada.
      */
-    public void refreshInBackground(RefreshCallback callback) {
-        new Thread(() -> {
-            try {
-                List<Electrolinera> updated = remoteDataSource.loadElectrolineras();
-                if (updated == null || updated.isEmpty()) {
-                    callback.onRefreshError(new RepoError(
-                            RepoError.Type.EMPTY_RESPONSE, "Sin datos de electrolineras"));
-                    return;
-                }
-                roomDataSource.saveAll(updated);
-                synchronized (ElectrolineraRepository.this) {
-                    memoryCache = updated;
-                }
-                callback.onRefreshed(updated);
-            } catch (RepoError e) {
-                callback.onRefreshError(e);
-            }
-        }).start();
-    }
-
     public synchronized void clearMemoryCache() {
         memoryCache = null;
     }
