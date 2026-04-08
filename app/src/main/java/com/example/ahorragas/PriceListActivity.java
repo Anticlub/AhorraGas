@@ -13,21 +13,17 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ahorragas.adapter.GasolineraAdapter;
-import com.example.ahorragas.data.CachedRemoteApiDataSource;
 import com.example.ahorragas.data.ElectrolineraRepository;
 import com.example.ahorragas.data.EstacionRepository;
 import com.example.ahorragas.data.GasolineraRepository;
 import com.example.ahorragas.data.RemoteDgtDataSource;
-import com.example.ahorragas.data.RepoError;
 import com.example.ahorragas.data.RoomElectrolineraDataSource;
 import com.example.ahorragas.data.RoomGasolineraDataSource;
 import com.example.ahorragas.data.local.AppDatabase;
 import com.example.ahorragas.location.LocationHelper;
-import com.example.ahorragas.model.Electrolinera;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceRange;
-import com.example.ahorragas.util.DiscountPrefs;
 import com.example.ahorragas.util.GasolineraSorter;
 import com.example.ahorragas.util.RadiusUtils;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -63,14 +59,13 @@ public class PriceListActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_price_list);
 
-        CachedRemoteApiDataSource dataSource = new CachedRemoteApiDataSource(this);
         AppDatabase db = AppDatabase.getInstance(this);
         RoomGasolineraDataSource roomGasolineraDs = new RoomGasolineraDataSource(db);
         RoomElectrolineraDataSource roomElectrolineraDs = new RoomElectrolineraDataSource(db);
-        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(dataSource, roomGasolineraDs);
+        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(roomGasolineraDs);
         ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
                 new RemoteDgtDataSource(), roomElectrolineraDs);
-        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo, dataSource);
+        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo);
         locationHelper = new LocationHelper(this);
 
         bindViews();
@@ -214,19 +209,20 @@ public class PriceListActivity extends BaseActivity {
                 double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
                 int maxMarkers = RadiusUtils.loadMarkersCount(PriceListActivity.this);
 
-                List<Gasolinera> gasolineras = new ArrayList<>(repository.getGasolineras());
+                List<Gasolinera> gasolineras;
                 if (selectedFuel == FuelType.ELECTRICO) {
-                    try {
-                        gasolineras.addAll(repository.getElectrolineras());
-                    } catch (RepoError ignored) {}
+                    gasolineras = new ArrayList<>(
+                            repository.getElectrolinerasByRadius(lat, lon, radiusMeters));
+                } else {
+                    gasolineras = new ArrayList<>(
+                            repository.getGasolinerasByRadius(lat, lon, radiusMeters));
                 }
+
                 List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
                 List<Gasolinera> inRadius = GasolineraSorter.getWithinRadius(
-                        filtered, lat, lon, radiusMeters, maxMarkers
-                );
+                        filtered, lat, lon, radiusMeters, maxMarkers);
 
                 if (selectedFuel == FuelType.ELECTRICO) {
-                    // Electrolineras: ordenar por potencia máxima descendente
                     inRadius.sort((a, b) -> {
                         double potA = getMaxPotencia(a);
                         double potB = getMaxPotencia(b);
