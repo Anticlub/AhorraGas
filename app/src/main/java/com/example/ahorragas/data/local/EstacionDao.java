@@ -32,11 +32,17 @@ public interface EstacionDao {
             double minLat, double maxLat, double minLon, double maxLon);
 
     @Query("SELECT * FROM gasolineras WHERE es_electrica = 0 " +
-            "AND municipio = :municipio")
+            "AND UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(" +
+            "municipio,'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'Ñ','N')) " +
+            "LIKE '%' || UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(" +
+            ":municipio,'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'Ñ','N')) || '%'")
     List<EstacionEntity> getGasolinerasByMunicipio(String municipio);
 
     @Query("SELECT * FROM gasolineras WHERE es_electrica = 1 " +
-            "AND municipio = :municipio")
+            "AND UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(" +
+            "municipio,'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'Ñ','N')) " +
+            "LIKE '%' || UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(" +
+            ":municipio,'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'Ñ','N')) || '%'")
     List<EstacionEntity> getElectrolinerasByMunicipio(String municipio);
 
     @Query("SELECT DISTINCT municipio FROM gasolineras " +
