@@ -7,97 +7,59 @@ import java.util.List;
 public class GasolineraRepository {
 
     private static GasolineraRepository instance;
-
-    private GasolineraDataSource primary;
     private final RoomGasolineraDataSource roomDataSource;
 
-    private static final long MEMORY_CACHE_MAX_AGE_MS = 30L * 60L * 1000L;
-    private List<Gasolinera> memoryCache;
-    private long memoryCacheTimestamp = 0L;
-    private DataSourceOrigin lastOrigin;
-
-    private GasolineraRepository(GasolineraDataSource primary,
-                                 RoomGasolineraDataSource roomDataSource) {
-        this.primary        = primary;
+    private GasolineraRepository(RoomGasolineraDataSource roomDataSource) {
         this.roomDataSource = roomDataSource;
     }
 
     public static synchronized GasolineraRepository getInstance(
-            GasolineraDataSource primary,
             RoomGasolineraDataSource roomDataSource) {
         if (instance == null) {
-            instance = new GasolineraRepository(primary, roomDataSource);
-        } else {
-            instance.primary = primary;
+            instance = new GasolineraRepository(roomDataSource);
         }
         return instance;
     }
 
-    public synchronized List<Gasolinera> getGasolineras() throws RepoError {
-
-        // 1) Caché en memoria válida
-        long ageMs = System.currentTimeMillis() - memoryCacheTimestamp;
-        if (memoryCache != null && ageMs <= MEMORY_CACHE_MAX_AGE_MS) {
-            return memoryCache;
-        }
-        memoryCache = null;
-
-        // 2) Room como primera fuente persistente
-        if (roomDataSource.hasData()) {
-            try {
-                List<Gasolinera> fromRoom = roomDataSource.loadGasolineras();
-                if (fromRoom != null && !fromRoom.isEmpty()) {
-                    memoryCache = fromRoom;
-                    memoryCacheTimestamp = System.currentTimeMillis();
-                    lastOrigin = DataSourceOrigin.CACHE;
-                    return memoryCache;
-                }
-            } catch (Exception ignored) {}
-        }
-
-        // 3) Sin Room → cargar desde primary (red o assets)
-        try {
-            memoryCache = primary.loadGasolineras();
-            memoryCacheTimestamp = System.currentTimeMillis();
-
-            if (memoryCache == null || memoryCache.isEmpty()) {
-                throw new RepoError(RepoError.Type.EMPTY_RESPONSE,
-                        "La fuente devolvió datos vacíos");
-            }
-
-            if (primary instanceof CachedRemoteApiDataSource) {
-                lastOrigin = ((CachedRemoteApiDataSource) primary).getLastOrigin();
-            } else {
-                lastOrigin = DataSourceOrigin.REMOTE;
-            }
-
-            // Persistir en Room en background
-            final List<Gasolinera> toSave = memoryCache;
-            new Thread(() -> {
-                try { roomDataSource.saveAll(toSave); }
-                catch (RepoError ignored) {}
-            }).start();
-
-            return memoryCache;
-
-        } catch (RepoError e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RepoError(RepoError.Type.NETWORK,
-                    "Fallo cargando gasolineras: " + (e.getMessage() != null
-                            ? e.getMessage() : e.getClass().getSimpleName()));
-        }
+    /**
+     * Devuelve todas las gasolineras desde Room.
+     *
+     * @return lista de gasolineras
+     * @throws RepoError si hay fallo
+     */
+    public List<Gasolinera> getGasolineras() throws RepoError {
+        return roomDataSource.loadGasolineras();
     }
 
-    public DataSourceOrigin getLastOrigin() {
-        return lastOrigin;
+    /**
+     * Devuelve gasolineras dentro de un radio desde Room.
+     *
+     * @param lat          latitud del centro
+     * @param lon          longitud del centro
+     * @param radiusMeters radio en metros
+     * @return lista de gasolineras en el radio
+     * @throws RepoError si hay fallo
+     */
+    public List<Gasolinera> getByRadius(double lat, double lon,
+                                        double radiusMeters) throws RepoError {
+        return roomDataSource.loadByRadius(lat, lon, radiusMeters);
+    }
+
+    /**
+     * Devuelve gasolineras de un municipio concreto desde Room.
+     *
+     * @param municipio nombre exacto del municipio
+     * @return lista de gasolineras del municipio
+     * @throws RepoError si hay fallo
+     */
+    public List<Gasolinera> getByMunicipio(String municipio) throws RepoError {
+        return roomDataSource.loadByMunicipio(municipio);
     }
 
     /**
      * Invalida la caché en memoria forzando recarga en la siguiente llamada.
      */
-    public synchronized void clearMemoryCache() {
-        memoryCache = null;
-        memoryCacheTimestamp = 0L;
+    public void clearMemoryCache() {
+        // No-op: Room es la fuente de verdad, no hay caché en memoria
     }
 }

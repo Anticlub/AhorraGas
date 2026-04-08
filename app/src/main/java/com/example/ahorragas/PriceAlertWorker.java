@@ -12,9 +12,6 @@ import androidx.core.app.NotificationCompat;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.example.ahorragas.R;
-import com.example.ahorragas.data.CachedRemoteApiDataSource;
-import com.example.ahorragas.data.GasolineraRepository;
 import com.example.ahorragas.data.RepoError;
 import com.example.ahorragas.data.RoomGasolineraDataSource;
 import com.example.ahorragas.data.local.AppDatabase;
@@ -39,20 +36,16 @@ public class PriceAlertWorker extends Worker {
     public Result doWork() {
         Context ctx = getApplicationContext();
         List<PriceAlert> alerts = PriceAlertPrefs.loadAll(ctx);
-
         if (alerts.isEmpty()) return Result.success();
 
         createNotificationChannel(ctx);
 
         AppDatabase db = AppDatabase.getInstance(ctx);
-        GasolineraRepository repo = GasolineraRepository.getInstance(
-                new CachedRemoteApiDataSource(ctx),
-                new RoomGasolineraDataSource(db)
-        );
+        RoomGasolineraDataSource roomDs = new RoomGasolineraDataSource(db);
 
         List<Gasolinera> gasolineras;
         try {
-            gasolineras = repo.getGasolineras();
+            gasolineras = roomDs.loadGasolineras();
         } catch (RepoError e) {
             android.util.Log.e("PriceAlertWorker", "Error cargando gasolineras: " + e.getMessage());
             return Result.retry();
