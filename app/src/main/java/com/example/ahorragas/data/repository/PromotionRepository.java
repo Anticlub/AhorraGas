@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -23,7 +24,7 @@ import java.util.concurrent.Executors;
 public class PromotionRepository {
 
     private static final String CSV_URL =
-            "https://geoportalgasolineras.es/downloadReportPlanes?extension=CSV";
+            "https://geoportalgasolineras.es/geoportal/downloadReportPlanes?cadena=&extension=CSV";
 
     private static final int CONNECT_TIMEOUT_MS = 10_000;
     private static final int READ_TIMEOUT_MS    = 15_000;
@@ -71,12 +72,12 @@ public class PromotionRepository {
             HttpURLConnection connection = null;
 
             try {
-                connection = openHttpsConnectionTrusted(CSV_URL);
+                connection = openConnection(CSV_URL);
 
                 try (BufferedReader reader = new BufferedReader(
                         new InputStreamReader(
                                 connection.getInputStream(),
-                                Charset.forName("ISO-8859-1")))) {
+                                StandardCharsets.ISO_8859_1))) {
 
                     // Fila 0: metadatos ("Fecha: 05/04/2026...") → ignorar
                     // Fila 1: cabeceras reales → ignorar
@@ -104,33 +105,22 @@ public class PromotionRepository {
 
     // ─── Helpers privados ────────────────────────────────────────────────────
 
-    private javax.net.ssl.HttpsURLConnection openHttpsConnectionTrusted(String urlString)
-            throws Exception {
-        javax.net.ssl.TrustManager[] trustAll = new javax.net.ssl.TrustManager[]{
-                new javax.net.ssl.X509TrustManager() {
-                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                        return new java.security.cert.X509Certificate[0];
-                    }
-                    public void checkClientTrusted(
-                            java.security.cert.X509Certificate[] certs, String authType) {}
-                    public void checkServerTrusted(
-                            java.security.cert.X509Certificate[] certs, String authType) {}
-                }
-        };
-
-        javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
-        sslContext.init(null, trustAll, new java.security.SecureRandom());
-
-        javax.net.ssl.HttpsURLConnection conn =
-                (javax.net.ssl.HttpsURLConnection) new URL(urlString).openConnection();
-        conn.setSSLSocketFactory(sslContext.getSocketFactory());
-        conn.setHostnameVerifier((hostname, session) -> true);
+    /**
+     * Abre una conexión HTTP estándar con los timeouts configurados.
+     * La validación SSL se delega al Network Security Config de Android,
+     * que incluye los certificados de la FNMT para el dominio del Geoportal.
+     *
+     * @param urlString URL a la que conectar.
+     * @return Conexión HTTP configurada.
+     * @throws Exception si hay error al abrir la conexión.
+     */
+    private HttpURLConnection openConnection(String urlString) throws Exception {
+        HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
         conn.setConnectTimeout(CONNECT_TIMEOUT_MS);
         conn.setReadTimeout(READ_TIMEOUT_MS);
         conn.setRequestMethod("GET");
         return conn;
     }
-
     /**
      * Parsea una línea CSV respetando campos entre comillas que contienen comas.
      *
