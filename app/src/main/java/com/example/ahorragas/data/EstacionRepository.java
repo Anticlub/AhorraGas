@@ -72,7 +72,8 @@ public class EstacionRepository {
         if (electrolineras == null) return result;
         for (Electrolinera e : electrolineras) {
             Gasolinera g = new Gasolinera();
-            g.setMarca(e.getNombre());
+            g.setMarca(e.getOperador() != null && !e.getOperador().trim().isEmpty()
+                    ? e.getOperador() : e.getNombre());
             g.setOperador(e.getOperador());
             g.setDireccion(e.getDireccion());
             g.setMunicipio(e.getMunicipio());
