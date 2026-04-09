@@ -405,7 +405,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void setupBottomNav() {
-        setupBottomNav(bottomNav, R.id.nav_map);
+        setupBottomNav(bottomNav, R.id.nav_map, selectedFuel);
     }
 
     private void requestLocationPermission() {
