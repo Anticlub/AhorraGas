@@ -74,7 +74,7 @@ public class StationDetailActivity extends AppCompatActivity {
                     case 1: return LocationFragment.newInstance(gasolinera);
                     case 2: return PricesFragment.newInstance(gasolinera);
                     case 3: return ComingSoonFragment.newInstance("Histórico");
-                    case 4: return ComingSoonFragment.newInstance("Promociones");
+                    case 4: return PromotionsFragment.newInstance(gasolinera.getMarca());
                     default: return ComingSoonFragment.newInstance("");
                 }
             }
