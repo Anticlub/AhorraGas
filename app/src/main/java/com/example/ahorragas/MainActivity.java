@@ -174,6 +174,12 @@ public class MainActivity extends BaseActivity {
         super.onResume();
         mapView.onResume();
 
+        FuelType currentNavFuel = FuelType.fromString(
+                PreferenceManager.getDefaultSharedPreferences(this)
+                        .getString(PREF_SELECTED_FUEL, FuelType.GASOLEO_A.name()));
+        bottomNav.getMenu().findItem(R.id.nav_price).setTitle(
+                currentNavFuel == FuelType.ELECTRICO ? "Por potencia" : "Por precio");
+
         if (locationOverlay != null && locationHelper.hasLocationPermission()) {
             locationOverlay.enableMyLocation();
         }
@@ -405,7 +411,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void setupBottomNav() {
-        setupBottomNav(bottomNav, R.id.nav_map);
+        setupBottomNav(bottomNav, R.id.nav_map, selectedFuel);
     }
 
     private void requestLocationPermission() {
