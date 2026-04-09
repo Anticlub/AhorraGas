@@ -15,6 +15,7 @@ public class RemoteApiDataSource implements GasolineraDataSource {
 
     private static final String ENDPOINT =
             "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/";
+            //"https://energia.serviciosmin.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/" // ES LA MODERNA QUE TARDE O TEMPRANO SE QUEDARA ESTA
 
     private static final int MAX_RETRIES = 2;
     private static final long RETRY_DELAY_MS = 1000L;
