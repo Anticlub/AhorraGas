@@ -4,6 +4,7 @@ import android.content.Intent;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -69,5 +70,20 @@ public abstract class BaseActivity extends AppCompatActivity {
             }
             return false;
         });
+    }
+
+    /**
+     * Configura el BottomNavigationView adaptando las etiquetas al tipo
+     * de combustible seleccionado.
+     *
+     * @param bottomNav    Vista del menú inferior.
+     * @param selectedItem ID del item que debe aparecer seleccionado.
+     * @param fuelType     Tipo de combustible activo.
+     */
+    protected void setupBottomNav(BottomNavigationView bottomNav, int selectedItem, FuelType fuelType) {
+        setupBottomNav(bottomNav, selectedItem);
+        if (fuelType == FuelType.ELECTRICO) {
+            bottomNav.getMenu().findItem(R.id.nav_price).setTitle("Por potencia");
+        }
     }
 }
