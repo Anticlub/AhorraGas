@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFFFF">>
+
+    <!-- Estado: cargando -->
+    <ProgressBar
+        android:id="@+id/pbHistoryLoading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+    <!-- Estado: no disponible (eléctrico) o sin datos -->
+    <TextView
+        android:id="@+id/tvHistoryMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textColor="#FF666666"
+        android:textSize="15sp"
+        android:gravity="center"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
+        android:visibility="gone" />
+
+    <!-- Estado: gráfico con datos -->
+    <LinearLayout
+        android:id="@+id/layoutHistoryContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvHistoryTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FF333333"
+            android:textSize="15sp"
+            android:gravity="center"
+            android:paddingTop="12dp"
+            android:paddingBottom="4dp" />
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/chartHistory"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingBottom="12dp"
+            android:paddingTop="4dp">
+
+            <TextView
+                android:id="@+id/btnRange7"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="7 días"
+                android:textColor="#FF4DB6AC"
+                android:textSize="13sp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/btnRange15"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="15 días"
+                android:textColor="#FFFFFFFF"
+                android:textSize="13sp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/btnRange30"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="30 días"
+                android:textColor="#FFFFFFFF"
+                android:textSize="13sp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>
