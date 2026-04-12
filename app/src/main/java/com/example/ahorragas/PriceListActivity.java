@@ -187,15 +187,14 @@ public class PriceListActivity extends BaseActivity {
                 }
             }
 
+            final PriceRange finalRange = selectedFuel == FuelType.ELECTRICO
+                    ? new PriceRange(null, null, 0)
+                    : GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
+
             mainHandler.post(() -> {
                 if (isDestroyed() || isFinishing()) return;
                 if (filtered.isEmpty()) showEmpty();
-                else {
-                    PriceRange range = selectedFuel == FuelType.ELECTRICO
-                            ? new PriceRange(null, null, 0)
-                            : GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
-                    showData(filtered, range);
-                }
+                else showData(filtered, finalRange);
             });
         });
     }
@@ -209,6 +208,7 @@ public class PriceListActivity extends BaseActivity {
     private void loadWithCoordinates(double lat, double lon) {
         executor.execute(() -> {
             try {
+
                 int radiusKm = RadiusUtils.loadRadiusKm(PriceListActivity.this);
                 double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
                 int maxMarkers = RadiusUtils.loadMarkersCount(PriceListActivity.this);
@@ -223,6 +223,7 @@ public class PriceListActivity extends BaseActivity {
                 }
 
                 List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
+
                 List<Gasolinera> inRadius = GasolineraSorter.getWithinRadius(
                         filtered, lat, lon, radiusMeters, maxMarkers);
 
@@ -244,15 +245,15 @@ public class PriceListActivity extends BaseActivity {
                     }
                 }
 
+                final List<Gasolinera> finalList = inRadius;
+                final PriceRange finalRange = selectedFuel == FuelType.ELECTRICO
+                        ? new PriceRange(null, null, 0)
+                        : GasolineraSorter.calculatePriceRange(inRadius, selectedFuel);
+
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
-                    if (inRadius.isEmpty()) showEmpty();
-                    else {
-                        PriceRange range = selectedFuel == FuelType.ELECTRICO
-                                ? new PriceRange(null, null, 0)
-                                : GasolineraSorter.calculatePriceRange(inRadius, selectedFuel);
-                        showData(inRadius, range);
-                    }
+                    if (finalList.isEmpty()) showEmpty();
+                    else showData(finalList, finalRange);
                 });
 
             } catch (Exception e) {

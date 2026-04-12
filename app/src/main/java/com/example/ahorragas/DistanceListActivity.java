@@ -186,6 +186,7 @@ public class DistanceListActivity extends BaseActivity {
     private void loadWithCoordinates(double lat, double lon) {
         executor.execute(() -> {
             try {
+
                 int radiusKm = RadiusUtils.loadRadiusKm(DistanceListActivity.this);
                 double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
                 int maxMarkers = RadiusUtils.loadMarkersCount(DistanceListActivity.this);
@@ -200,6 +201,7 @@ public class DistanceListActivity extends BaseActivity {
                 }
 
                 List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
+
                 List<Gasolinera> sorted = GasolineraSorter.getWithinRadius(
                         filtered, lat, lon, radiusMeters, maxMarkers);
 
