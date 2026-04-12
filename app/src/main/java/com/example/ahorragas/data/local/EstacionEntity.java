@@ -2,11 +2,16 @@ package com.example.ahorragas.data.local;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
 import androidx.annotation.NonNull;
 
-@Entity(tableName = "gasolineras")
+@Entity(tableName = "gasolineras",
+        indices = {
+                @Index(value = {"es_electrica", "lat", "lon"}),
+                @Index(value = {"es_electrica", "municipio"})
+        })
 public class EstacionEntity {
 
     @PrimaryKey
