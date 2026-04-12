@@ -11,7 +11,7 @@ import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.example.ahorragas.data.RemoteDgtDataSource;
+import com.example.ahorragas.data.remote.RemoteDgtDataSource;
 import com.example.ahorragas.data.RoomElectrolineraDataSource;
 import com.example.ahorragas.data.RoomGasolineraDataSource;
 import com.example.ahorragas.data.local.AppDatabase;

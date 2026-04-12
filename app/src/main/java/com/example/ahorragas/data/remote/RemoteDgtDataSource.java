@@ -1,72 +1,88 @@
-package com.example.ahorragas.data;
+package com.example.ahorragas.data.remote;
 
 import android.util.Xml;
 
+import com.example.ahorragas.data.ElectrolineraDataSource;
+import com.example.ahorragas.data.RepoError;
 import com.example.ahorragas.model.ConnectorType;
 import com.example.ahorragas.model.Electrolinera;
 import com.example.ahorragas.util.GeoValidation;
 
 import org.xmlpull.v1.XmlPullParser;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.SocketTimeoutException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.ResponseBody;
+import retrofit2.Response;
+
+/**
+ * Fuente de datos remota que descarga electrolineras
+ * de la DGT usando Retrofit.
+ */
 public class RemoteDgtDataSource implements ElectrolineraDataSource {
 
-    private static final String ENDPOINT =
-            "https://infocar.dgt.es/datex2/v3/miterd/" +
-                    "EnergyInfrastructureTablePublication/electrolineras.xml";
+    private static final String BASE_URL = "https://infocar.dgt.es/";
 
+    private final ElectrolineraApiService apiService;
+
+    public RemoteDgtDataSource() {
+        apiService = ApiClient.getInstance().createService(BASE_URL, ElectrolineraApiService.class);
+    }
+
+    /**
+     * Descarga y parsea la lista de electrolineras desde la DGT.
+     *
+     * @return lista de electrolineras válidas, nunca null
+     * @throws RepoError si hay fallo de red, parseo o respuesta vacía
+     */
     @Override
     public List<Electrolinera> loadElectrolineras() throws RepoError {
-        HttpURLConnection connection = null;
-        InputStream is = null;
-
         try {
-            URL url = new URL(ENDPOINT);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setConnectTimeout(15000);
-            connection.setReadTimeout(60000); // XML grande → timeout generoso
-            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+            Response<ResponseBody> response = apiService.getElectrolineras().execute();
 
-            int code = connection.getResponseCode();
-            if (code < 200 || code >= 300) {
-                throw new RepoError(RepoError.Type.HTTP, code, "HTTP " + code);
+            if (!response.isSuccessful()) {
+                throw new RepoError(RepoError.Type.HTTP, response.code(),
+                        "HTTP " + response.code());
             }
 
-            is = connection.getInputStream();
-            String encoding = connection.getContentEncoding();
-            if ("gzip".equalsIgnoreCase(encoding)) {
-                is = new java.util.zip.GZIPInputStream(is);
-            }
-            List<Electrolinera> result = parseXmlPublic(is);
-
-            if (result.isEmpty()) {
+            ResponseBody body = response.body();
+            if (body == null) {
                 throw new RepoError(RepoError.Type.EMPTY_RESPONSE,
-                        "El XML de electrolineras no contiene estaciones válidas");
+                        "Respuesta vacía de electrolineras DGT");
             }
 
-            return result;
+            try (InputStream is = body.byteStream()) {
+                List<Electrolinera> result = parseXmlPublic(is);
 
-        } catch (SocketTimeoutException e) {
-            throw new RepoError(RepoError.Type.TIMEOUT,
-                    "Timeout descargando electrolineras DGT");
+                if (result.isEmpty()) {
+                    throw new RepoError(RepoError.Type.EMPTY_RESPONSE,
+                            "El XML de electrolineras no contiene estaciones válidas");
+                }
+
+                return result;
+            }
+
         } catch (RepoError e) {
             throw e;
-        } catch (Exception e) {
+        } catch (java.net.SocketTimeoutException e) {
+            throw new RepoError(RepoError.Type.TIMEOUT,
+                    "Timeout descargando electrolineras DGT");
+        } catch (IOException e) {
             throw new RepoError(RepoError.Type.NETWORK,
                     "Fallo de red electrolineras: " + e.getMessage());
-        } finally {
-            try { if (is != null) is.close(); } catch (Exception ignored) {}
-            if (connection != null) connection.disconnect();
         }
     }
 
+    /**
+     * Parsea el XML de electrolineras usando XmlPullParser.
+     *
+     * @param is InputStream del XML
+     * @return lista de electrolineras con coordenadas válidas
+     * @throws RepoError si hay error de parseo
+     */
     List<Electrolinera> parseXmlPublic(InputStream is) throws RepoError {
         List<Electrolinera> result = new ArrayList<>();
         Electrolinera current = null;
@@ -81,7 +97,7 @@ public class RemoteDgtDataSource implements ElectrolineraDataSource {
         boolean nombreSiteAsignado = false;
         boolean operadorAsignado   = false;
         int addressOrder      = -1;
-        String lastOpenTag    = ""; // último START_TAG procesado
+        String lastOpenTag    = "";
 
         try {
             XmlPullParser parser = Xml.newPullParser();
@@ -162,7 +178,6 @@ public class RemoteDgtDataSource implements ElectrolineraDataSource {
                     text = text.trim();
                     if (text.isEmpty()) { eventType = parser.next(); continue; }
 
-                    // Usamos lastOpenTag en lugar de localName para el bloque TEXT
                     switch (lastOpenTag) {
                         case "value":
                             if (inName && !inOperator && !inAddressLine && !inText
@@ -240,6 +255,7 @@ public class RemoteDgtDataSource implements ElectrolineraDataSource {
 
         return result;
     }
+
     /**
      * Elimina el prefijo de las líneas de dirección del XML.
      * Ejemplo: "Dirección: Camí dels Reis 166" → "Camí dels Reis 166"
