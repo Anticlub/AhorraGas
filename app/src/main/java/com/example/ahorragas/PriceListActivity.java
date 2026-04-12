@@ -16,7 +16,7 @@ import com.example.ahorragas.adapter.GasolineraAdapter;
 import com.example.ahorragas.data.ElectrolineraRepository;
 import com.example.ahorragas.data.EstacionRepository;
 import com.example.ahorragas.data.GasolineraRepository;
-import com.example.ahorragas.data.RemoteDgtDataSource;
+import com.example.ahorragas.data.remote.RemoteDgtDataSource;
 import com.example.ahorragas.data.RoomElectrolineraDataSource;
 import com.example.ahorragas.data.RoomGasolineraDataSource;
 import com.example.ahorragas.data.local.AppDatabase;
