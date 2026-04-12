@@ -19,6 +19,7 @@ import com.example.ahorragas.model.PriceLevel;
 import com.example.ahorragas.model.PriceRange;
 import com.example.ahorragas.util.DiscountPrefs;
 import com.example.ahorragas.util.GasolineraSorter;
+import com.example.ahorragas.util.PriceAlertPrefs;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,23 +101,25 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        private final View vPriceStripe;
+        private final View      vPriceStripe;
         private final ImageView ivBrandLogo;
-        private final TextView tvBrandName;
-        private final TextView tvAddress;
-        private final TextView tvPrice;
-        private final TextView tvDistance;
-        private final TextView btnAlert;
+        private final TextView  tvBrandName;
+        private final TextView  tvAddress;
+        private final TextView  tvPrice;
+        private final TextView  tvDistance;
+        private final TextView  btnAlert;
+        private final View      vAlertDivider;
 
         ViewHolder(View itemView) {
             super(itemView);
-            vPriceStripe = itemView.findViewById(R.id.vPriceStripe);
-            ivBrandLogo = itemView.findViewById(R.id.ivBrandLogo);
-            tvBrandName = itemView.findViewById(R.id.tvBrandName);
-            tvAddress = itemView.findViewById(R.id.tvAddress);
-            tvPrice = itemView.findViewById(R.id.tvPrice);
-            tvDistance = itemView.findViewById(R.id.tvDistance);
-            btnAlert = itemView.findViewById(R.id.btnAlert);
+            vPriceStripe  = itemView.findViewById(R.id.vPriceStripe);
+            ivBrandLogo   = itemView.findViewById(R.id.ivBrandLogo);
+            tvBrandName   = itemView.findViewById(R.id.tvBrandName);
+            tvAddress     = itemView.findViewById(R.id.tvAddress);
+            tvPrice       = itemView.findViewById(R.id.tvPrice);
+            tvDistance    = itemView.findViewById(R.id.tvDistance);
+            btnAlert      = itemView.findViewById(R.id.btnAlert);
+            vAlertDivider = itemView.findViewById(R.id.vAlertDivider);
         }
 
         void bind(Gasolinera gasolinera,
@@ -125,6 +128,9 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
                   OnGasolineraClickListener clickListener,
                   OnAlertClickListener alertListener) {
 
+            Context ctx = itemView.getContext();
+
+            // ── Logo y nombre ─────────────────────────────────────────────────
             int logoResId = gasolinera.isElectric()
                     ? BrandLogoProvider.getLogoResId(gasolinera.getMarca(), gasolinera.getOperador())
                     : BrandLogoProvider.getLogoResId(gasolinera.getMarca());
@@ -132,12 +138,12 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
 
             String marca = gasolinera.getMarca();
             tvBrandName.setText(marca == null || marca.trim().isEmpty()
-                    ? itemView.getContext().getString(R.string.sin_marca)
+                    ? ctx.getString(R.string.sin_marca)
                     : marca);
             tvAddress.setText(gasolinera.getDisplayAddress());
 
+            // ── Precio ────────────────────────────────────────────────────────
             if (gasolinera.isElectric()) {
-                // Electrolineras: mostrar resumen de conectores en lugar del precio
                 String resumen = gasolinera.getResumenMejorConector();
                 tvPrice.setText(resumen != null ? resumen : "Sin datos");
                 tvPrice.setTextColor(MarkerBitmapFactory.getElectricColor());
@@ -146,7 +152,7 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
                 Double originalPrice = gasolinera.getPrecio(fuel);
                 if (originalPrice != null && originalPrice > 0) {
                     double discounted = DiscountPrefs.applyAllDiscounts(
-                            itemView.getContext(), gasolinera.getMarca(), originalPrice);
+                            ctx, gasolinera.getMarca(), originalPrice);
                     tvPrice.setText(String.format(java.util.Locale.getDefault(),
                             "%.3f €", discounted));
                 } else {
@@ -157,19 +163,26 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
                 vPriceStripe.setBackgroundColor(priceColor);
             }
 
+            // ── Distancia ─────────────────────────────────────────────────────
             String distance = gasolinera.getFormattedDistance();
             tvDistance.setText(distance.isEmpty() ? "" : "\uD83D\uDCCD " + distance);
 
             // ── Botón alerta ──────────────────────────────────────────────────
             if (alertListener != null) {
                 btnAlert.setVisibility(View.VISIBLE);
+                vAlertDivider.setVisibility(View.VISIBLE);
+
+                String alertKey = gasolinera.getId() + "_" + fuel.name();
+                boolean hasAlert = PriceAlertPrefs.exists(ctx, alertKey);
+
+                btnAlert.setAlpha(hasAlert ? 1.0f : 0.3f);
                 btnAlert.setOnClickListener(v -> alertListener.onAlertClick(gasolinera));
             } else {
                 btnAlert.setVisibility(View.GONE);
+                vAlertDivider.setVisibility(View.GONE);
             }
 
             itemView.setOnClickListener(v -> clickListener.onGasolineraClick(gasolinera));
         }
     }
-
 }

@@ -1,6 +1,9 @@
 package com.example.ahorragas;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
@@ -11,7 +14,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -22,7 +28,6 @@ import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceAlert;
 import com.example.ahorragas.model.PriceRange;
-import com.example.ahorragas.util.DiscountPrefs;
 import com.example.ahorragas.util.FavoritesPrefs;
 import com.example.ahorragas.util.GasolineraSorter;
 import com.example.ahorragas.util.GeoUtils;
@@ -44,6 +49,25 @@ public class FavoritesActivity extends BaseActivity {
     private TextView tvError;
     private View layoutError;
     private Button btnRetry;
+
+    private Gasolinera pendingAlertGasolinera = null;
+
+    private final ActivityResultLauncher<String> notificationPermissionLauncher =
+            registerForActivityResult(
+                    new ActivityResultContracts.RequestPermission(),
+                    granted -> {
+                        if (granted) {
+                            if (pendingAlertGasolinera != null) {
+                                showAlertDialog(pendingAlertGasolinera);
+                            }
+                        } else {
+                            Toast.makeText(this,
+                                    "Sin permiso de notificaciones no podremos avisarte. Puedes activarlo en Ajustes.",
+                                    Toast.LENGTH_LONG).show();
+                        }
+                        pendingAlertGasolinera = null;
+                    }
+            );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,14 +107,36 @@ public class FavoritesActivity extends BaseActivity {
                 selectedFuel,
                 gasolinera -> navigateToDetail(gasolinera)
         );
-        adapter.setOnAlertClickListener(gasolinera -> showAlertDialog(gasolinera));
+        adapter.setOnAlertClickListener(gasolinera -> requestNotificationPermissionIfNeeded(gasolinera));
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
     }
 
     /**
+     * Comprueba si la app tiene permiso para enviar notificaciones (Android 13+).
+     * Si no lo tiene, lo solicita al usuario. Si ya lo tiene, abre el diálogo
+     * de creación de alerta directamente.
+     *
+     * @param gasolinera Gasolinera sobre la que el usuario quiere crear una alerta.
+     */
+    private void requestNotificationPermissionIfNeeded(Gasolinera gasolinera) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    == PackageManager.PERMISSION_GRANTED) {
+                showAlertDialog(gasolinera);
+            } else {
+                pendingAlertGasolinera = gasolinera;
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        } else {
+            showAlertDialog(gasolinera);
+        }
+    }
+
+    /**
      * Muestra un diálogo para que el usuario introduzca el precio umbral
      * de la alerta para la gasolinera y combustible seleccionados.
+     * Tras guardar o eliminar, refresca el item correspondiente en el adapter.
      *
      * @param gasolinera Gasolinera sobre la que crear la alerta.
      */
@@ -106,6 +152,8 @@ public class FavoritesActivity extends BaseActivity {
                     .setPositiveButton("Eliminar", (d, w) -> {
                         PriceAlertPrefs.remove(this, key);
                         Toast.makeText(this, "Alerta eliminada", Toast.LENGTH_SHORT).show();
+                        int pos = adapter.getPositionOf(gasolinera);
+                        if (pos >= 0) adapter.notifyItemChanged(pos);
                     })
                     .setNegativeButton("Cancelar", null)
                     .show();
@@ -163,6 +211,8 @@ public class FavoritesActivity extends BaseActivity {
                     boolean saved = PriceAlertPrefs.add(this, alert);
                     if (saved) {
                         Toast.makeText(this, "✅ Alerta guardada", Toast.LENGTH_SHORT).show();
+                        int pos = adapter.getPositionOf(gasolinera);
+                        if (pos >= 0) adapter.notifyItemChanged(pos);
                     } else {
                         Toast.makeText(this,
                                 "Ya tienes 3 alertas. Elimina una antes de añadir otra.",
