@@ -3,31 +3,29 @@ package com.example.ahorragas.data.repository;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.ahorragas.data.remote.ApiClient;
+import com.example.ahorragas.data.remote.PromotionApiService;
 import com.example.ahorragas.model.PromotionPlan;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import okhttp3.ResponseBody;
+import retrofit2.Response;
+
 /**
  * Repositorio que descarga y parsea el CSV de planes de descuento
- * del Geoportal de Gasolineras del Ministerio.
+ * del Geoportal de Gasolineras del Ministerio usando Retrofit.
  * Devuelve los datos como LiveData para que el ViewModel los observe.
  */
 public class PromotionRepository {
 
-    private static final String CSV_URL =
-            "https://geoportalgasolineras.es/geoportal/downloadReportPlanes?cadena=&extension=CSV";
-
-    private static final int CONNECT_TIMEOUT_MS = 10_000;
-    private static final int READ_TIMEOUT_MS    = 15_000;
+    private static final String BASE_URL = "https://geoportalgasolineras.es/";
 
     // Índices de columna en el CSV (tras saltarse la fila de metadatos)
     private static final int COL_OPERATOR       = 0;
@@ -43,8 +41,11 @@ public class PromotionRepository {
     private static PromotionRepository instance;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final PromotionApiService apiService;
 
-    private PromotionRepository() {}
+    private PromotionRepository() {
+        apiService = ApiClient.getInstance().createService(BASE_URL, PromotionApiService.class);
+    }
 
     /**
      * Devuelve la instancia única del repositorio (singleton).
@@ -69,32 +70,32 @@ public class PromotionRepository {
 
         executor.execute(() -> {
             List<PromotionPlan> plans = new ArrayList<>();
-            HttpURLConnection connection = null;
 
             try {
-                connection = openConnection(CSV_URL);
+                Response<ResponseBody> response = apiService
+                        .getPromotions("", "CSV").execute();
 
-                try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(
-                                connection.getInputStream(),
-                                StandardCharsets.ISO_8859_1))) {
+                if (response.isSuccessful() && response.body() != null) {
+                    try (BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(
+                                    response.body().byteStream(),
+                                    StandardCharsets.ISO_8859_1))) {
 
-                    // Fila 0: metadatos ("Fecha: 05/04/2026...") → ignorar
-                    // Fila 1: cabeceras reales → ignorar
-                    reader.readLine(); // metadatos
-                    reader.readLine(); // cabeceras
+                        // Fila 0: metadatos ("Fecha: 05/04/2026...") → ignorar
+                        // Fila 1: cabeceras reales → ignorar
+                        reader.readLine(); // metadatos
+                        reader.readLine(); // cabeceras
 
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        PromotionPlan plan = parseLine(line);
-                        if (plan != null) plans.add(plan);
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            PromotionPlan plan = parseLine(line);
+                            if (plan != null) plans.add(plan);
+                        }
                     }
                 }
             } catch (Exception e) {
                 android.util.Log.e("PromotionRepository",
                         "Error descargando promociones: " + e.getMessage(), e);
-            } finally {
-                if (connection != null) connection.disconnect();
             }
 
             liveData.postValue(plans);
@@ -105,22 +106,6 @@ public class PromotionRepository {
 
     // ─── Helpers privados ────────────────────────────────────────────────────
 
-    /**
-     * Abre una conexión HTTP estándar con los timeouts configurados.
-     * La validación SSL se delega al Network Security Config de Android,
-     * que incluye los certificados de la FNMT para el dominio del Geoportal.
-     *
-     * @param urlString URL a la que conectar.
-     * @return Conexión HTTP configurada.
-     * @throws Exception si hay error al abrir la conexión.
-     */
-    private HttpURLConnection openConnection(String urlString) throws Exception {
-        HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
-        conn.setConnectTimeout(CONNECT_TIMEOUT_MS);
-        conn.setReadTimeout(READ_TIMEOUT_MS);
-        conn.setRequestMethod("GET");
-        return conn;
-    }
     /**
      * Parsea una línea CSV respetando campos entre comillas que contienen comas.
      *
@@ -159,7 +144,6 @@ public class PromotionRepository {
         for (int i = 0; i < line.length(); i++) {
             char c = line.charAt(i);
             if (c == '"') {
-                // Comilla escapada ("") dentro de un campo entrecomillado
                 if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
                     current.append('"');
                     i++;
