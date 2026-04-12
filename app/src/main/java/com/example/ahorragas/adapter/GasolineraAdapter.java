@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ahorragas.R;
@@ -61,19 +62,49 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
     }
 
     /**
-     * Actualiza los datos mostrados en la lista.
+     * Actualiza los datos mostrados en la lista usando DiffUtil
+     * para calcular las diferencias y animar solo los cambios.
      *
      * @param newGasolineras Lista de gasolineras a mostrar.
      * @param fuel           Tipo de combustible seleccionado.
      * @param priceRange     Rango de precios para calcular el nivel de precio con descuento.
      */
     public void updateData(List<Gasolinera> newGasolineras, FuelType fuel, PriceRange priceRange) {
-        this.gasolineras = new ArrayList<>(newGasolineras);
+        List<Gasolinera> oldList = this.gasolineras;
+        List<Gasolinera> newList = new ArrayList<>(newGasolineras);
+
+        DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() { return oldList.size(); }
+
+            @Override
+            public int getNewListSize() { return newList.size(); }
+
+            @Override
+            public boolean areItemsTheSame(int oldPos, int newPos) {
+                return oldList.get(oldPos).getId() == newList.get(newPos).getId();
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldPos, int newPos) {
+                Gasolinera oldG = oldList.get(oldPos);
+                Gasolinera newG = newList.get(newPos);
+                Double oldPrice = oldG.getPrecio(fuel);
+                Double newPrice = newG.getPrecio(fuel);
+                boolean samePrice = (oldPrice == null && newPrice == null)
+                        || (oldPrice != null && oldPrice.equals(newPrice));
+                boolean sameLevel = oldG.getPriceLevel() == newG.getPriceLevel();
+                boolean sameDist = java.util.Objects.equals(
+                        oldG.getDistanceMeters(), newG.getDistanceMeters());
+                return samePrice && sameLevel && sameDist;
+            }
+        });
+
+        this.gasolineras = newList;
         this.currentFuel = fuel;
         this.currentPriceRange = priceRange != null ? priceRange : new PriceRange(null, null, 0);
-        notifyDataSetChanged();
+        result.dispatchUpdatesTo(this);
     }
-
     public int getPositionOf(Gasolinera target) {
         for (int i = 0; i < gasolineras.size(); i++) {
             if (gasolineras.get(i).getId() == target.getId()) return i;
