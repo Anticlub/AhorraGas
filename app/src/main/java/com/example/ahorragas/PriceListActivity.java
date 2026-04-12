@@ -70,6 +70,9 @@ public class PriceListActivity extends BaseActivity {
 
         bindViews();
         setupRecyclerView();
+        selectedFuel = FuelType.fromString(
+                PreferenceManager.getDefaultSharedPreferences(this)
+                        .getString("pref_selected_fuel", FuelType.GASOLEO_A.name()));
         setupBottomNav();
         btnRetry.setOnClickListener(v -> loadAndDisplay());
     }
@@ -84,6 +87,10 @@ public class PriceListActivity extends BaseActivity {
         if (!dataLoaded || currentFuel != lastLoadedFuel) {
             selectedFuel = currentFuel;
             lastLoadedFuel = currentFuel;
+            TextView tvTitle = findViewById(R.id.tvPriceListTitle);
+            tvTitle.setText(currentFuel == FuelType.ELECTRICO
+                    ? "Estaciones por potencia"
+                    : "Estaciones por precio");
             loadAndDisplay();
         }
     }
@@ -103,16 +110,13 @@ public class PriceListActivity extends BaseActivity {
     }
 
     private void bindViews() {
-        progressBar  = findViewById(R.id.progressBarPrice);
+        progressBar = findViewById(R.id.progressBarPrice);
         recyclerView = findViewById(R.id.recyclerViewPrice);
-        tvEmpty      = findViewById(R.id.tvEmptyPrice);
-        layoutError  = findViewById(R.id.layoutErrorPrice);
-        tvError      = findViewById(R.id.tvErrorPrice);
-        btnRetry     = findViewById(R.id.btnRetryPrice);
+        tvEmpty = findViewById(R.id.tvEmptyPrice);
+        layoutError = findViewById(R.id.layoutErrorPrice);
+        tvError = findViewById(R.id.tvErrorPrice);
+        btnRetry = findViewById(R.id.btnRetryPrice);
         TextView tvTitle = findViewById(R.id.tvPriceListTitle);
-        if (selectedFuel == FuelType.ELECTRICO) {
-            tvTitle.setText("Estaciones por cargador");
-        }
     }
 
     private void setupRecyclerView() {
@@ -127,7 +131,7 @@ public class PriceListActivity extends BaseActivity {
 
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavPrice);
-        setupBottomNav(bottomNav, R.id.nav_price);
+        setupBottomNav(bottomNav, R.id.nav_price, selectedFuel);
     }
 
     /**
