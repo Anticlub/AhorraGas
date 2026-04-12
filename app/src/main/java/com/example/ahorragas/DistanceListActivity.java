@@ -186,9 +186,13 @@ public class DistanceListActivity extends BaseActivity {
     private void loadWithCoordinates(double lat, double lon) {
         executor.execute(() -> {
             try {
+                long t0 = System.currentTimeMillis();
+
                 int radiusKm = RadiusUtils.loadRadiusKm(DistanceListActivity.this);
                 double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
                 int maxMarkers = RadiusUtils.loadMarkersCount(DistanceListActivity.this);
+
+                long t1 = System.currentTimeMillis();
 
                 List<Gasolinera> gasolineras;
                 if (selectedFuel == FuelType.ELECTRICO) {
@@ -199,14 +203,31 @@ public class DistanceListActivity extends BaseActivity {
                             repository.getGasolinerasByRadius(lat, lon, radiusMeters));
                 }
 
+                long t2 = System.currentTimeMillis();
+
                 List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
+
+                long t3 = System.currentTimeMillis();
+
                 List<Gasolinera> sorted = GasolineraSorter.getWithinRadius(
                         filtered, lat, lon, radiusMeters, maxMarkers);
+
+                long t4 = System.currentTimeMillis();
 
                 PriceRange range = GasolineraSorter.calculatePriceRange(sorted, selectedFuel);
                 for (Gasolinera g : sorted) {
                     g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
                 }
+
+                long t5 = System.currentTimeMillis();
+
+                android.util.Log.d("PERF_DISTANCE",
+                        "prefs=" + (t1 - t0) + "ms" +
+                                " | room=" + (t2 - t1) + "ms (" + gasolineras.size() + " items)" +
+                                " | filter=" + (t3 - t2) + "ms (" + filtered.size() + " items)" +
+                                " | sort+radius=" + (t4 - t3) + "ms (" + sorted.size() + " items)" +
+                                " | priceRange=" + (t5 - t4) + "ms" +
+                                " | TOTAL=" + (t5 - t0) + "ms");
 
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
