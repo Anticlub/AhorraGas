@@ -43,6 +43,7 @@ dependencies {
     implementation(libs.osmdroid)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
+    implementation(libs.converter.scalars)
     implementation(libs.logging.interceptor)
     implementation(libs.work.runtime)
     implementation(libs.room.runtime)
