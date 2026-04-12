@@ -2,7 +2,7 @@ package com.example.ahorragas;
 
 import com.example.ahorragas.data.ElectrolineraRepository;
 import com.example.ahorragas.data.EstacionRepository;
-import com.example.ahorragas.data.RemoteDgtDataSource;
+import com.example.ahorragas.data.remote.RemoteDgtDataSource;
 import com.example.ahorragas.data.RoomElectrolineraDataSource;
 import com.example.ahorragas.data.RoomGasolineraDataSource;
 import com.example.ahorragas.data.local.AppDatabase;
