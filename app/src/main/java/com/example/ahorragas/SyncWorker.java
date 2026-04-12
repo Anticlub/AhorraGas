@@ -11,15 +11,14 @@ import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.example.ahorragas.data.ElectrolineraDataSource;
 import com.example.ahorragas.data.RemoteDgtDataSource;
-import com.example.ahorragas.data.RemoteApiDataSource;
 import com.example.ahorragas.data.RoomElectrolineraDataSource;
 import com.example.ahorragas.data.RoomGasolineraDataSource;
 import com.example.ahorragas.data.local.AppDatabase;
 import com.example.ahorragas.data.local.MetadataEntity;
 import com.example.ahorragas.model.Electrolinera;
 import com.example.ahorragas.model.Gasolinera;
+import com.example.ahorragas.data.remote.RemoteApiDataSource;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
