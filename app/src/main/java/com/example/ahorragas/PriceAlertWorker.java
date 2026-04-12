@@ -9,6 +9,7 @@ import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
+import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -24,8 +25,9 @@ import java.util.concurrent.TimeUnit;
 
 public class PriceAlertWorker extends Worker {
 
+    public static final String  KEY_IS_TEST     = "is_test";
     private static final String CHANNEL_ID      = "price_alerts";
-    private static final long   MIN_INTERVAL_MS =TimeUnit.HOURS.toMillis(24);
+    private static final long   MIN_INTERVAL_MS = TimeUnit.HOURS.toMillis(24);
 
     public PriceAlertWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
@@ -40,6 +42,8 @@ public class PriceAlertWorker extends Worker {
 
         createNotificationChannel(ctx);
 
+        boolean isTest = getInputData().getBoolean(KEY_IS_TEST, false);
+
         AppDatabase db = AppDatabase.getInstance(ctx);
         RoomGasolineraDataSource roomDs = new RoomGasolineraDataSource(db);
 
@@ -53,7 +57,7 @@ public class PriceAlertWorker extends Worker {
 
         for (PriceAlert alert : alerts) {
             try {
-                checkAlert(ctx, gasolineras, alert);
+                checkAlert(ctx, gasolineras, alert, isTest);
             } catch (Exception e) {
                 android.util.Log.e("PriceAlertWorker",
                         "Error comprobando alerta " + alert.getKey(), e);
@@ -65,7 +69,7 @@ public class PriceAlertWorker extends Worker {
 
     // ─── PRIVADO ──────────────────────────────────────────────────────────────
 
-    private void checkAlert(Context ctx, List<Gasolinera> gasolineras, PriceAlert alert) {
+    private void checkAlert(Context ctx, List<Gasolinera> gasolineras, PriceAlert alert, boolean isTest) {
         Gasolinera target = null;
         for (Gasolinera g : gasolineras) {
             if (g.getId() == alert.getGasolineraId()) {
@@ -79,12 +83,14 @@ public class PriceAlertWorker extends Worker {
         if (currentPrice == null) return;
 
         boolean priceBelowThreshold = currentPrice <= alert.getTargetPrice();
-        boolean cooldownPassed = (System.currentTimeMillis() - alert.getLastNotifiedAt())
+        boolean cooldownPassed = isTest || (System.currentTimeMillis() - alert.getLastNotifiedAt())
                 >= MIN_INTERVAL_MS;
 
         if (priceBelowThreshold && cooldownPassed) {
             sendNotification(ctx, alert, currentPrice);
-            PriceAlertPrefs.updateLastNotified(ctx, alert.getKey(), System.currentTimeMillis());
+            if (!isTest) {
+                PriceAlertPrefs.updateLastNotified(ctx, alert.getKey(), System.currentTimeMillis());
+            }
         }
     }
 
@@ -109,7 +115,8 @@ public class PriceAlertWorker extends Worker {
                 .setContentTitle(title)
                 .setContentText(body)
                 .setSound(soundUri)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(NotificationCompat.DEFAULT_VIBRATE)
                 .setAutoCancel(true);
 
         manager.notify(alert.getKey().hashCode(), builder.build());
@@ -127,10 +134,11 @@ public class PriceAlertWorker extends Worker {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
                     "Alertas de precio",
-                    NotificationManager.IMPORTANCE_DEFAULT
+                    NotificationManager.IMPORTANCE_HIGH
             );
             channel.setDescription("Notificaciones cuando el precio baja del umbral configurado");
             channel.setSound(soundUri, audioAttributes);
+            channel.enableVibration(true);
 
             NotificationManager manager =
                     (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
