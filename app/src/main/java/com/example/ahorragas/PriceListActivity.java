@@ -187,15 +187,14 @@ public class PriceListActivity extends BaseActivity {
                 }
             }
 
+            final PriceRange finalRange = selectedFuel == FuelType.ELECTRICO
+                    ? new PriceRange(null, null, 0)
+                    : GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
+
             mainHandler.post(() -> {
                 if (isDestroyed() || isFinishing()) return;
                 if (filtered.isEmpty()) showEmpty();
-                else {
-                    PriceRange range = selectedFuel == FuelType.ELECTRICO
-                            ? new PriceRange(null, null, 0)
-                            : GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
-                    showData(filtered, range);
-                }
+                else showData(filtered, finalRange);
             });
         });
     }
@@ -209,13 +208,10 @@ public class PriceListActivity extends BaseActivity {
     private void loadWithCoordinates(double lat, double lon) {
         executor.execute(() -> {
             try {
-                long t0 = System.currentTimeMillis();
 
                 int radiusKm = RadiusUtils.loadRadiusKm(PriceListActivity.this);
                 double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
                 int maxMarkers = RadiusUtils.loadMarkersCount(PriceListActivity.this);
-
-                long t1 = System.currentTimeMillis();
 
                 List<Gasolinera> gasolineras;
                 if (selectedFuel == FuelType.ELECTRICO) {
@@ -226,16 +222,10 @@ public class PriceListActivity extends BaseActivity {
                             repository.getGasolinerasByRadius(lat, lon, radiusMeters));
                 }
 
-                long t2 = System.currentTimeMillis();
-
                 List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
-
-                long t3 = System.currentTimeMillis();
 
                 List<Gasolinera> inRadius = GasolineraSorter.getWithinRadius(
                         filtered, lat, lon, radiusMeters, maxMarkers);
-
-                long t4 = System.currentTimeMillis();
 
                 if (selectedFuel == FuelType.ELECTRICO) {
                     inRadius.sort((a, b) -> {
@@ -255,26 +245,15 @@ public class PriceListActivity extends BaseActivity {
                     }
                 }
 
-                long t5 = System.currentTimeMillis();
-
-                android.util.Log.d("PERF_PRICE",
-                        "prefs=" + (t1 - t0) + "ms" +
-                                " | room=" + (t2 - t1) + "ms (" + gasolineras.size() + " items)" +
-                                " | filter=" + (t3 - t2) + "ms (" + filtered.size() + " items)" +
-                                " | sort+radius=" + (t4 - t3) + "ms (" + inRadius.size() + " items)" +
-                                " | priceSort=" + (t5 - t4) + "ms" +
-                                " | TOTAL=" + (t5 - t0) + "ms");
-
                 final List<Gasolinera> finalList = inRadius;
+                final PriceRange finalRange = selectedFuel == FuelType.ELECTRICO
+                        ? new PriceRange(null, null, 0)
+                        : GasolineraSorter.calculatePriceRange(inRadius, selectedFuel);
+
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
                     if (finalList.isEmpty()) showEmpty();
-                    else {
-                        PriceRange range = selectedFuel == FuelType.ELECTRICO
-                                ? new PriceRange(null, null, 0)
-                                : GasolineraSorter.calculatePriceRange(finalList, selectedFuel);
-                        showData(finalList, range);
-                    }
+                    else showData(finalList, finalRange);
                 });
 
             } catch (Exception e) {
