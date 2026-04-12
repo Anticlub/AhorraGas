@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">geoportalgasolineras.es</domain>
+    <domain-config>
+        <domain includeSubdomains="true">geoportalgasolineras.es</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/fnmt_raiz" />
+            <certificates src="@raw/fnmt_componentes" />
+        </trust-anchors>
     </domain-config>
 </network-security-config>

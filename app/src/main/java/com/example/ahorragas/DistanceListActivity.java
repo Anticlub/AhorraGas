@@ -68,6 +68,9 @@ public class DistanceListActivity extends BaseActivity {
 
         bindViews();
         setupRecyclerView();
+        selectedFuel = FuelType.fromString(
+                PreferenceManager.getDefaultSharedPreferences(this)
+                        .getString("pref_selected_fuel", FuelType.GASOLEO_A.name()));
         setupBottomNav();
         btnRetry.setOnClickListener(v -> loadAndDisplay());
     }
@@ -111,7 +114,7 @@ public class DistanceListActivity extends BaseActivity {
 
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavDistance);
-        setupBottomNav(bottomNav, R.id.nav_distance);
+        setupBottomNav(bottomNav, R.id.nav_distance, selectedFuel);
     }
 
     private void setupRecyclerView() {

@@ -164,6 +164,12 @@ public class PreferencesActivity extends BaseActivity {
             }
             return false;
         });
+        FuelType fuel = FuelType.fromString(
+                androidx.preference.PreferenceManager.getDefaultSharedPreferences(this)
+                        .getString("pref_selected_fuel", FuelType.GASOLEO_A.name()));
+        if (fuel == FuelType.ELECTRICO) {
+            bottomNav.getMenu().findItem(R.id.nav_price).setTitle("Por potencia");
+        }
     }
 
     private void setupBackPress() {

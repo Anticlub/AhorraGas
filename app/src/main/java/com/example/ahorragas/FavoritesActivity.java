@@ -78,6 +78,9 @@ public class FavoritesActivity extends BaseActivity {
 
         bindViews();
         setupRecyclerView();
+        selectedFuel = FuelType.fromString(
+                PreferenceManager.getDefaultSharedPreferences(this)
+                        .getString("pref_selected_fuel", FuelType.GASOLEO_A.name()));
         setupBottomNav();
         btnRetry.setOnClickListener(v -> loadAndDisplay());
     }
@@ -295,24 +298,6 @@ public class FavoritesActivity extends BaseActivity {
 
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavFavorites);
-        bottomNav.setSelectedItemId(R.id.nav_favorites);
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_favorites) return true;
-            else if (id == R.id.nav_map) {
-                navigateToMap();
-                return true;
-            } else if (id == R.id.nav_price) {
-                navigateToPrice();
-                return true;
-            } else if (id == R.id.nav_distance) {
-                navigateToDistanceList();
-                return true;
-            } else if (id == R.id.nav_preferences) {
-                navigateToPreferences();
-                return true;
-            }
-            return false;
-        });
+        setupBottomNav(bottomNav, R.id.nav_favorites, selectedFuel);
     }
 }
