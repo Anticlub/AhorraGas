@@ -11,6 +11,9 @@ import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import com.example.ahorragas.model.Discount;
 import com.example.ahorragas.model.FuelType;
@@ -70,14 +73,9 @@ public class PreferencesActivity extends BaseActivity {
         setupBottomNav();
         setupBackPress();
         setupMarkersSelector();
+        setupAlertTestButton();
         refreshVehicleList();
         refreshDiscountList();
-        refreshAlertList();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
         refreshAlertList();
     }
 
@@ -180,6 +178,115 @@ public class PreferencesActivity extends BaseActivity {
                 }
             }
         });
+    }
+
+    // ─── Test de notificaciones ───────────────────────────────────────────────
+
+    private void setupAlertTestButton() {
+        findViewById(R.id.btnTestAlerts).setOnClickListener(v -> runAlertTest());
+    }
+
+    /**
+     * Lanza el worker de alertas de precio en modo prueba, ignorando el cooldown
+     * de 24 horas, para verificar que las notificaciones funcionan correctamente.
+     */
+    private void runAlertTest() {
+        List<PriceAlert> alerts = PriceAlertPrefs.loadAll(this);
+        if (alerts.isEmpty()) {
+            Toast.makeText(this, "No tienes alertas configuradas.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Data inputData = new Data.Builder()
+                .putBoolean(PriceAlertWorker.KEY_IS_TEST, true)
+                .build();
+
+        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(PriceAlertWorker.class)
+                .setInputData(inputData)
+                .build();
+
+        WorkManager.getInstance(this).enqueue(request);
+        Toast.makeText(this,
+                "🔔 Comprobando alertas… Si algún precio cumple la condición, recibirás la notificación en unos segundos.",
+                Toast.LENGTH_LONG).show();
+    }
+
+    // ─── UI Alertas ───────────────────────────────────────────────────────────
+
+    private void refreshAlertList() {
+        List<PriceAlert> alerts = PriceAlertPrefs.loadAll(this);
+        alertListContainer.removeAllViews();
+
+        if (alerts.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText("Sin alertas. Créalas desde tus favoritas.");
+            empty.setTextColor(0xFFAAAAAA);
+            empty.setPadding(dp(16), dp(24), dp(16), dp(8));
+            alertListContainer.addView(empty);
+            return;
+        }
+
+        for (PriceAlert alert : alerts) {
+            addAlertRow(alert);
+        }
+    }
+
+    private void addAlertRow(PriceAlert alert) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setBackgroundColor(0xFF383848);
+        card.setPadding(dp(16), dp(14), dp(12), dp(14));
+
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.setMargins(0, dp(4), 0, dp(4));
+        card.setLayoutParams(cardParams);
+
+        LinearLayout textCol = new LinearLayout(this);
+        textCol.setOrientation(LinearLayout.VERTICAL);
+        textCol.setLayoutParams(new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView tvName = new TextView(this);
+        tvName.setText(alert.getGasolineraName());
+        tvName.setTextColor(0xFFFFFFFF);
+        tvName.setTextSize(15);
+        tvName.setTypeface(null, android.graphics.Typeface.BOLD);
+        textCol.addView(tvName);
+
+        TextView tvDetail = new TextView(this);
+        tvDetail.setText(alert.getFuelType().displayName()
+                + " · alerta ≤ "
+                + String.format(Locale.getDefault(), "%.3f €/L", alert.getTargetPrice()));
+        tvDetail.setTextColor(0xFFAAAAAA);
+        tvDetail.setTextSize(12);
+        textCol.addView(tvDetail);
+
+        card.addView(textCol);
+
+        TextView btnDelete = makeTextButton("🗑", 0xFFEF5350);
+        btnDelete.setOnClickListener(v -> {
+            new AlertDialog.Builder(this)
+                    .setTitle("Eliminar alerta")
+                    .setMessage("¿Eliminar la alerta de " + alert.getGasolineraName() + "?")
+                    .setPositiveButton("Eliminar", (d, w) -> {
+                        PriceAlertPrefs.remove(this, alert.getKey());
+                        refreshAlertList();
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
+        });
+        card.addView(btnDelete);
+
+        alertListContainer.addView(card);
+
+        View sep = new View(this);
+        sep.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 1));
+        sep.setBackgroundColor(0xFF444455);
+        alertListContainer.addView(sep);
     }
 
     // ─── UI Vehículos ─────────────────────────────────────────────────────────
@@ -350,77 +457,6 @@ public class PreferencesActivity extends BaseActivity {
                 LinearLayout.LayoutParams.MATCH_PARENT, 1));
         sep.setBackgroundColor(0xFF444455);
         discountListContainer.addView(sep);
-    }
-
-    // ─── UI Alertas ───────────────────────────────────────────────────────────
-
-    private void refreshAlertList() {
-        alertListContainer.removeAllViews();
-        List<PriceAlert> alerts = PriceAlertPrefs.loadAll(this);
-
-        if (alerts.isEmpty()) {
-            TextView empty = new TextView(this);
-            empty.setText("Sin alertas activas. Crea una desde tus favoritas.");
-            empty.setTextColor(0xFFAAAAAA);
-            empty.setPadding(dp(16), dp(24), dp(16), dp(8));
-            alertListContainer.addView(empty);
-            return;
-        }
-
-        for (PriceAlert alert : alerts) {
-            addAlertRow(alert);
-        }
-    }
-
-    private void addAlertRow(PriceAlert alert) {
-        LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.HORIZONTAL);
-        card.setBackgroundColor(0xFF383848);
-        card.setPadding(dp(16), dp(14), dp(12), dp(14));
-
-        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        cardParams.setMargins(0, dp(4), 0, dp(4));
-        card.setLayoutParams(cardParams);
-
-        LinearLayout textCol = new LinearLayout(this);
-        textCol.setOrientation(LinearLayout.VERTICAL);
-        textCol.setLayoutParams(new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-
-        TextView tvName = new TextView(this);
-        tvName.setText(alert.getGasolineraName());
-        tvName.setTextColor(0xFFFFFFFF);
-        tvName.setTextSize(15);
-        tvName.setTypeface(null, android.graphics.Typeface.BOLD);
-        textCol.addView(tvName);
-
-        TextView tvDetail = new TextView(this);
-        tvDetail.setText(alert.getFuelType().displayName()
-                + " · alerta ≤ "
-                + String.format(Locale.getDefault(), "%.3f €/L", alert.getTargetPrice()));
-        tvDetail.setTextColor(0xFFAAAAAA);
-        tvDetail.setTextSize(12);
-        textCol.addView(tvDetail);
-
-        card.addView(textCol);
-
-        TextView btnDelete = makeTextButton("🗑", 0xFFEF5350);
-        btnDelete.setOnClickListener(v -> {
-            PriceAlertPrefs.remove(this, alert.getKey());
-            refreshAlertList();
-        });
-        card.addView(btnDelete);
-
-        alertListContainer.addView(card);
-
-        View sep = new View(this);
-        sep.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 1));
-        sep.setBackgroundColor(0xFF444455);
-        alertListContainer.addView(sep);
     }
 
     // ─── Diálogo Vehículo ─────────────────────────────────────────────────────

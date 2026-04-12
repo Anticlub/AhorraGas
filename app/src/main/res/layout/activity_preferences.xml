@@ -310,6 +310,19 @@
                     android:paddingHorizontal="12dp"
                     android:paddingTop="8dp" />
 
+                <Button
+                    android:id="@+id/btnTestAlerts"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="4dp"
+                    android:text="🔔 Probar notificaciones"
+                    android:textAllCaps="false"
+                    android:textSize="14sp"
+                    android:backgroundTint="#1A237E"
+                    android:textColor="#FFFFFF" />
+
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 

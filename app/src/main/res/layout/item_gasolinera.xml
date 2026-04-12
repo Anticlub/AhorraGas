@@ -6,23 +6,20 @@
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="8dp"
     android:layout_marginVertical="3dp"
-    android:foreground="?attr/selectableItemBackground"
     app:cardCornerRadius="8dp"
     app:cardElevation="2dp"
     app:strokeWidth="0dp">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="68dp"
         android:orientation="horizontal"
-        android:minHeight="68dp"
         android:gravity="center_vertical">
 
         <View
             android:id="@+id/vPriceStripe"
             android:layout_width="5dp"
             android:layout_height="match_parent"
-            android:minHeight="68dp"
             android:background="@color/price_medium" />
 
         <ImageView
@@ -89,14 +86,23 @@
                 android:textColor="@color/text_secondary" />
         </LinearLayout>
 
+        <!-- Divisor vertical -->
+        <View
+            android:id="@+id/vAlertDivider"
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#AAAAAA"
+            android:visibility="gone" />
+
+        <!-- Zona de toque de la alerta -->
         <TextView
             android:id="@+id/btnAlert"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
+            android:layout_width="56dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
             android:text="🔔"
-            android:textSize="20sp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:textSize="22sp"
+            android:background="?attr/selectableItemBackground"
             android:contentDescription="Crear alerta"
             android:visibility="gone"
             android:clickable="true"
