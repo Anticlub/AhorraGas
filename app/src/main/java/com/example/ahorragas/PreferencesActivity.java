@@ -377,6 +377,11 @@ public class PreferencesActivity extends BaseActivity {
             VehiclePrefs.saveActiveIndex(this, finalIndex);
             activeIndex = finalIndex;
             refreshVehicleList();
+
+            BottomNavigationView bottomNav = findViewById(R.id.bottomNavPrefs);
+            FuelType fuel = vehicles.get(finalIndex).getFuelType();
+            bottomNav.getMenu().findItem(R.id.nav_price).setTitle(
+                    fuel == FuelType.ELECTRICO ? "Por potencia" : "Por precio");
         });
 
         vehicleListContainer.addView(card);
