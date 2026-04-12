@@ -112,10 +112,39 @@ public class RoomElectrolineraDataSource implements ElectrolineraDataSource {
         return estacionDao.countElectrolineras() > 0;
     }
 
+    /**
+     * Convierte entidades de Room a objetos Electrolinera.
+     * Carga todos los conectores en una sola query batch para
+     * evitar el problema N+1.
+     *
+     * @param entities lista de entidades de estación
+     * @return lista de electrolineras con sus conectores
+     */
     private List<Electrolinera> toElectrolineras(List<EstacionEntity> entities) {
+        if (entities.isEmpty()) return new ArrayList<>();
+
+        // 1. Recoger todos los IDs de estación
+        List<String> ids = new ArrayList<>(entities.size());
+        for (EstacionEntity e : entities) {
+            ids.add(e.stationId);
+        }
+
+        // 2. Cargar TODOS los conectores en una sola query
+        List<ConectorEntity> allConectores = conectorDao.getByEstaciones(ids);
+
+        // 3. Agrupar conectores por estacion_id en un mapa
+        java.util.Map<String, List<ConectorEntity>> conectoresPorEstacion = new java.util.HashMap<>();
+        for (ConectorEntity c : allConectores) {
+            conectoresPorEstacion
+                    .computeIfAbsent(c.estacionId, k -> new ArrayList<>())
+                    .add(c);
+        }
+
+        // 4. Construir electrolineras asignando sus conectores desde el mapa
         List<Electrolinera> result = new ArrayList<>(entities.size());
         for (EstacionEntity e : entities) {
-            List<ConectorEntity> conectores = conectorDao.getByEstacion(e.stationId);
+            List<ConectorEntity> conectores = conectoresPorEstacion.get(e.stationId);
+            if (conectores == null) conectores = new ArrayList<>();
             result.add(EstacionMapper.toElectrolinera(e, conectores));
         }
         return result;
