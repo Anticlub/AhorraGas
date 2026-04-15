@@ -200,7 +200,7 @@ public class FavoritesActivity extends BaseActivity {
 
         if (PriceAlertPrefs.count(this) >= PriceAlertPrefs.MAX_ALERTS) {
             Toast.makeText(this,
-                    "Ya tienes 3 alertas. Elimina una antes de añadir otra.",
+                    "Ya tienes 5 alertas. Elimina una antes de añadir otra.",
                     Toast.LENGTH_SHORT).show();
             return;
         }

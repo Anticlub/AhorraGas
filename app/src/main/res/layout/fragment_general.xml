@@ -30,7 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:textColor="@color/price_cheap"
+            android:textColor="@color/secondary"
             android:textSize="28sp"
             android:textStyle="bold" />
 
@@ -54,7 +54,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:textColor="#FF7043"
+            android:textColor="@color/price_cheap"
             android:textSize="28sp"
             android:textStyle="bold"
             android:visibility="gone" />
@@ -65,7 +65,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:textColor="#FF7043"
+            android:textColor="@color/price_cheap"
             android:textSize="14sp"
             android:visibility="gone" />
 
@@ -135,7 +135,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:textColor="@color/text_primary"
-            android:textSize="16sp" />
+            android:textSize="14sp" />
 
         <View
             android:layout_width="match_parent"
