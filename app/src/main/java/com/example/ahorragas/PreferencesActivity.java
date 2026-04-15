@@ -214,7 +214,7 @@ public class PreferencesActivity extends BaseActivity {
 
         WorkManager.getInstance(this).enqueue(request);
         Toast.makeText(this,
-                "🔔 Comprobando alertas… Si algún precio cumple la condición, recibirás la notificación en unos segundos.",
+                "🔔 Comprobando precios… Si alguno baja de tu alerta, te avisaremos.",
                 Toast.LENGTH_LONG).show();
     }
 
