@@ -9,13 +9,13 @@ import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
-import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.example.ahorragas.data.RepoError;
 import com.example.ahorragas.data.RoomGasolineraDataSource;
 import com.example.ahorragas.data.local.AppDatabase;
+import com.example.ahorragas.data.remote.RemoteApiDataSource;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceAlert;
 import com.example.ahorragas.util.PriceAlertPrefs;
@@ -44,16 +44,8 @@ public class PriceAlertWorker extends Worker {
 
         boolean isTest = getInputData().getBoolean(KEY_IS_TEST, false);
 
-        AppDatabase db = AppDatabase.getInstance(ctx);
-        RoomGasolineraDataSource roomDs = new RoomGasolineraDataSource(db);
-
-        List<Gasolinera> gasolineras;
-        try {
-            gasolineras = roomDs.loadGasolineras();
-        } catch (RepoError e) {
-            android.util.Log.e("PriceAlertWorker", "Error cargando gasolineras: " + e.getMessage());
-            return Result.retry();
-        }
+        List<Gasolinera> gasolineras = fetchGasolineras(ctx);
+        if (gasolineras == null) return Result.retry();
 
         for (PriceAlert alert : alerts) {
             try {
@@ -68,6 +60,38 @@ public class PriceAlertWorker extends Worker {
     }
 
     // ─── PRIVADO ──────────────────────────────────────────────────────────────
+
+    /**
+     * Intenta obtener la lista de gasolineras descargando datos frescos de la API.
+     * Si la descarga falla, cae a Room como fallback.
+     * Devuelve null solo si ambas fuentes fallan.
+     *
+     * @param ctx Contexto de la aplicación.
+     * @return Lista de gasolineras o null si no hay datos disponibles.
+     */
+    private List<Gasolinera> fetchGasolineras(Context ctx) {
+        try {
+            RemoteApiDataSource remoteDs = new RemoteApiDataSource();
+            List<Gasolinera> gasolineras = remoteDs.loadGasolineras();
+            android.util.Log.d("PriceAlertWorker", "Datos obtenidos de la API remota.");
+            return gasolineras;
+        } catch (RepoError remoteError) {
+            android.util.Log.w("PriceAlertWorker",
+                    "Fallo remoto, usando Room como fallback: " + remoteError.getMessage());
+        }
+
+        try {
+            AppDatabase db = AppDatabase.getInstance(ctx);
+            RoomGasolineraDataSource roomDs = new RoomGasolineraDataSource(db);
+            List<Gasolinera> gasolineras = roomDs.loadGasolineras();
+            android.util.Log.d("PriceAlertWorker", "Datos obtenidos de Room (fallback).");
+            return gasolineras;
+        } catch (RepoError roomError) {
+            android.util.Log.e("PriceAlertWorker",
+                    "Fallo también en Room: " + roomError.getMessage());
+            return null;
+        }
+    }
 
     private void checkAlert(Context ctx, List<Gasolinera> gasolineras, PriceAlert alert, boolean isTest) {
         Gasolinera target = null;
