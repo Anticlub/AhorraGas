@@ -19,7 +19,7 @@ import java.util.List;
  */
 public final class PriceAlertPrefs {
 
-    public static final int MAX_ALERTS = 3;
+    public static final int MAX_ALERTS = 5;
     private static final String KEY_ALERTS = "pref_price_alerts";
 
     private PriceAlertPrefs() {}

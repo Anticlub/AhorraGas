@@ -632,7 +632,7 @@ public class PreferencesActivity extends BaseActivity {
             if (isNew) {
                 boolean added = VehiclePrefs.addVehicle(this, vehicle);
                 if (!added) {
-                    tvNameError.setText("Ya tienes el máximo de 3 vehículos.");
+                    tvNameError.setText("Ya tienes el máximo de 10 vehículos.");
                     tvNameError.setVisibility(View.VISIBLE);
                     return;
                 }
