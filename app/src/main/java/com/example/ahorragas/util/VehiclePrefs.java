@@ -24,7 +24,7 @@ import java.util.List;
  */
 public final class VehiclePrefs {
 
-    public static final int MAX_VEHICLES = 3;
+    public static final int MAX_VEHICLES = 10;
     private static final String KEY_VEHICLES      = "pref_vehicles";
     private static final String KEY_ACTIVE        = "pref_active_vehicle";
     private static final String KEY_SELECTED_FUEL = "pref_selected_fuel";
