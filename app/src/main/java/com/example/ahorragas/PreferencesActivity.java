@@ -209,6 +209,7 @@ public class PreferencesActivity extends BaseActivity {
 
         OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(PriceAlertWorker.class)
                 .setInputData(inputData)
+                .setExpedited(androidx.work.OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
 
         WorkManager.getInstance(this).enqueue(request);
