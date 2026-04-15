@@ -1,10 +1,14 @@
 package com.example.ahorragas;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
@@ -137,6 +141,37 @@ public class FavoritesActivity extends BaseActivity {
     }
 
     /**
+     * Muestra un diálogo explicativo y lleva al usuario a la pantalla del sistema
+     * para eximir la app de la optimización de batería, si aún no está eximida.
+     * Necesario para que las notificaciones en segundo plano funcionen en todos
+     * los fabricantes (Xiaomi, Huawei, Samsung, etc.).
+     */
+    private void requestBatteryOptimizationExemptionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return;
+
+        PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+        if (pm == null) return;
+        if (pm.isIgnoringBatteryOptimizations(getPackageName())) return;
+
+        new AlertDialog.Builder(this)
+                .setTitle("Activar alertas en segundo plano")
+                .setMessage("Para recibir notificaciones de precio aunque la app esté cerrada, "
+                        + "necesitas permitir que funcione sin restricciones de batería.\n\n"
+                        + "No te preocupes: solo comprueba los precios cada 4 horas y el impacto "
+                        + "en batería es mínimo.\n\n"
+                        )
+                .setPositiveButton("Configurar", (d, w) -> {
+                    Intent intent = new Intent(
+                            Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                            Uri.parse("package:" + getPackageName())
+                    );
+                    startActivity(intent);
+                })
+                .setNegativeButton("Ahora no", null)
+                .show();
+    }
+
+    /**
      * Muestra un diálogo para que el usuario introduzca el precio umbral
      * de la alerta para la gasolinera y combustible seleccionados.
      * Tras guardar o eliminar, refresca el item correspondiente en el adapter.
@@ -214,6 +249,7 @@ public class FavoritesActivity extends BaseActivity {
                     boolean saved = PriceAlertPrefs.add(this, alert);
                     if (saved) {
                         Toast.makeText(this, "✅ Alerta guardada", Toast.LENGTH_SHORT).show();
+                        requestBatteryOptimizationExemptionIfNeeded();
                         int pos = adapter.getPositionOf(gasolinera);
                         if (pos >= 0) adapter.notifyItemChanged(pos);
                     } else {
