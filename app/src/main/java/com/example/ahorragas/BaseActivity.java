@@ -1,14 +1,22 @@
 package com.example.ahorragas;
 
 import android.content.Intent;
+import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public abstract class BaseActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        super.onCreate(savedInstanceState);
+    }
 
     protected void navigateToMap() {
         Intent intent = new Intent(this, MainActivity.class);
@@ -25,6 +33,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(intent);
     }
+
     protected void navigateToPrice() {
         Intent intent = new Intent(this, PriceListActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -36,11 +45,13 @@ public abstract class BaseActivity extends AppCompatActivity {
         intent.putExtra(com.example.ahorragas.detail.StationDetailActivity.EXTRA_GASOLINERA, gasolinera);
         startActivity(intent);
     }
+
     protected void navigateToFavorites() {
         Intent intent = new Intent(this, FavoritesActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(intent);
     }
+
     /**
      * Configura el BottomNavigationView centralizando la lógica de navegación.
      *
