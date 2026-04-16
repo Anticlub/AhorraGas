@@ -624,11 +624,16 @@ public class MainActivity extends BaseActivity {
                         && g.getPrecio(fuelSnapshot) > 0) {
                     double discounted = DiscountPrefs.applyAllDiscounts(
                             getApplicationContext(), g.getMarca(), g.getPrecio(fuelSnapshot));
-                    g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, rangeSnapshot));
-                    g.setPrecio(fuelSnapshot, discounted);
+                    PriceLevel level = GasolineraSorter.getPriceLevel(discounted, rangeSnapshot);
+                    g.setPriceLevel(level);
+                    String priceText = String.format(java.util.Locale.getDefault(),
+                            "%.3f €", discounted);
+                    bitmaps.put(g, MarkerBitmapFactory.createMarker(
+                            getApplicationContext(), g, fuelSnapshot, priceText, level));
+                } else {
+                    bitmaps.put(g, MarkerBitmapFactory.createMarker(
+                            getApplicationContext(), g, fuelSnapshot));
                 }
-                bitmaps.put(g, MarkerBitmapFactory.createMarker(
-                        getApplicationContext(), g, fuelSnapshot));
             }
 
             mainHandler.post(() -> {
