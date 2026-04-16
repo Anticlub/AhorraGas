@@ -14,6 +14,7 @@ import androidx.preference.PreferenceManager;
 
 import com.example.ahorragas.R;
 import com.example.ahorragas.model.Discount;
+import com.example.ahorragas.model.Electrolinera;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.Vehicle;
@@ -36,6 +37,7 @@ public class GeneralFragment extends Fragment {
     private static final String ARG_DISTANCE      = "arg_distance";
     private static final String ARG_IS_ELECTRIC = "arg_is_electric";
     private static final String ARG_OPERADOR    = "arg_operador";
+    private static final String ARG_MAX_POWER_W = "arg_max_power_w";
 
     /**
      * Crea una nueva instancia del fragment con los datos de la gasolinera.
@@ -65,6 +67,17 @@ public class GeneralFragment extends Fragment {
         args.putBoolean(ARG_IS_ELECTRIC, gasolinera.isElectric());
         if (gasolinera.getOperador() != null) {
             args.putString(ARG_OPERADOR, gasolinera.getOperador());
+            if (gasolinera.isElectric() && gasolinera.getConectores() != null) {
+                double maxPowerW = 0;
+                for (Electrolinera.Conector c : gasolinera.getConectores()) {
+                    if (c.getPotenciaW() != null && c.getPotenciaW() > maxPowerW) {
+                        maxPowerW = c.getPotenciaW();
+                    }
+                }
+                if (maxPowerW > 0) {
+                    args.putDouble(ARG_MAX_POWER_W, maxPowerW);
+                }
+            }
         }
         fragment.setArguments(args);
         return fragment;
@@ -130,11 +143,51 @@ public class GeneralFragment extends Fragment {
         tvFuelLabel.setText(selectedFuel.displayName());
 
         if (isElectric) {
-            // Para electrolineras mostramos el operador en lugar del precio
             String operador = args.getString(ARG_OPERADOR, "Operador desconocido");
             tvPrice.setText(operador);
-            tvFillCost.setText("N/D");
-            tvArrivalCost.setText("N/D");
+
+            // ── Gasto energético hasta la estación ───────────────────────────
+            if (activeVehicle == null || !activeVehicle.isElectric()) {
+                tvArrivalCost.setText("Configura un vehículo eléctrico para calcular");
+            } else if (!activeVehicle.hasConsumption()) {
+                tvArrivalCost.setText("Añade el consumo (kWh/100km) en preferencias");
+            } else if (g.getDistanceMeters() == null || g.getDistanceMeters() <= 0) {
+                tvArrivalCost.setText("Distancia no disponible");
+            } else {
+                double distanceKm = g.getDistanceMeters() / 1000.0;
+                Double kwh = activeVehicle.estimateEnergyConsumption(distanceKm);
+                tvArrivalCost.setText(String.format(java.util.Locale.getDefault(),
+                        "%.2f kWh para llegar", kwh));
+            }
+
+            // ── Tiempo de carga estimado ─────────────────────────────────────
+            double maxPowerW = args.getDouble(ARG_MAX_POWER_W, 0);
+            double maxPowerKw = maxPowerW / 1000.0;
+
+            if (activeVehicle == null || !activeVehicle.isElectric()) {
+                tvFillCost.setText("Configura un vehículo eléctrico para calcular");
+            } else if (!activeVehicle.hasTankCapacity() || !activeVehicle.hasChargingPower()) {
+                tvFillCost.setText("Añade batería y potencia de carga en preferencias");
+            } else if (maxPowerKw <= 0) {
+                tvFillCost.setText("Potencia de la estación no disponible");
+            } else {
+                Double hours = activeVehicle.estimateChargeTimeHours(maxPowerKw);
+                if (hours != null) {
+                    int minutes = (int) Math.round(hours * 60);
+                    if (minutes < 60) {
+                        tvFillCost.setText(String.format(java.util.Locale.getDefault(),
+                                "~%d min (20%% → 80%%)", minutes));
+                    } else {
+                        int h = minutes / 60;
+                        int m = minutes % 60;
+                        tvFillCost.setText(String.format(java.util.Locale.getDefault(),
+                                "~%dh %dmin (20%% → 80%%)", h, m));
+                    }
+                } else {
+                    tvFillCost.setText("N/D");
+                }
+            }
+
             tvDiscountLabel.setVisibility(View.GONE);
             tvDiscountPrice.setVisibility(View.GONE);
             tvDiscountFill.setVisibility(View.GONE);

@@ -137,6 +137,24 @@ public final class FavoritesPrefs {
                 );
                 g.setHorario(obj.optString("horario"));
                 g.setElectric(obj.optBoolean("electric", false));
+                if (g.isElectric()) {
+                    g.setOperador(obj.optString("operador", ""));
+                    JSONArray conArr = obj.optJSONArray("conectores");
+                    if (conArr != null) {
+                        java.util.List<com.example.ahorragas.model.Electrolinera.Conector> conectores = new java.util.ArrayList<>();
+                        for (int j = 0; j < conArr.length(); j++) {
+                            JSONObject conObj = conArr.getJSONObject(j);
+                            com.example.ahorragas.model.ConnectorType tipo;
+                            try { tipo = com.example.ahorragas.model.ConnectorType.valueOf(conObj.optString("tipo", "UNKNOWN")); }
+                            catch (Exception e) { tipo = com.example.ahorragas.model.ConnectorType.UNKNOWN; }
+                            String modo = conObj.optString("modo", "");
+                            Double potenciaW = conObj.optDouble("potenciaW", 0);
+                            if (potenciaW == 0) potenciaW = null;
+                            conectores.add(new com.example.ahorragas.model.Electrolinera.Conector(tipo, modo, potenciaW));
+                        }
+                        g.setConectores(conectores);
+                    }
+                }
 
                 JSONObject prices = obj.optJSONObject("prices");
                 if (prices != null) {
@@ -170,6 +188,20 @@ public final class FavoritesPrefs {
                 obj.put("lon",       g.getLon() != null ? g.getLon() : 0.0);
                 obj.put("horario",   g.getHorario());
                 obj.put("electric",  g.isElectric());
+                if (g.isElectric()) {
+                    obj.put("operador", g.getOperador() != null ? g.getOperador() : "");
+                    if (g.getConectores() != null && !g.getConectores().isEmpty()) {
+                        JSONArray conArr = new JSONArray();
+                        for (com.example.ahorragas.model.Electrolinera.Conector c : g.getConectores()) {
+                            JSONObject conObj = new JSONObject();
+                            conObj.put("tipo", c.getTipo() != null ? c.getTipo().name() : "UNKNOWN");
+                            conObj.put("modo", c.getModoRecarga() != null ? c.getModoRecarga() : "");
+                            conObj.put("potenciaW", c.getPotenciaW() != null ? c.getPotenciaW() : 0);
+                            conArr.put(conObj);
+                        }
+                        obj.put("conectores", conArr);
+                    }
+                }
 
                 JSONObject prices = new JSONObject();
                 for (FuelType fuel : FuelType.values()) {
