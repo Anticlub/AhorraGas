@@ -355,9 +355,12 @@ public class PreferencesActivity extends BaseActivity {
         String tankDetail = vehicle.hasTankCapacity()
                 ? String.format(Locale.getDefault(), isEv ? " · %.0f kWh batería" : " · %.0f L depósito", vehicle.getTankCapacity())
                 : "";
+        String chargingDetail = (isEv && vehicle.hasChargingPower())
+                ? String.format(Locale.getDefault(), " · %.0f kW carga", vehicle.getChargingPowerKw())
+                : "";
 
         TextView tvDetail = new TextView(this);
-        tvDetail.setText(vehicle.getFuelType().displayName() + " · " + consDetail + tankDetail);
+        tvDetail.setText(vehicle.getFuelType().displayName() + " · " + consDetail + tankDetail + chargingDetail);
         tvDetail.setTextColor(0xFFAAAAAA);
         tvDetail.setTextSize(12);
         textCol.addView(tvDetail);
