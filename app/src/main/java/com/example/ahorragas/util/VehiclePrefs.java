@@ -46,7 +46,8 @@ public final class VehiclePrefs {
                 String fuel = obj.optString("fuel", FuelType.GASOLEO_A.name());
                 double cons = obj.optDouble("consumption", 6.0);
                 double tank = obj.optDouble("tankCapacity", 0.0);
-                list.add(new Vehicle(name, FuelType.fromString(fuel), cons, tank));
+                double chargingPower = obj.optDouble("chargingPowerKw", 0.0);
+                list.add(new Vehicle(name, FuelType.fromString(fuel), cons, tank, chargingPower));
             }
         } catch (Exception e) {
             android.util.Log.e("VehiclePrefs", "Error leyendo vehículos: " + e.getMessage(), e);
@@ -88,6 +89,7 @@ public final class VehiclePrefs {
                 obj.put("fuel",         v.getFuelType().name());
                 obj.put("consumption",  v.getConsumption());
                 obj.put("tankCapacity", v.getTankCapacity());
+                obj.put("chargingPowerKw", v.getChargingPowerKw());
                 arr.put(obj);
             }
             prefs(ctx).edit().putString(KEY_VEHICLES, arr.toString()).apply();
