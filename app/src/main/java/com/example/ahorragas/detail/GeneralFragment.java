@@ -135,6 +135,8 @@ public class GeneralFragment extends Fragment {
         TextView tvDiscountPrice = view.findViewById(R.id.tvDiscountPrice);
         TextView tvDiscountFill  = view.findViewById(R.id.tvDiscountFill);
         View dividerDiscount     = view.findViewById(R.id.dividerDiscount);
+        TextView tvFillLabel    = view.findViewById(R.id.tvFillLabel);
+        TextView tvArrivalLabel = view.findViewById(R.id.tvArrivalLabel);
 
         boolean isElectric = args.getBoolean(ARG_IS_ELECTRIC, false);
         Vehicle activeVehicle = VehiclePrefs.loadActiveVehicle(requireContext());
@@ -144,7 +146,15 @@ public class GeneralFragment extends Fragment {
 
         if (isElectric) {
             String operador = args.getString(ARG_OPERADOR, "Operador desconocido");
-            tvPrice.setText(operador);
+            tvFuelLabel.setText("Potencia máxima");
+            tvFillLabel.setText("Tiempo de carga estimado");
+            tvArrivalLabel.setText("Gasto energético hasta la estación");
+            double maxPwW = args.getDouble(ARG_MAX_POWER_W, 0);
+            if (maxPwW > 0) {
+                tvPrice.setText(String.format(java.util.Locale.getDefault(), "%.0f kW", maxPwW / 1000.0));
+            } else {
+                tvPrice.setText("N/D");
+            }
 
             // ── Gasto energético hasta la estación ───────────────────────────
             if (activeVehicle == null || !activeVehicle.isElectric()) {
