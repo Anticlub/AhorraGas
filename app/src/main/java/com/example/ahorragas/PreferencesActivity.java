@@ -348,11 +348,12 @@ public class PreferencesActivity extends BaseActivity {
         tvName.setTypeface(null, android.graphics.Typeface.BOLD);
         textCol.addView(tvName);
 
+        boolean isEv = vehicle.isElectric();
         String consDetail = vehicle.hasConsumption()
-                ? String.format(Locale.getDefault(), "%.1f L/100km", vehicle.getConsumption())
+                ? String.format(Locale.getDefault(), isEv ? "%.1f kWh/100km" : "%.1f L/100km", vehicle.getConsumption())
                 : "consumo no especificado";
         String tankDetail = vehicle.hasTankCapacity()
-                ? String.format(Locale.getDefault(), " · %.0f L depósito", vehicle.getTankCapacity())
+                ? String.format(Locale.getDefault(), isEv ? " · %.0f kWh batería" : " · %.0f L depósito", vehicle.getTankCapacity())
                 : "";
 
         TextView tvDetail = new TextView(this);
@@ -531,6 +532,38 @@ public class PreferencesActivity extends BaseActivity {
         TextView tvTankError = makeErrorLabel();
         layout.addView(tvTankError);
 
+        // ── Campo potencia de carga (solo eléctricos) ─────────────────────────
+        TextView labelCharging = new TextView(this);
+        labelCharging.setText("Potencia de carga (kW)  · opcional");
+        labelCharging.setTextColor(0xFFCCCCCC);
+        labelCharging.setTextSize(13);
+        labelCharging.setPadding(0, dp(12), 0, 0);
+        layout.addView(labelCharging);
+
+        EditText etCharging = new EditText(this);
+        etCharging.setHint("Ej: 11  (entre 1 y 500)");
+        etCharging.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        if (existing != null && existing.hasChargingPower()) {
+            etCharging.setText(String.format(Locale.getDefault(), "%.0f", existing.getChargingPowerKw()));
+        }
+        layout.addView(etCharging);
+
+        TextView tvChargingError = makeErrorLabel();
+        layout.addView(tvChargingError);
+
+        // Visibilidad inicial: solo si es eléctrico
+        boolean initElectric = (existing != null && existing.isElectric())
+                || (existing == null && FuelType.GASOLEO_A == FuelType.ELECTRICO);
+        labelCharging.setVisibility(initElectric ? View.VISIBLE : View.GONE);
+        etCharging.setVisibility(initElectric ? View.VISIBLE : View.GONE);
+
+        if (initElectric) {
+            labelCons.setText("Consumo (kWh/100 km)  · opcional");
+            etCons.setHint("Ej: 18  (entre 0.1 y 100)");
+            labelTank.setText("Batería (kWh)  · opcional");
+            etTank.setHint("Ej: 60  (entre 1 y 200)");
+        }
+
         TextView labelFuel = new TextView(this);
         labelFuel.setText("Tipo de combustible *");
         labelFuel.setTextColor(0xFFCCCCCC);
@@ -563,6 +596,13 @@ public class PreferencesActivity extends BaseActivity {
                     .setSingleChoiceItems(fuelNames, checked, (d, which) -> {
                         selectedFuel[0] = fuels[which];
                         tvFuelSelector.setText(selectedFuel[0].displayName());
+                        boolean isEv = (selectedFuel[0] == FuelType.ELECTRICO);
+                        labelCons.setText(isEv ? "Consumo (kWh/100 km)  · opcional" : "Consumo (L/100 km)  · opcional");
+                        etCons.setHint(isEv ? "Ej: 18  (entre 0.1 y 100)" : "Ej: 6.5  (entre 0.1 y 100)");
+                        labelTank.setText(isEv ? "Batería (kWh)  · opcional" : "Capacidad depósito (L)  · opcional");
+                        etTank.setHint(isEv ? "Ej: 60  (entre 1 y 200)" : "Ej: 50  (entre 1 y 200)");
+                        labelCharging.setVisibility(isEv ? View.VISIBLE : View.GONE);
+                        etCharging.setVisibility(isEv ? View.VISIBLE : View.GONE);
                         d.dismiss();
                     })
                     .setNegativeButton("Cancelar", null)
@@ -626,9 +666,25 @@ public class PreferencesActivity extends BaseActivity {
                 tvTankError.setVisibility(View.GONE);
             }
 
+            String chargingStr = etCharging.getText().toString().trim().replace(",", ".");
+            double chargingPower = 0.0;
+            if (selectedFuel[0] == FuelType.ELECTRICO && !chargingStr.isEmpty()) {
+                try {
+                    chargingPower = Double.parseDouble(chargingStr);
+                    if (chargingPower <= 0 || chargingPower > 500) throw new NumberFormatException();
+                    tvChargingError.setVisibility(View.GONE);
+                } catch (Exception e) {
+                    tvChargingError.setText("Valor no válido. Introduce un número entre 1 y 500.");
+                    tvChargingError.setVisibility(View.VISIBLE);
+                    hasError = true;
+                }
+            } else {
+                tvChargingError.setVisibility(View.GONE);
+            }
+
             if (hasError) return;
 
-            Vehicle vehicle = new Vehicle(name, selectedFuel[0], cons, tank);
+            Vehicle vehicle = new Vehicle(name, selectedFuel[0], cons, tank, chargingPower);
             if (isNew) {
                 boolean added = VehiclePrefs.addVehicle(this, vehicle);
                 if (!added) {
