@@ -24,6 +24,7 @@ import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceRange;
+import com.example.ahorragas.util.DiscountPrefs;
 import com.example.ahorragas.util.GasolineraSorter;
 import com.example.ahorragas.util.RadiusUtils;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -166,7 +167,12 @@ public class DistanceListActivity extends BaseActivity {
 
             PriceRange range = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
             for (Gasolinera g : filtered) {
-                g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
+                double discounted = g.getPrecio(selectedFuel) != null
+                        ? DiscountPrefs.applyAllDiscounts(
+                        DistanceListActivity.this, g.getMarca(),
+                        g.getPrecio(selectedFuel))
+                        : 0;
+                g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, range));
             }
 
             mainHandler.post(() -> {
@@ -207,7 +213,12 @@ public class DistanceListActivity extends BaseActivity {
 
                 PriceRange range = GasolineraSorter.calculatePriceRange(sorted, selectedFuel);
                 for (Gasolinera g : sorted) {
-                    g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
+                    double discounted = g.getPrecio(selectedFuel) != null
+                            ? DiscountPrefs.applyAllDiscounts(
+                            DistanceListActivity.this, g.getMarca(),
+                            g.getPrecio(selectedFuel))
+                            : 0;
+                    g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, range));
                 }
 
                 mainHandler.post(() -> {

@@ -24,6 +24,7 @@ import com.example.ahorragas.location.LocationHelper;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceRange;
+import com.example.ahorragas.util.DiscountPrefs;
 import com.example.ahorragas.util.GasolineraSorter;
 import com.example.ahorragas.util.RadiusUtils;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -179,11 +180,19 @@ public class PriceListActivity extends BaseActivity {
             } else {
                 filtered.sort(Comparator.comparingDouble(g ->
                         g.getPrecio(selectedFuel) != null
-                                ? g.getPrecio(selectedFuel) : Double.MAX_VALUE
+                                ? DiscountPrefs.applyAllDiscounts(
+                                PriceListActivity.this, g.getMarca(),
+                                g.getPrecio(selectedFuel))
+                                : Double.MAX_VALUE
                 ));
                 PriceRange range = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
                 for (Gasolinera g : filtered) {
-                    g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), range));
+                    double discounted = g.getPrecio(selectedFuel) != null
+                            ? DiscountPrefs.applyAllDiscounts(
+                            PriceListActivity.this, g.getMarca(),
+                            g.getPrecio(selectedFuel))
+                            : 0;
+                    g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, range));
                 }
             }
 
@@ -236,12 +245,19 @@ public class PriceListActivity extends BaseActivity {
                 } else {
                     inRadius.sort(Comparator.comparingDouble(g ->
                             g.getPrecio(selectedFuel) != null
-                                    ? g.getPrecio(selectedFuel) : Double.MAX_VALUE
+                                    ? DiscountPrefs.applyAllDiscounts(
+                                    PriceListActivity.this, g.getMarca(),
+                                    g.getPrecio(selectedFuel))
+                                    : Double.MAX_VALUE
                     ));
                     PriceRange range = GasolineraSorter.calculatePriceRange(inRadius, selectedFuel);
                     for (Gasolinera g : inRadius) {
-                        g.setPriceLevel(GasolineraSorter.getPriceLevel(
-                                g.getPrecio(selectedFuel), range));
+                        double discounted = g.getPrecio(selectedFuel) != null
+                                ? DiscountPrefs.applyAllDiscounts(
+                                PriceListActivity.this, g.getMarca(),
+                                g.getPrecio(selectedFuel))
+                                : 0;
+                        g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, range));
                     }
                 }
 
