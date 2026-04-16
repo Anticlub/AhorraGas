@@ -79,6 +79,7 @@
 
         <!-- Coste de llenado -->
         <TextView
+            android:id="@+id/tvFillLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Coste de llenado"
@@ -101,6 +102,7 @@
 
         <!-- Coste de llegada -->
         <TextView
+            android:id="@+id/tvArrivalLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Coste de llegada"
