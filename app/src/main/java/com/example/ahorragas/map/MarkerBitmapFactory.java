@@ -101,6 +101,38 @@ public final class MarkerBitmapFactory {
         CACHE.put(key, rendered);
         return rendered;
     }
+    /**
+     * Crea el bitmap del marcador con un texto de precio personalizado.
+     * Útil cuando el precio mostrado difiere del original (p.ej. con descuento).
+     *
+     * @param context    Contexto de la aplicación.
+     * @param gasolinera Gasolinera a representar.
+     * @param fuelType   Tipo de combustible seleccionado.
+     * @param priceText  Texto de precio a mostrar en el marker.
+     * @param priceLevel Nivel de precio para el color del marker.
+     * @return Bitmap del marcador.
+     */
+    public static Bitmap createMarker(Context context,
+                                      Gasolinera gasolinera,
+                                      FuelType fuelType,
+                                      String priceText,
+                                      PriceLevel priceLevel) {
+        int bgColor = gasolinera.isElectric()
+                ? getElectricColor()
+                : getPriceLevelColor(priceLevel);
+
+        int logoResId = gasolinera.isElectric()
+                ? BrandLogoProvider.getLogoResId(gasolinera.getMarca(), gasolinera.getOperador())
+                : BrandLogoProvider.getLogoResId(gasolinera.getMarca());
+        String key = logoResId + "|" + priceLevel.name() + "|" + priceText;
+
+        Bitmap cached = CACHE.get(key);
+        if (cached != null && !cached.isRecycled()) return cached;
+
+        Bitmap rendered = renderMarker(context, gasolinera, priceText, logoResId, bgColor);
+        CACHE.put(key, rendered);
+        return rendered;
+    }
 
     /**
      * Devuelve la potencia máxima de una electrolinera formateada para el marcador.
