@@ -10,7 +10,7 @@
         android:title="Por precio" />
     <item
         android:id="@+id/nav_distance"
-        android:icon="@drawable/ic_distance"
+        android:icon="@drawable/ic_near_me"
         android:title="Por Distancia" />
     <item
         android:id="@+id/nav_favorites"
