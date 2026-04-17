@@ -34,6 +34,15 @@
             android:textSize="12sp"
             android:text="@string/status_location_pending" />
 
+        <TextView
+            android:id="@+id/tvLastSync"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="11sp"
+            android:text="Última actualización: --" />
+
         <EditText
             android:id="@+id/etSearch"
             android:layout_width="match_parent"
@@ -84,7 +93,7 @@
             app:elevation="6dp" />
     </FrameLayout>
 
-        <com.google.android.material.bottomnavigation.BottomNavigationView
+    <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
