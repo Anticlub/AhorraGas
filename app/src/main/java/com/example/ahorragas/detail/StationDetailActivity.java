@@ -18,7 +18,7 @@ import android.widget.TextView;
 
 public class StationDetailActivity extends AppCompatActivity {
 
-    private static final String[] TAB_TITLES = {"General", "Ubicación", "Precios", "Histórico", "Promociones"};    public static final String EXTRA_GASOLINERA = "extra_gasolinera";
+    public static final String EXTRA_GASOLINERA = "extra_gasolinera";
     private Gasolinera gasolinera;
 
     @Override
@@ -38,7 +38,6 @@ public class StationDetailActivity extends AppCompatActivity {
 
     /**
      * Reconstruye el objeto Gasolinera a partir de los extras del Intent.
-     * Se usan extras primitivos en lugar de Parcelable para evitar dependencias.
      *
      * @return Gasolinera reconstruida o null si faltan datos esenciales.
      */
@@ -51,7 +50,9 @@ public class StationDetailActivity extends AppCompatActivity {
         TextView tvAddress = findViewById(R.id.tvDetailAddress);
 
         String marca = gasolinera.getMarca();
-        tvBrand.setText(marca == null || marca.trim().isEmpty() ? getString(R.string.sin_marca) : marca);        tvAddress.setText(gasolinera.getDisplayAddress());
+        tvBrand.setText(marca == null || marca.trim().isEmpty()
+                ? getString(R.string.sin_marca) : marca);
+        tvAddress.setText(gasolinera.getDisplayAddress());
         ImageView ivLogo = findViewById(R.id.ivHeaderLogo);
         ivLogo.setImageResource(BrandLogoProvider.getLogoResId(gasolinera.getMarca()));
     }
@@ -61,7 +62,7 @@ public class StationDetailActivity extends AppCompatActivity {
         TabLayout tabLayout  = findViewById(R.id.tabLayout);
 
         String preciosTab = gasolinera.isElectric() ? "Cargadores" : "Precios";
-        String[] tabTitles = {"General", "Ubicación", preciosTab, "Histórico", "Promociones"};
+        String[] tabTitles = {"General", "Ubicación", preciosTab, "Histórico", "Promociones", "Opiniones"};
 
         viewPager.setAdapter(new FragmentStateAdapter(this) {
             @Override
@@ -74,6 +75,7 @@ public class StationDetailActivity extends AppCompatActivity {
                     case 1: return LocationFragment.newInstance(gasolinera);
                     case 2: return PricesFragment.newInstance(gasolinera);
                     case 4: return PromotionsFragment.newInstance(gasolinera.getMarca());
+                    case 5: return ReviewsFragment.newInstance(gasolinera);
                     default: return HistoryFragment.newInstance(gasolinera.getId(), gasolinera.getMarca());
                 }
             }
