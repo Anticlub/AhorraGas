@@ -183,6 +183,8 @@ public class MainActivity extends BaseActivity {
                         .getString(PREF_SELECTED_FUEL, FuelType.GASOLEO_A.name()));
         bottomNav.getMenu().findItem(R.id.nav_price).setTitle(
                 currentNavFuel == FuelType.ELECTRICO ? "Por potencia" : "Por precio");
+        bottomNav.getMenu().findItem(R.id.nav_price).setIcon(
+                currentNavFuel == FuelType.ELECTRICO ? R.drawable.ic_bolt : R.drawable.ic_price);
 
         if (locationOverlay != null && locationHelper.hasLocationPermission()) {
             locationOverlay.enableMyLocation();
