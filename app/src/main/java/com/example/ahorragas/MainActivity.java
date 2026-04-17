@@ -53,9 +53,12 @@ import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class MainActivity extends BaseActivity {
@@ -72,6 +75,7 @@ public class MainActivity extends BaseActivity {
     private FloatingActionButton fabMiUbicacion;
     private TextView tvDataStatus;
     private TextView tvLocation;
+    private TextView tvLastSync;
     private ProgressBar progressBarSearch;
     private EditText etSearch;
     private BottomNavigationView bottomNav;
@@ -373,8 +377,6 @@ public class MainActivity extends BaseActivity {
             if (userLocation != null) {
                 loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
             } else {
-                // La ubicación llegará después y applyUserLocation lanzará loadByRadius
-                // con selectedFuel ya actualizado
                 updateDisplayForFuel(selectedFuel);
             }
             vehicleDialogShown = false;
@@ -389,9 +391,36 @@ public class MainActivity extends BaseActivity {
         fabMiUbicacion = findViewById(R.id.fabMiUbicacion);
         tvDataStatus = findViewById(R.id.tvDataStatus);
         tvLocation = findViewById(R.id.tvLocation);
+        tvLastSync = findViewById(R.id.tvLastSync);
         progressBarSearch = findViewById(R.id.progressBarSearch);
         bottomNav = findViewById(R.id.bottomNav);
         etSearch = findViewById(R.id.etSearch);
+        loadLastSync();
+    }
+
+    /**
+     * Lee el timestamp de la última sincronización de gasolineras desde Room
+     * en un hilo de fondo y lo muestra formateado en tvLastSync.
+     */
+    private void loadLastSync() {
+        executor.execute(() -> {
+            try {
+                AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+                String raw = db.metadataDao().get("last_sync_gasolineras");
+                String text;
+                if (raw != null) {
+                    long millis = Long.parseLong(raw);
+                    String formatted = new SimpleDateFormat(
+                            "dd/MM/yyyy HH:mm", Locale.getDefault()).format(new Date(millis));
+                    text = "Última actualización: " + formatted;
+                } else {
+                    text = "Última actualización: --";
+                }
+                mainHandler.post(() -> tvLastSync.setText(text));
+            } catch (Exception e) {
+                mainHandler.post(() -> tvLastSync.setText("Última actualización: --"));
+            }
+        });
     }
 
     private void setupMap() {
@@ -480,11 +509,11 @@ public class MainActivity extends BaseActivity {
         if (userLocation != null) {
             loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
         } else {
-            // Sin ubicación aún — esperamos a que llegue, se llamará desde applyUserLocation
             progressBarSearch.setVisibility(View.GONE);
             tvDataStatus.setText(getString(R.string.status_location_pending));
         }
     }
+
     private void loadByRadius(double lat, double lon) {
         progressBarSearch.setVisibility(View.VISIBLE);
         int radiusKm = RadiusUtils.loadRadiusKm(this);
@@ -499,17 +528,14 @@ public class MainActivity extends BaseActivity {
                     result.addAll(repository.getGasolinerasByRadius(lat, lon, radiusMeters));
                 }
 
-                // Calcular distancias
                 for (Gasolinera g : result) {
                     g.setDistanceMeters(GeoUtils.distanceMeters(
                             lat, lon, g.getLat(), g.getLon()));
                 }
 
-                // Ordenar por distancia
                 result.sort(java.util.Comparator.comparingDouble(g ->
                         g.getDistanceMeters() == null ? Double.MAX_VALUE : g.getDistanceMeters()));
 
-                // Limitar al máximo configurado
                 int maxMarkers = RadiusUtils.loadMarkersCount(this);
                 if (result.size() > maxMarkers) {
                     result = result.subList(0, maxMarkers);
@@ -536,11 +562,11 @@ public class MainActivity extends BaseActivity {
             }
         });
     }
+
     private void updateDisplayForFuel(FuelType fuel) {
         FuelType previous = selectedFuel;
         selectedFuel = fuel != null ? fuel : FuelType.GASOLEO_A;
 
-        // Si cambió entre eléctrico y combustión, recargar desde Room
         boolean fuelTypeChanged = (previous == FuelType.ELECTRICO) != (selectedFuel == FuelType.ELECTRICO);
         if (fuelTypeChanged && lastSearchQuery == null) {
             Location ref = userLocation;
@@ -882,7 +908,6 @@ public class MainActivity extends BaseActivity {
                 .toLowerCase(java.util.Locale.getDefault());
     }
 
-
     /**
      * Filtra los markers del mapa usando el índice pre-calculado de municipios.
      *
@@ -895,8 +920,6 @@ public class MainActivity extends BaseActivity {
 
         executor.execute(() -> {
             try {
-                // Normalizar query: eliminar artículos iniciales para cubrir
-                // formatos como "Casar (El)" cuando el usuario escribe "El Casar"
                 String normalizedQuery = normalizeMunicipioQuery(query);
 
                 List<Gasolinera> result = new ArrayList<>();
@@ -906,7 +929,6 @@ public class MainActivity extends BaseActivity {
                     result.addAll(repository.getGasolinerasByMunicipio(normalizedQuery));
                 }
 
-                // Calcular distancias si hay ubicación
                 Location ref = searchLocation != null ? searchLocation : userLocation;
                 if (ref != null) {
                     for (Gasolinera g : result) {
@@ -1004,6 +1026,7 @@ public class MainActivity extends BaseActivity {
     private int dp(int dp) {
         return Math.round(getResources().getDisplayMetrics().density * dp);
     }
+
     /**
      * Normaliza el nombre de un municipio para la búsqueda en Room.
      * Elimina artículos iniciales (el, la, los, las, de, del) para cubrir
