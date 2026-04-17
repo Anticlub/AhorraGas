@@ -35,9 +35,9 @@ public class GeneralFragment extends Fragment {
     private static final String ARG_HORARIO       = "arg_horario";
     private static final String ARG_PRICES_PREFIX = "arg_price_";
     private static final String ARG_DISTANCE      = "arg_distance";
-    private static final String ARG_IS_ELECTRIC = "arg_is_electric";
-    private static final String ARG_OPERADOR    = "arg_operador";
-    private static final String ARG_MAX_POWER_W = "arg_max_power_w";
+    private static final String ARG_IS_ELECTRIC   = "arg_is_electric";
+    private static final String ARG_OPERADOR      = "arg_operador";
+    private static final String ARG_MAX_POWER_W   = "arg_max_power_w";
 
     /**
      * Crea una nueva instancia del fragment con los datos de la gasolinera.
@@ -135,8 +135,8 @@ public class GeneralFragment extends Fragment {
         TextView tvDiscountPrice = view.findViewById(R.id.tvDiscountPrice);
         TextView tvDiscountFill  = view.findViewById(R.id.tvDiscountFill);
         View dividerDiscount     = view.findViewById(R.id.dividerDiscount);
-        TextView tvFillLabel    = view.findViewById(R.id.tvFillLabel);
-        TextView tvArrivalLabel = view.findViewById(R.id.tvArrivalLabel);
+        TextView tvFillLabel     = view.findViewById(R.id.tvFillLabel);
+        TextView tvArrivalLabel  = view.findViewById(R.id.tvArrivalLabel);
 
         boolean isElectric = args.getBoolean(ARG_IS_ELECTRIC, false);
         Vehicle activeVehicle = VehiclePrefs.loadActiveVehicle(requireContext());
@@ -231,23 +231,21 @@ public class GeneralFragment extends Fragment {
             }
 
             // ── Descuento ────────────────────────────────────────────────────────
-            // ── Descuento ────────────────────────────────────────────────────────
             List<Discount> discounts = DiscountPrefs.findAllForBrand(requireContext(), g.getMarca());
             if (!discounts.isEmpty() && price != null && price > 0) {
                 double discountedPrice = DiscountPrefs.applyAllDiscounts(
                         requireContext(), g.getMarca(), price);
 
-                // Construir etiqueta con todos los descuentos aplicados
                 StringBuilder typeLabel = new StringBuilder();
                 for (int i = 0; i < discounts.size(); i++) {
                     if (i > 0) typeLabel.append(" + ");
                     Discount d = discounts.get(i);
                     if (d.getType() == Discount.Type.PERCENTAGE) {
                         typeLabel.append(String.format(java.util.Locale.getDefault(),
-                                "-%.1f%%", d.getValue()));
+                                "%.1f%%", d.getValue()));
                     } else {
                         typeLabel.append(String.format(java.util.Locale.getDefault(),
-                                "-%.3f €/L", d.getValue() / 100.0));
+                                "%.3f €/L", d.getValue() / 100.0));
                     }
                 }
 
