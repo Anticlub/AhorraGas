@@ -387,6 +387,8 @@ public class PreferencesActivity extends BaseActivity {
             FuelType fuel = vehicles.get(finalIndex).getFuelType();
             bottomNav.getMenu().findItem(R.id.nav_price).setTitle(
                     fuel == FuelType.ELECTRICO ? "Por potencia" : "Por precio");
+            bottomNav.getMenu().findItem(R.id.nav_price).setIcon(
+                    fuel == FuelType.ELECTRICO ? R.drawable.ic_bolt : R.drawable.ic_price);
         });
 
         vehicleListContainer.addView(card);
