@@ -169,6 +169,7 @@ public class PreferencesActivity extends BaseActivity {
                         .getString("pref_selected_fuel", FuelType.GASOLEO_A.name()));
         if (fuel == FuelType.ELECTRICO) {
             bottomNav.getMenu().findItem(R.id.nav_price).setTitle("Por potencia");
+            bottomNav.getMenu().findItem(R.id.nav_price).setIcon(R.drawable.ic_bolt);
         }
     }
 
