@@ -166,6 +166,21 @@ public class MainActivity extends BaseActivity {
         requestLocationPermission();
         PriceAlertScheduler.schedule(this);
         SyncWorker.schedule(this);
+        AppDatabase.getInstance(this)
+                .metadataDao()
+                .observe("last_sync_gasolineras")
+                .observe(this, timestamp -> {
+                    TextView tvLastSync = findViewById(R.id.tvLastSync);
+                    if (tvLastSync == null) return;
+                    if (timestamp == null) {
+                        tvLastSync.setText(getString(R.string.last_sync_never));
+                    } else {
+                        long millis = Long.parseLong(timestamp);
+                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
+                                "dd/MM/yyyy HH:mm", java.util.Locale.getDefault());
+                        tvLastSync.setText(getString(R.string.last_sync_format, sdf.format(new java.util.Date(millis))));
+                    }
+                });
         // ⚠️ SOLO PRUEBAS — BORRAR ANTES DEL PR ⚠️
         /*androidx.work.WorkManager.getInstance(this)
                 .enqueue(new androidx.work.OneTimeWorkRequest.Builder(

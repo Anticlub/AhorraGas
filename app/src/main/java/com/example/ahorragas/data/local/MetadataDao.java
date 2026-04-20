@@ -1,5 +1,6 @@
 package com.example.ahorragas.data.local;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
@@ -13,4 +14,7 @@ public interface MetadataDao {
 
     @Query("SELECT valor FROM metadata WHERE clave = :clave")
     String get(String clave);
+
+    @Query("SELECT valor FROM metadata WHERE clave = :clave")
+    LiveData<String> observe(String clave);
 }
