@@ -71,6 +71,6 @@
     <string name="promo_ver_menos">Ver menos</string>
 
     <!-- Main -->
-    <string name="last_sync_never">Última sync: nunca</string>
-    <string name="last_sync_format">Última sync: %1$s</string>
+    <string name="last_sync_never">EESS: sin actualizar</string>
+    <string name="last_sync_format">EESS actualizadas a: %1$s</string>
 </resources>
