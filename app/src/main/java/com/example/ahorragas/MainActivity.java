@@ -73,8 +73,6 @@ public class MainActivity extends BaseActivity {
 
     private MapView mapView;
     private FloatingActionButton fabMiUbicacion;
-    private TextView tvDataStatus;
-    private TextView tvLocation;
     private TextView tvLastSync;
     private ProgressBar progressBarSearch;
     private EditText etSearch;
@@ -117,13 +115,11 @@ public class MainActivity extends BaseActivity {
                             requestUserLocation();
                         } else {
                             showSpainFallback();
-                            updateLocationStatus(getString(R.string.status_location_denied));
                             Toast.makeText(
                                     this,
                                     R.string.location_permission_message,
                                     Toast.LENGTH_LONG
                             ).show();
-                            renderMetaStatus();
                         }
                     });
 
@@ -158,10 +154,6 @@ public class MainActivity extends BaseActivity {
         setupFab();
         setupSearch();
         setupBottomNav();
-
-        updateLocationStatus(getString(R.string.status_location_pending));
-        tvDataStatus.setText(R.string.status_loading_data);
-
         loadGasolineras();
         requestLocationPermission();
         PriceAlertScheduler.schedule(this);
@@ -406,8 +398,6 @@ public class MainActivity extends BaseActivity {
     private void initViews() {
         mapView = findViewById(R.id.mapView);
         fabMiUbicacion = findViewById(R.id.fabMiUbicacion);
-        tvDataStatus = findViewById(R.id.tvDataStatus);
-        tvLocation = findViewById(R.id.tvLocation);
         tvLastSync = findViewById(R.id.tvLastSync);
         progressBarSearch = findViewById(R.id.progressBarSearch);
         bottomNav = findViewById(R.id.bottomNav);
@@ -474,13 +464,10 @@ public class MainActivity extends BaseActivity {
     private void requestUserLocation() {
         if (!locationHelper.isLocationEnabled()) {
             showSpainFallback();
-            updateLocationStatus(getString(R.string.status_location_disabled));
             Toast.makeText(this, R.string.location_gps_message, Toast.LENGTH_LONG).show();
-            renderMetaStatus();
             return;
         }
 
-        updateLocationStatus(getString(R.string.status_location_loading));
 
         locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
             @Override
@@ -491,7 +478,6 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onError(LocationHelper.LocationError error) {
                 showSpainFallback();
-                updateLocationStatus(buildLocationErrorMessage(error));
                 Toast.makeText(
                         MainActivity.this,
                         buildLocationToast(error),
@@ -510,24 +496,16 @@ public class MainActivity extends BaseActivity {
         mapView.getController().animateTo(point);
         mapView.getController().setZoom(ZOOM_USER);
 
-        updateLocationStatus(getString(
-                R.string.status_location_format,
-                location.getLatitude(),
-                location.getLongitude()
-        ));
-
         loadByRadius(location.getLatitude(), location.getLongitude());
     }
 
     private void loadGasolineras() {
         progressBarSearch.setVisibility(View.VISIBLE);
-        tvDataStatus.setText(getString(R.string.status_loading_data));
 
         if (userLocation != null) {
             loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
         } else {
             progressBarSearch.setVisibility(View.GONE);
-            tvDataStatus.setText(getString(R.string.status_location_pending));
         }
     }
 
@@ -566,15 +544,12 @@ public class MainActivity extends BaseActivity {
                     allGasolineras.addAll(toShow);
                     progressBarSearch.setVisibility(View.GONE);
                     updateDisplayForFuel(selectedFuel);
-                    renderMetaStatus();
                 });
 
             } catch (RepoError e) {
                 mainHandler.post(() -> {
                     if (isDestroyed() || isFinishing()) return;
                     progressBarSearch.setVisibility(View.GONE);
-                    tvDataStatus.setText(getString(R.string.error_loading_data)
-                            + ": " + buildRepoErrorMessage(e));
                 });
             }
         });
@@ -608,7 +583,6 @@ public class MainActivity extends BaseActivity {
 
         if (allGasolineras.isEmpty()) {
             clearMapMarkers();
-            renderMetaStatus();
             return;
         }
 
@@ -620,8 +594,6 @@ public class MainActivity extends BaseActivity {
         } else {
             showStationsOnMap(RadiusUtils.loadMarkersCount(this));
         }
-
-        renderMetaStatus();
     }
 
     private List<Gasolinera> buildVisibleGasolineras(FuelType fuel) {
@@ -633,21 +605,6 @@ public class MainActivity extends BaseActivity {
         return result;
     }
 
-    private void renderMetaStatus() {
-        String originText = getOriginLabel(null);
-        String orderText = userLocation != null
-                ? getString(R.string.order_by_distance)
-                : getString(R.string.order_by_price);
-
-        tvDataStatus.setText(getString(
-                R.string.data_status_format,
-                originText,
-                allGasolineras.size(),
-                visibleGasolineras.size(),
-                selectedFuel.displayName(),
-                orderText
-        ));
-    }
 
     private void showStationsOnMap(int count) {
         MarkerBitmapFactory.clearCache();
@@ -804,7 +761,6 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    private void updateLocationStatus(String value) { tvLocation.setText(value); }
 
     private String getOriginLabel(DataSourceOrigin origin) {
         if (origin == null) return getString(R.string.origin_unknown);

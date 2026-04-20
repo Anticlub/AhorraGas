@@ -17,31 +17,20 @@
         android:paddingBottom="8dp">
 
         <TextView
-            android:id="@+id/tvDataStatus"
+            android:id="@+id/tvLastSync"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/text_primary"
             android:textSize="13sp"
             android:textStyle="bold"
-            android:text="@string/status_loading_data" />
+            android:text="@string/last_sync_never" />
 
-        <TextView
-            android:id="@+id/tvLocation"
+        <View
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:textColor="@color/text_secondary"
-            android:textSize="12sp"
-            android:text="@string/status_location_pending" />
-
-        <TextView
-            android:id="@+id/tvLastSync"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textColor="@color/text_secondary"
-            android:textSize="11sp"
-            android:text="Última actualización: --" />
+            android:layout_height="1dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="2dp"
+            android:background="@color/text_secondary" />
 
         <EditText
             android:id="@+id/etSearch"
