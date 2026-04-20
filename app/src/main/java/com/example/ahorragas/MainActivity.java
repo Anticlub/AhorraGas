@@ -897,11 +897,30 @@ public class MainActivity extends BaseActivity {
 
                 List<Gasolinera> result = new ArrayList<>();
                 if (selectedFuel == FuelType.ELECTRICO) {
-                    result.addAll(repository.getElectrolinerasByMunicipio(normalizedQuery));
+                    result.addAll(repository.getElectrolinerasByMunicipio(query));
+                    if (result.isEmpty()) {
+                        result.addAll(repository.getElectrolinerasByMunicipio(
+                                normalizeMunicipioQuery(query)));
+                    }
+                    if (result.isEmpty()) {
+                        for (String variant : buildInvertedQueries(query)) {
+                            result.addAll(repository.getElectrolinerasByMunicipio(variant));
+                            if (!result.isEmpty()) break;
+                        }
+                    }
                 } else {
-                    result.addAll(repository.getGasolinerasByMunicipio(normalizedQuery));
+                    result.addAll(repository.getGasolinerasByMunicipio(query));
+                    if (result.isEmpty()) {
+                        result.addAll(repository.getGasolinerasByMunicipio(
+                                normalizeMunicipioQuery(query)));
+                    }
+                    if (result.isEmpty()) {
+                        for (String variant : buildInvertedQueries(query)) {
+                            result.addAll(repository.getGasolinerasByMunicipio(variant));
+                            if (!result.isEmpty()) break;
+                        }
+                    }
                 }
-
                 Location ref = searchLocation != null ? searchLocation : userLocation;
                 if (ref != null) {
                     for (Gasolinera g : result) {
@@ -1018,5 +1037,28 @@ public class MainActivity extends BaseActivity {
             }
         }
         return query.trim();
+    }
+
+    /**
+     * Genera variantes invertidas de un municipio con artículo para buscar en Room.
+     * Ej: "El Casar" → ["Casar (El)", "Casar, El"]
+     *
+     * @param query texto introducido por el usuario
+     * @return lista de variantes o lista vacía si no empieza por artículo
+     */
+    private List<String> buildInvertedQueries(String query) {
+        List<String> variants = new ArrayList<>();
+        if (query == null) return variants;
+        String[] articles = {"El ", "La ", "Los ", "Las ", "A "};
+        String trimmed = query.trim();
+        for (String article : articles) {
+            if (trimmed.startsWith(article)) {
+                String rest = trimmed.substring(article.length()).trim();
+                variants.add(rest + " (" + article.trim() + ")");
+                variants.add(rest + ", " + article.trim());
+                return variants;
+            }
+        }
+        return variants;
     }
 }
