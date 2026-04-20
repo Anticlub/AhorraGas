@@ -69,4 +69,8 @@
     <string name="promo_error_red">No se pudieron cargar las promociones.\nComprueba tu conexión.</string>
     <string name="promo_ver_mas">Ver más</string>
     <string name="promo_ver_menos">Ver menos</string>
+
+    <!-- Main -->
+    <string name="last_sync_never">Última sync: nunca</string>
+    <string name="last_sync_format">Última sync: %1$s</string>
 </resources>
