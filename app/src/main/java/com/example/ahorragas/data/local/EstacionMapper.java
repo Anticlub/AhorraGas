@@ -29,7 +29,7 @@ public final class EstacionMapper {
         EstacionEntity e = new EstacionEntity();
         e.stationId  = String.valueOf(g.getId());
         e.marca      = g.getMarca();
-        e.municipio  = g.getMunicipio();
+        e.municipio  = normalizeMunicipio(g.getMunicipio());
         e.direccion  = g.getDireccion();
         e.horario    = g.getHorario();
         e.lat        = g.getLat();
@@ -64,7 +64,7 @@ public final class EstacionMapper {
         EstacionEntity e = new EstacionEntity();
         e.stationId   = el.getId();
         e.marca       = el.getNombre();
-        e.municipio   = el.getMunicipio();
+        e.municipio  = normalizeMunicipio(el.getMunicipio());
         e.direccion   = el.getDireccion();
         e.horario     = el.getHorario();
         e.lat         = el.getLat();
@@ -193,5 +193,65 @@ public final class EstacionMapper {
             }
         }
         return el;
+    }
+
+    /**
+     * Normaliza el nombre de un municipio eliminando formatos invertidos y nombres dobles.
+     * Ejemplos:
+     *   "Casar (El)"           → "El Casar"
+     *   "Casar, El"            → "El Casar"
+     *   "Coruña (A)"           → "A Coruña"
+     *   "Pamplona/Iruña"       → "Pamplona"
+     *   "San Sebastián-Donostia" → "San Sebastián"
+     *
+     * @param municipio nombre original del municipio tal como viene de la API
+     * @return nombre normalizado en formato natural
+     */
+    static String normalizeMunicipio(String municipio) {
+        if (municipio == null || municipio.trim().isEmpty()) return municipio;
+
+        String result = municipio.trim();
+
+        // Formato "Nombre (Artículo)" → "Artículo Nombre"
+        java.util.regex.Matcher m1 = java.util.regex.Pattern
+                .compile("^(.+?)\\s*\\(([^)]+)\\)$")
+                .matcher(result);
+        if (m1.matches()) {
+            result = m1.group(2).trim() + " " + m1.group(1).trim();
+            return result;
+        }
+
+        // Formato "Nombre, Artículo" → "Artículo Nombre"
+        java.util.regex.Matcher m2 = java.util.regex.Pattern
+                .compile("^(.+?),\\s*(.+)$")
+                .matcher(result);
+        if (m2.matches()) {
+            String[] articles = {"El", "La", "Los", "Las", "A", "Os", "As"};
+            String part2 = m2.group(2).trim();
+            for (String article : articles) {
+                if (part2.equalsIgnoreCase(article)) {
+                    result = part2 + " " + m2.group(1).trim();
+                    return result;
+                }
+            }
+        }
+
+        // Formato "NombreCastellano/NombreCooficial" → "NombreCastellano"
+        if (result.contains("/")) {
+            result = result.substring(0, result.indexOf("/")).trim();
+            return result;
+        }
+
+        // Formato "NombreCastellano-NombreCooficial" con guión como separador de nombres
+        // Solo aplica si ambas partes parecen palabras completas (no casos como "San Sebastián")
+        java.util.regex.Matcher m3 = java.util.regex.Pattern
+                .compile("^(.{4,})-([A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]{3,})$")
+                .matcher(result);
+        if (m3.matches()) {
+            result = m3.group(1).trim();
+            return result;
+        }
+
+        return result;
     }
 }
