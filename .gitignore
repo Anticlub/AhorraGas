@@ -50,3 +50,4 @@ captures/
 # OS generated files
 .DS_Store
 Thumbs.db
+app/google-services.json
