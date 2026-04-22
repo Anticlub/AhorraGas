@@ -8,4 +8,8 @@
         <item name="colorOnSecondary">@color/white</item>
         <item name="android:statusBarColor">@color/primary_dark</item>
     </style>
+
+    <style name="BottomNavTextStyle">
+        <item name="android:textSize">11sp</item>
+    </style>
 </resources>
