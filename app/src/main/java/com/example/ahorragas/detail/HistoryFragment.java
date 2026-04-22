@@ -144,7 +144,7 @@ public class HistoryFragment extends Fragment {
         repository.getHistory(stationId, fuel, fechaInicio, fechaFin)
                 .observe(getViewLifecycleOwner(), entries -> {
                     if (entries == null || entries.isEmpty()) {
-                        showMessage("Sin datos de precios para este periodo");
+                        showMessage("El histórico de precios no está disponible en este momento");
                         return;
                     }
                     tvTitle.setText(fuel.displayName() + " — " + stationName);
