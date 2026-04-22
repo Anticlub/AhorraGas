@@ -173,11 +173,7 @@ public class MainActivity extends BaseActivity {
                         tvLastSync.setText(getString(R.string.last_sync_format, sdf.format(new java.util.Date(millis))));
                     }
                 });
-        // ⚠️ SOLO PRUEBAS — BORRAR ANTES DEL PR ⚠️
-        /*androidx.work.WorkManager.getInstance(this)
-                .enqueue(new androidx.work.OneTimeWorkRequest.Builder(
-                        com.example.ahorragas.PriceAlertWorker.class)
-                        .build());*/
+
     }
 
     @Override
@@ -301,6 +297,20 @@ public class MainActivity extends BaseActivity {
         etTank.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         layout.addView(etTank);
 
+        TextView labelCharging = new TextView(this);
+        labelCharging.setText("Potencia de carga (kW)  · opcional");
+        labelCharging.setTextColor(0xFF333333);
+        labelCharging.setTextSize(13);
+        labelCharging.setPadding(0, dp(12), 0, 0);
+        labelCharging.setVisibility(View.GONE);
+        layout.addView(labelCharging);
+
+        EditText etCharging = new EditText(this);
+        etCharging.setHint("Ej: 11  (entre 1 y 500)");
+        etCharging.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        etCharging.setVisibility(View.GONE);
+        layout.addView(etCharging);
+
         TextView labelFuel = new TextView(this);
         labelFuel.setText(getString(R.string.dialogo_vehiculo_combustible));
         labelFuel.setTextColor(0xFF333333);
@@ -328,10 +338,25 @@ public class MainActivity extends BaseActivity {
                 if (fuels[i] == selectedFuelLocal[0]) { checked = i; break; }
             }
             new AlertDialog.Builder(this)
-                    .setTitle(getString(R.string.dialogo_vehiculo_titulo))
+                    .setTitle(getString(R.string.dialogo_vehiculo_combustible_titulo))
                     .setSingleChoiceItems(fuelNames, checked, (d, which) -> {
                         selectedFuelLocal[0] = fuels[which];
                         tvFuelSelector.setText(selectedFuelLocal[0].displayName());
+                        boolean isEv = (selectedFuelLocal[0] == FuelType.ELECTRICO);
+                        labelCons.setText(isEv
+                                ? "Consumo (kWh/100 km)  · opcional"
+                                : getString(R.string.dialogo_vehiculo_consumo));
+                        etCons.setHint(isEv
+                                ? "Ej: 18  (entre 0.1 y 100)"
+                                : getString(R.string.dialogo_vehiculo_consumo_hint));
+                        labelTank.setText(isEv
+                                ? "Batería (kWh)  · opcional"
+                                : "Capacidad depósito (L)  · opcional");
+                        etTank.setHint(isEv
+                                ? "Ej: 60  (entre 1 y 200)"
+                                : "Ej: 50  (entre 1 y 200)");
+                        labelCharging.setVisibility(isEv ? View.VISIBLE : View.GONE);
+                        etCharging.setVisibility(isEv ? View.VISIBLE : View.GONE);
                         d.dismiss();
                     })
                     .setNegativeButton(getString(R.string.dialogo_vehiculo_cancelar), null)
@@ -352,19 +377,22 @@ public class MainActivity extends BaseActivity {
             String name = etName.getText().toString().trim();
             String consStr = etCons.getText().toString().trim().replace(",", ".");
             String tankStr = etTank.getText().toString().trim().replace(",", ".");
+            String chargingStr = etCharging.getText().toString().trim().replace(",", ".");
 
             if (name.isEmpty()) {
                 Toast.makeText(this, getString(R.string.dialogo_vehiculo_nombre_vacio), Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            double cons;
-            try {
-                cons = Double.parseDouble(consStr);
-                if (cons <= 0 || cons > 100) throw new NumberFormatException();
-            } catch (Exception e) {
-                Toast.makeText(this, getString(R.string.dialogo_vehiculo_consumo_invalido), Toast.LENGTH_SHORT).show();
-                return;
+            double cons = 0.0;
+            if (!consStr.isEmpty()) {
+                try {
+                    cons = Double.parseDouble(consStr);
+                    if (cons <= 0 || cons > 100) throw new NumberFormatException();
+                } catch (Exception e) {
+                    Toast.makeText(this, getString(R.string.dialogo_vehiculo_consumo_invalido), Toast.LENGTH_SHORT).show();
+                    return;
+                }
             }
 
             double tank = 0.0;
@@ -378,7 +406,18 @@ public class MainActivity extends BaseActivity {
                 }
             }
 
-            Vehicle vehicle = new Vehicle(name, selectedFuelLocal[0], cons, tank);
+            double charging = 0.0;
+            if (!chargingStr.isEmpty()) {
+                try {
+                    charging = Double.parseDouble(chargingStr);
+                    if (charging <= 0 || charging > 500) throw new NumberFormatException();
+                } catch (Exception e) {
+                    Toast.makeText(this, "Potencia no válida. Introduce un número entre 1 y 500.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+
+            Vehicle vehicle = new Vehicle(name, selectedFuelLocal[0], cons, tank, charging);
             VehiclePrefs.addVehicle(this, vehicle);
 
             selectedFuel = selectedFuelLocal[0];
