@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -50,7 +49,6 @@ public class PromotionsFragment extends Fragment {
     private LinearLayout layoutLoading;
     private LinearLayout layoutError;
     private TextView tvErrorMessage;
-    private Button btnRetry;
 
     @Nullable
     @Override
@@ -73,17 +71,17 @@ public class PromotionsFragment extends Fragment {
     }
 
     private void initViews(View view) {
-        rvPromotions  = view.findViewById(R.id.rvPromotions);
-        layoutLoading = view.findViewById(R.id.layoutLoading);
-        layoutError   = view.findViewById(R.id.layoutError);
+        rvPromotions   = view.findViewById(R.id.rvPromotions);
+        layoutLoading  = view.findViewById(R.id.layoutLoading);
+        layoutError    = view.findViewById(R.id.layoutError);
         tvErrorMessage = view.findViewById(R.id.tvErrorMessage);
-        btnRetry      = view.findViewById(R.id.btnRetry);
 
         rvPromotions.setLayoutManager(new LinearLayoutManager(requireContext()));
     }
 
     private void setupViewModel() {
         viewModel = new ViewModelProvider(this).get(PromotionsViewModel.class);
+
 
         viewModel.getState().observe(getViewLifecycleOwner(), state -> {
             switch (state) {
@@ -109,13 +107,6 @@ public class PromotionsFragment extends Fragment {
                 rvPromotions.setAdapter(new PromotionAdapter(filtered));
             }
         });
-
-        btnRetry.setOnClickListener(v -> retryLoad());
-    }
-
-    private void retryLoad() {
-        viewModel.getPromotions().removeObservers(getViewLifecycleOwner());
-        setupViewModel();
     }
 
     private void showLoading() {
