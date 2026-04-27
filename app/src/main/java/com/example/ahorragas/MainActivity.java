@@ -237,6 +237,22 @@ public class MainActivity extends BaseActivity {
                 updateDisplayForFuel(selectedFuel);
             }
         }
+        if (lastSearchQuery == null && userLocation != null) {
+            locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
+                @Override
+                public void onSuccess(Location newLocation) {
+                    float distance = newLocation.distanceTo(userLocation);
+                    if (distance > 500) {
+                        applyUserLocation(newLocation);
+                    }
+                }
+
+                @Override
+                public void onError(LocationHelper.LocationError error) {
+                    // si no podemos obtener ubicación, mantenemos la anterior
+                }
+            });
+        }
     }
 
     @Override
