@@ -7,8 +7,10 @@ import com.example.ahorragas.data.RepoLogger;
 import com.example.ahorragas.model.Gasolinera;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.util.List;
 
+import okhttp3.ResponseBody;
 import retrofit2.Response;
 
 /**
@@ -42,9 +44,10 @@ public class RemoteApiDataSource implements GasolineraDataSource {
 
         for (int attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
             try {
-                String json = downloadJson();
-                try {
-                    return GasolineraJsonParser.parse(json);
+                try (Reader reader = downloadBodyAsReader()) {
+                    return GasolineraJsonParser.parse(reader);
+                } catch (RepoError e) {
+                    throw e;
                 } catch (Exception e) {
                     throw new RepoError(
                             RepoError.Type.PARSE,
@@ -77,26 +80,27 @@ public class RemoteApiDataSource implements GasolineraDataSource {
     }
 
     /**
-     * Ejecuta la llamada Retrofit y devuelve el JSON como String.
+     * Ejecuta la llamada Retrofit y devuelve un Reader sobre el stream
+     * de la respuesta. El llamador es responsable de cerrar el Reader.
      *
-     * @return cuerpo de la respuesta JSON
+     * @return Reader sobre el cuerpo de la respuesta
      * @throws RepoError si hay error de red, timeout, HTTP o respuesta vacía
      */
-    private String downloadJson() throws RepoError {
+    private Reader downloadBodyAsReader() throws RepoError {
         try {
-            Response<String> response = apiService.getEstacionesTerrestres().execute();
+            Response<ResponseBody> response = apiService.getEstacionesTerrestres().execute();
 
             if (!response.isSuccessful()) {
                 throw new RepoError(RepoError.Type.HTTP, response.code(),
                         "HTTP " + response.code());
             }
 
-            String body = response.body();
-            if (body == null || body.isEmpty()) {
+            ResponseBody body = response.body();
+            if (body == null) {
                 throw new RepoError(RepoError.Type.EMPTY_RESPONSE, "Respuesta remota vacía");
             }
 
-            return body;
+            return body.charStream();
 
         } catch (RepoError e) {
             throw e;
