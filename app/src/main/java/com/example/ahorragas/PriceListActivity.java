@@ -107,6 +107,7 @@ public class PriceListActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        locationHelper.cancel();
         executor.shutdownNow();
     }
 
