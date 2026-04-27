@@ -171,6 +171,7 @@ public class MainActivity extends BaseActivity {
                         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
                                 "dd/MM/yyyy HH:mm", java.util.Locale.getDefault());
                         tvLastSync.setText(getString(R.string.last_sync_format, sdf.format(new java.util.Date(millis))));
+                        loadGasolineras();
                     }
                 });
 
