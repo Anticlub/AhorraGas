@@ -209,4 +209,13 @@ public class LocationHelper {
             callback.onError(LocationError.TIMEOUT);
             }, 12_000);
     }
+
+    /**
+     * Cancela cualquier petición de ubicación en curso.
+     * Debe llamarse desde onDestroy() de la Activity para evitar
+     * callbacks tras la destrucción de la Activity.
+     */
+    public void cancel() {
+        fusedLocation.removeLocationUpdates(new LocationCallback() {});
+    }
 }
