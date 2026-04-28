@@ -38,7 +38,7 @@
             android:layout_height="36dp"
             android:layout_marginTop="6dp"
             android:paddingHorizontal="10dp"
-            android:hint="Buscar por localidad..."
+            android:hint="@string/hint_search_by_location"
             android:drawableEnd="@android:drawable/ic_menu_search"
             android:drawablePadding="8dp"
             android:textSize="13sp"
