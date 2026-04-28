@@ -66,7 +66,7 @@ public class FavoritesActivity extends BaseActivity {
                             }
                         } else {
                             Toast.makeText(this,
-                                    "Sin permiso de notificaciones no podremos avisarte. Puedes activarlo en Ajustes.",
+                                    getString(R.string.msg_no_notification_permission),
                                     Toast.LENGTH_LONG).show();
                         }
                         pendingAlertGasolinera = null;
@@ -143,8 +143,6 @@ public class FavoritesActivity extends BaseActivity {
     /**
      * Muestra un diálogo explicativo y lleva al usuario a la pantalla del sistema
      * para eximir la app de la optimización de batería, si aún no está eximida.
-     * Necesario para que las notificaciones en segundo plano funcionen en todos
-     * los fabricantes (Xiaomi, Huawei, Samsung, etc.).
      */
     private void requestBatteryOptimizationExemptionIfNeeded() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return;
@@ -154,27 +152,22 @@ public class FavoritesActivity extends BaseActivity {
         if (pm.isIgnoringBatteryOptimizations(getPackageName())) return;
 
         new AlertDialog.Builder(this)
-                .setTitle("Activar alertas en segundo plano")
-                .setMessage("Para recibir notificaciones de precio aunque la app esté cerrada, "
-                        + "necesitas permitir que funcione sin restricciones de batería.\n\n"
-                        + "No te preocupes: solo comprueba los precios cada 4 horas y el impacto "
-                        + "en batería es mínimo.\n\n"
-                        )
-                .setPositiveButton("Configurar", (d, w) -> {
+                .setTitle(getString(R.string.title_background_alerts))
+                .setMessage(getString(R.string.msg_background_alerts))
+                .setPositiveButton(getString(R.string.btn_configure), (d, w) -> {
                     Intent intent = new Intent(
                             Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
                             Uri.parse("package:" + getPackageName())
                     );
                     startActivity(intent);
                 })
-                .setNegativeButton("Ahora no", null)
+                .setNegativeButton(getString(R.string.btn_not_now), null)
                 .show();
     }
 
     /**
      * Muestra un diálogo para que el usuario introduzca el precio umbral
      * de la alerta para la gasolinera y combustible seleccionados.
-     * Tras guardar o eliminar, refresca el item correspondiente en el adapter.
      *
      * @param gasolinera Gasolinera sobre la que crear la alerta.
      */
@@ -187,31 +180,29 @@ public class FavoritesActivity extends BaseActivity {
                     .setMessage("Ya tienes una alerta para " + gasolinera.getMarca()
                             + " con " + selectedFuel.displayName()
                             + ".\n¿Quieres eliminarla?")
-                    .setPositiveButton("Eliminar", (d, w) -> {
+                    .setPositiveButton(getString(R.string.btn_delete), (d, w) -> {
                         PriceAlertPrefs.remove(this, key);
-                        Toast.makeText(this, "Alerta eliminada", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.msg_alert_deleted), Toast.LENGTH_SHORT).show();
                         int pos = adapter.getPositionOf(gasolinera);
                         if (pos >= 0) adapter.notifyItemChanged(pos);
                     })
-                    .setNegativeButton("Cancelar", null)
+                    .setNegativeButton(getString(R.string.btn_cancel), null)
                     .show();
             return;
         }
 
         if (PriceAlertPrefs.count(this) >= PriceAlertPrefs.MAX_ALERTS) {
-            Toast.makeText(this,
-                    "Ya tienes 5 alertas. Elimina una antes de añadir otra.",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.msg_max_alerts), Toast.LENGTH_SHORT).show();
             return;
         }
 
         Double currentPrice = gasolinera.getPrecio(selectedFuel);
         String priceHint = currentPrice != null
                 ? String.format(java.util.Locale.getDefault(), "Precio actual: %.3f €/L", currentPrice)
-                : "Precio no disponible";
+                : getString(R.string.msg_price_unavailable);
 
         EditText etPrice = new EditText(this);
-        etPrice.setHint("Ej: 1.450");
+        etPrice.setHint(getString(R.string.hint_alert_price));
         etPrice.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
 
         LinearLayout layout = new LinearLayout(this);
@@ -231,14 +222,14 @@ public class FavoritesActivity extends BaseActivity {
                 .setMessage("Combustible: " + selectedFuel.displayName()
                         + "\nNotificaremos cuando el precio sea igual o menor al que indiques.")
                 .setView(layout)
-                .setPositiveButton("Guardar", (d, w) -> {
+                .setPositiveButton(getString(R.string.btn_save), (d, w) -> {
                     String input = etPrice.getText().toString().trim().replace(",", ".");
                     double price;
                     try {
                         price = Double.parseDouble(input);
                         if (price <= 0) throw new NumberFormatException();
                     } catch (NumberFormatException e) {
-                        Toast.makeText(this, "Precio no válido.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.msg_invalid_price), Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -248,17 +239,15 @@ public class FavoritesActivity extends BaseActivity {
 
                     boolean saved = PriceAlertPrefs.add(this, alert);
                     if (saved) {
-                        Toast.makeText(this, "✅ Alerta guardada", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.msg_alert_saved), Toast.LENGTH_SHORT).show();
                         requestBatteryOptimizationExemptionIfNeeded();
                         int pos = adapter.getPositionOf(gasolinera);
                         if (pos >= 0) adapter.notifyItemChanged(pos);
                     } else {
-                        Toast.makeText(this,
-                                "Ya tienes 3 alertas. Elimina una antes de añadir otra.",
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.msg_max_alerts_3), Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("Cancelar", null)
+                .setNegativeButton(getString(R.string.btn_cancel), null)
                 .show();
     }
 

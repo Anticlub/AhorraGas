@@ -177,4 +177,16 @@
     <string name="label_last_sync_format">Última actualización: %1$s</string>
     <string name="label_last_sync_never">Última actualización: --</string>
     <string name="msg_por_potencia">Por potencia</string>
+    <!-- FavoritesActivity -->
+    <string name="msg_no_notification_permission">Sin permiso de notificaciones no podremos avisarte. Puedes activarlo en Ajustes.</string>
+    <string name="title_background_alerts">Activar alertas en segundo plano</string>
+    <string name="msg_background_alerts">Para recibir notificaciones de precio aunque la app esté cerrada, necesitas permitir que funcione sin restricciones de batería.\n\nNo te preocupes: solo comprueba los precios cada 4 horas y el impacto en batería es mínimo.\n\n</string>
+    <string name="btn_configure">Configurar</string>
+    <string name="btn_not_now">Ahora no</string>
+    <string name="msg_alert_deleted">Alerta eliminada</string>
+    <string name="msg_max_alerts">Ya tienes 5 alertas. Elimina una antes de añadir otra.</string>
+    <string name="hint_alert_price">Ej: 1.450</string>
+    <string name="msg_invalid_price">Precio no válido.</string>
+    <string name="msg_alert_saved">✅ Alerta guardada</string>
+    <string name="msg_max_alerts_3">Ya tienes 3 alertas. Elimina una antes de añadir otra.</string>
 </resources>
