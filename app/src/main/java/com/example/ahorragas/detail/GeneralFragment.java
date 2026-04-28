@@ -145,24 +145,23 @@ public class GeneralFragment extends Fragment {
         tvFuelLabel.setText(selectedFuel.displayName());
 
         if (isElectric) {
-            String operador = args.getString(ARG_OPERADOR, "Operador desconocido");
-            tvFuelLabel.setText("Potencia máxima");
-            tvFillLabel.setText("Tiempo de carga estimado");
-            tvArrivalLabel.setText("Gasto energético hasta la estación");
+            tvFuelLabel.setText(getString(R.string.label_max_power));
+            tvFillLabel.setText(getString(R.string.label_charge_time));
+            tvArrivalLabel.setText(getString(R.string.label_energy_cost));
             double maxPwW = args.getDouble(ARG_MAX_POWER_W, 0);
             if (maxPwW > 0) {
                 tvPrice.setText(String.format(java.util.Locale.getDefault(), "%.0f kW", maxPwW / 1000.0));
             } else {
-                tvPrice.setText("N/D");
+                tvPrice.setText(getString(R.string.msg_power_unavailable));
             }
 
             // ── Gasto energético hasta la estación ───────────────────────────
             if (activeVehicle == null || !activeVehicle.isElectric()) {
-                tvArrivalCost.setText("Configura un vehículo eléctrico para calcular");
+                tvArrivalCost.setText(getString(R.string.msg_configure_electric_vehicle));
             } else if (!activeVehicle.hasConsumption()) {
-                tvArrivalCost.setText("Añade el consumo (kWh/100km) en preferencias");
+                tvArrivalCost.setText(getString(R.string.msg_add_consumption_ev));
             } else if (g.getDistanceMeters() == null || g.getDistanceMeters() <= 0) {
-                tvArrivalCost.setText("Distancia no disponible");
+                tvArrivalCost.setText(getString(R.string.msg_distance_unavailable));
             } else {
                 double distanceKm = g.getDistanceMeters() / 1000.0;
                 Double kwh = activeVehicle.estimateEnergyConsumption(distanceKm);
@@ -175,11 +174,11 @@ public class GeneralFragment extends Fragment {
             double maxPowerKw = maxPowerW / 1000.0;
 
             if (activeVehicle == null || !activeVehicle.isElectric()) {
-                tvFillCost.setText("Configura un vehículo eléctrico para calcular");
+                tvFillCost.setText(getString(R.string.msg_configure_electric_vehicle));
             } else if (!activeVehicle.hasTankCapacity() || !activeVehicle.hasChargingPower()) {
-                tvFillCost.setText("Añade batería y potencia de carga en preferencias");
+                tvFillCost.setText(getString(R.string.msg_add_battery_and_power));
             } else if (maxPowerKw <= 0) {
-                tvFillCost.setText("Potencia de la estación no disponible");
+                tvFillCost.setText(getString(R.string.msg_station_power_unavailable));
             } else {
                 Double hours = activeVehicle.estimateChargeTimeHours(maxPowerKw);
                 if (hours != null) {
@@ -194,7 +193,7 @@ public class GeneralFragment extends Fragment {
                                 "~%dh %dmin (20%% → 80%%)", h, m));
                     }
                 } else {
-                    tvFillCost.setText("N/D");
+                    tvFillCost.setText(getString(R.string.msg_power_unavailable));
                 }
             }
 
@@ -207,11 +206,11 @@ public class GeneralFragment extends Fragment {
 
             // ── Coste de llenado ─────────────────────────────────────────────────
             if (activeVehicle == null) {
-                tvFillCost.setText("Configura tu vehículo para calcular el coste de llenado");
+                tvFillCost.setText(getString(R.string.msg_configure_vehicle_fill));
             } else if (!activeVehicle.hasTankCapacity()) {
-                tvFillCost.setText("Añade la capacidad del depósito en preferencias");
+                tvFillCost.setText(getString(R.string.msg_add_tank_capacity));
             } else if (price == null || price <= 0) {
-                tvFillCost.setText("Precio no disponible");
+                tvFillCost.setText(getString(R.string.msg_price_unavailable));
             } else {
                 tvFillCost.setText(String.format(java.util.Locale.getDefault(),
                         "%.2f €", activeVehicle.estimateFillCost(price)));
@@ -219,11 +218,11 @@ public class GeneralFragment extends Fragment {
 
             // ── Coste de llegada ─────────────────────────────────────────────────
             if (activeVehicle == null || !activeVehicle.hasConsumption()) {
-                tvArrivalCost.setText("Configura tu vehículo para calcular el coste");
+                tvArrivalCost.setText(getString(R.string.msg_configure_vehicle_cost));
             } else if (g.getDistanceMeters() == null || g.getDistanceMeters() <= 0) {
-                tvArrivalCost.setText("Distancia no disponible");
+                tvArrivalCost.setText(getString(R.string.msg_distance_unavailable));
             } else if (price == null || price <= 0) {
-                tvArrivalCost.setText("Precio no disponible");
+                tvArrivalCost.setText(getString(R.string.msg_price_unavailable));
             } else {
                 double distanceKm = g.getDistanceMeters() / 1000.0;
                 double coste = (distanceKm / 100.0) * activeVehicle.getConsumption() * price;
@@ -275,25 +274,25 @@ public class GeneralFragment extends Fragment {
         }
 
         tvDistance.setText(g.getFormattedDistance().isEmpty()
-                ? "Distancia no disponible"
+                ? getString(R.string.msg_distance_unavailable)
                 : g.getFormattedDistance());
         String horario = g.getFormattedHorario();
-        tvHorario.setText(horario != null && !horario.isEmpty() ? horario : "No disponible");
+        tvHorario.setText(horario != null && !horario.isEmpty() ? horario : getString(R.string.msg_no_available));
 
         // ── Botón favorito ───────────────────────────────────────────────────
         Button btnFavorite = view.findViewById(R.id.btnFavorite);
         boolean isFav = FavoritesPrefs.isFavorite(requireContext(), g);
-        btnFavorite.setText(isFav ? "❤️ Quitar de favoritos" : "🤍 Añadir a favoritos");
+        btnFavorite.setText(isFav ? getString(R.string.btn_remove_from_favorites) : getString(R.string.btn_add_to_favorites));
 
         final Gasolinera finalG = g;
         btnFavorite.setOnClickListener(v -> {
             boolean nowFav = FavoritesPrefs.isFavorite(requireContext(), finalG);
             if (nowFav) {
                 FavoritesPrefs.remove(requireContext(), finalG);
-                btnFavorite.setText("🤍 Añadir a favoritos");
+                btnFavorite.setText(getString(R.string.btn_add_to_favorites));
             } else {
                 FavoritesPrefs.add(requireContext(), finalG);
-                btnFavorite.setText("❤️ Quitar de favoritos");
+                btnFavorite.setText(getString(R.string.btn_remove_from_favorites));
             }
         });
     }
