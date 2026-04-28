@@ -151,4 +151,20 @@
     <string name="title_delete_discount">Eliminar descuento</string>
     <string name="msg_no_alerts_configured">No tienes alertas configuradas.</string>
     <string name="msg_checking_prices">🔔 Comprobando precios… Si alguno baja de tu alerta, te avisaremos.</string>
+    <!-- GeneralFragment -->
+    <string name="label_max_power">Potencia máxima</string>
+    <string name="label_charge_time">Tiempo de carga estimado</string>
+    <string name="label_energy_cost">Gasto energético hasta la estación</string>
+    <string name="msg_configure_electric_vehicle">Configura un vehículo eléctrico para calcular</string>
+    <string name="msg_add_consumption_ev">Añade el consumo (kWh/100km) en preferencias</string>
+    <string name="msg_distance_unavailable">Distancia no disponible</string>
+    <string name="msg_configure_vehicle_fill">Configura tu vehículo para calcular el coste de llenado</string>
+    <string name="msg_add_tank_capacity">Añade la capacidad del depósito en preferencias</string>
+    <string name="msg_price_unavailable">Precio no disponible</string>
+    <string name="msg_configure_vehicle_cost">Configura tu vehículo para calcular el coste</string>
+    <string name="msg_add_battery_and_power">Añade batería y potencia de carga en preferencias</string>
+    <string name="msg_station_power_unavailable">Potencia de la estación no disponible</string>
+    <string name="msg_power_unavailable">N/D</string>
+    <string name="btn_remove_from_favorites">❤️ Quitar de favoritos</string>
+    <string name="msg_no_available">No disponible</string>
 </resources>
