@@ -174,7 +174,6 @@ public class MainActivity extends BaseActivity {
                         loadGasolineras();
                     }
                 });
-
     }
 
     @Override
@@ -186,7 +185,7 @@ public class MainActivity extends BaseActivity {
                 PreferenceManager.getDefaultSharedPreferences(this)
                         .getString(PREF_SELECTED_FUEL, FuelType.GASOLEO_A.name()));
         bottomNav.getMenu().findItem(R.id.nav_price).setTitle(
-                currentNavFuel == FuelType.ELECTRICO ? "Por potencia" : "Por precio");
+                currentNavFuel == FuelType.ELECTRICO ? getString(R.string.label_by_power) : getString(R.string.label_by_price));
         bottomNav.getMenu().findItem(R.id.nav_price).setIcon(
                 currentNavFuel == FuelType.ELECTRICO ? R.drawable.ic_bolt : R.drawable.ic_price);
 
@@ -303,19 +302,19 @@ public class MainActivity extends BaseActivity {
         layout.addView(etCons);
 
         TextView labelTank = new TextView(this);
-        labelTank.setText("Capacidad depósito (L)  · opcional");
+        labelTank.setText(getString(R.string.label_tank_capacity));
         labelTank.setTextColor(0xFF333333);
         labelTank.setTextSize(13);
         labelTank.setPadding(0, dp(12), 0, 0);
         layout.addView(labelTank);
 
         EditText etTank = new EditText(this);
-        etTank.setHint("Ej: 50  (entre 1 y 200)");
+        etTank.setHint(getString(R.string.hint_tank_capacity));
         etTank.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         layout.addView(etTank);
 
         TextView labelCharging = new TextView(this);
-        labelCharging.setText("Potencia de carga (kW)  · opcional");
+        labelCharging.setText(getString(R.string.label_charging_power));
         labelCharging.setTextColor(0xFF333333);
         labelCharging.setTextSize(13);
         labelCharging.setPadding(0, dp(12), 0, 0);
@@ -323,7 +322,7 @@ public class MainActivity extends BaseActivity {
         layout.addView(labelCharging);
 
         EditText etCharging = new EditText(this);
-        etCharging.setHint("Ej: 11  (entre 1 y 500)");
+        etCharging.setHint(getString(R.string.hint_charging_power));
         etCharging.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         etCharging.setVisibility(View.GONE);
         layout.addView(etCharging);
@@ -361,17 +360,17 @@ public class MainActivity extends BaseActivity {
                         tvFuelSelector.setText(selectedFuelLocal[0].displayName());
                         boolean isEv = (selectedFuelLocal[0] == FuelType.ELECTRICO);
                         labelCons.setText(isEv
-                                ? "Consumo (kWh/100 km)  · opcional"
+                                ? getString(R.string.label_consumption_ev)
                                 : getString(R.string.dialogo_vehiculo_consumo));
                         etCons.setHint(isEv
-                                ? "Ej: 18  (entre 0.1 y 100)"
+                                ? getString(R.string.hint_consumption_ev)
                                 : getString(R.string.dialogo_vehiculo_consumo_hint));
                         labelTank.setText(isEv
-                                ? "Batería (kWh)  · opcional"
-                                : "Capacidad depósito (L)  · opcional");
+                                ? getString(R.string.label_battery_capacity)
+                                : getString(R.string.label_tank_capacity));
                         etTank.setHint(isEv
-                                ? "Ej: 60  (entre 1 y 200)"
-                                : "Ej: 50  (entre 1 y 200)");
+                                ? getString(R.string.hint_battery_capacity)
+                                : getString(R.string.hint_tank_capacity));
                         labelCharging.setVisibility(isEv ? View.VISIBLE : View.GONE);
                         etCharging.setVisibility(isEv ? View.VISIBLE : View.GONE);
                         d.dismiss();
@@ -418,7 +417,7 @@ public class MainActivity extends BaseActivity {
                     tank = Double.parseDouble(tankStr);
                     if (tank <= 0 || tank > 200) throw new NumberFormatException();
                 } catch (Exception e) {
-                    Toast.makeText(this, "Capacidad no válida. Introduce un número entre 1 y 200.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.msg_invalid_tank_capacity), Toast.LENGTH_SHORT).show();
                     return;
                 }
             }
@@ -429,7 +428,7 @@ public class MainActivity extends BaseActivity {
                     charging = Double.parseDouble(chargingStr);
                     if (charging <= 0 || charging > 500) throw new NumberFormatException();
                 } catch (Exception e) {
-                    Toast.makeText(this, "Potencia no válida. Introduce un número entre 1 y 500.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.msg_invalid_charging_power), Toast.LENGTH_SHORT).show();
                     return;
                 }
             }
@@ -475,13 +474,13 @@ public class MainActivity extends BaseActivity {
                     long millis = Long.parseLong(raw);
                     String formatted = new SimpleDateFormat(
                             "dd/MM/yyyy HH:mm", Locale.getDefault()).format(new Date(millis));
-                    text = "Última actualización: " + formatted;
+                    text = getString(R.string.label_last_sync_format, formatted);
                 } else {
-                    text = "Última actualización: --";
+                    text = getString(R.string.label_last_sync_never);
                 }
                 mainHandler.post(() -> tvLastSync.setText(text));
             } catch (Exception e) {
-                mainHandler.post(() -> tvLastSync.setText("Última actualización: --"));
+                mainHandler.post(() -> tvLastSync.setText(getString(R.string.label_last_sync_never)));
             }
         });
     }
@@ -523,7 +522,6 @@ public class MainActivity extends BaseActivity {
             Toast.makeText(this, R.string.location_gps_message, Toast.LENGTH_LONG).show();
             return;
         }
-
 
         locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
             @Override
@@ -660,7 +658,6 @@ public class MainActivity extends BaseActivity {
         }
         return result;
     }
-
 
     private void showStationsOnMap(int count) {
         MarkerBitmapFactory.clearCache();
@@ -817,7 +814,6 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-
     private String getOriginLabel(DataSourceOrigin origin) {
         if (origin == null) return getString(R.string.origin_unknown);
         switch (origin) {
@@ -890,7 +886,7 @@ public class MainActivity extends BaseActivity {
                     mainHandler.post(() -> {
                         progressBarSearch.setVisibility(View.GONE);
                         Toast.makeText(this,
-                                "No se encontró la localidad", Toast.LENGTH_SHORT).show();
+                                getString(R.string.msg_location_not_found), Toast.LENGTH_SHORT).show();
                     });
                     return;
                 }
@@ -918,7 +914,7 @@ public class MainActivity extends BaseActivity {
                 mainHandler.post(() -> {
                     progressBarSearch.setVisibility(View.GONE);
                     Toast.makeText(this,
-                            "Error al buscar la localidad", Toast.LENGTH_SHORT).show();
+                            getString(R.string.msg_error_searching_location), Toast.LENGTH_SHORT).show();
                 });
             }
         });
@@ -1009,7 +1005,7 @@ public class MainActivity extends BaseActivity {
 
                     if (filtered.isEmpty()) {
                         Toast.makeText(this,
-                                "No hay estaciones en esa localidad", Toast.LENGTH_SHORT).show();
+                                getString(R.string.msg_no_stations_in_location), Toast.LENGTH_SHORT).show();
                     }
                 });
 
@@ -1018,7 +1014,7 @@ public class MainActivity extends BaseActivity {
                     if (isDestroyed() || isFinishing()) return;
                     progressBarSearch.setVisibility(View.GONE);
                     Toast.makeText(this,
-                            "Error buscando estaciones", Toast.LENGTH_SHORT).show();
+                            getString(R.string.msg_error_searching_stations), Toast.LENGTH_SHORT).show();
                 });
             }
         });
@@ -1077,8 +1073,6 @@ public class MainActivity extends BaseActivity {
 
     /**
      * Normaliza el nombre de un municipio para la búsqueda en Room.
-     * Elimina artículos iniciales (el, la, los, las, de, del) para cubrir
-     * formatos como "Casar (El)" cuando el usuario escribe "El Casar".
      *
      * @param query texto introducido por el usuario
      * @return palabra principal del municipio para buscar en Room
@@ -1097,7 +1091,6 @@ public class MainActivity extends BaseActivity {
 
     /**
      * Genera variantes invertidas de un municipio con artículo para buscar en Room.
-     * Ej: "El Casar" → ["Casar (El)", "Casar, El"]
      *
      * @param query texto introducido por el usuario
      * @return lista de variantes o lista vacía si no empieza por artículo

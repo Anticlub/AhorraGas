@@ -167,4 +167,26 @@
     <string name="msg_power_unavailable">N/D</string>
     <string name="btn_remove_from_favorites">❤️ Quitar de favoritos</string>
     <string name="msg_no_available">No disponible</string>
+    <!-- MainActivity -->
+    <string name="msg_location_not_found">No se encontró la localidad</string>
+    <string name="msg_error_searching_location">Error al buscar la localidad</string>
+    <string name="msg_no_stations_in_location">No hay estaciones en esa localidad</string>
+    <string name="msg_error_searching_stations">Error buscando estaciones</string>
+    <string name="msg_invalid_tank_capacity">Capacidad no válida. Introduce un número entre 1 y 200.</string>
+    <string name="msg_invalid_charging_power">Potencia no válida. Introduce un número entre 1 y 500.</string>
+    <string name="label_last_sync_format">Última actualización: %1$s</string>
+    <string name="label_last_sync_never">Última actualización: --</string>
+    <string name="msg_por_potencia">Por potencia</string>
+    <!-- FavoritesActivity -->
+    <string name="msg_no_notification_permission">Sin permiso de notificaciones no podremos avisarte. Puedes activarlo en Ajustes.</string>
+    <string name="title_background_alerts">Activar alertas en segundo plano</string>
+    <string name="msg_background_alerts">Para recibir notificaciones de precio aunque la app esté cerrada, necesitas permitir que funcione sin restricciones de batería.\n\nNo te preocupes: solo comprueba los precios cada 4 horas y el impacto en batería es mínimo.\n\n</string>
+    <string name="btn_configure">Configurar</string>
+    <string name="btn_not_now">Ahora no</string>
+    <string name="msg_alert_deleted">Alerta eliminada</string>
+    <string name="msg_max_alerts">Ya tienes 5 alertas. Elimina una antes de añadir otra.</string>
+    <string name="hint_alert_price">Ej: 1.450</string>
+    <string name="msg_invalid_price">Precio no válido.</string>
+    <string name="msg_alert_saved">✅ Alerta guardada</string>
+    <string name="msg_max_alerts_3">Ya tienes 3 alertas. Elimina una antes de añadir otra.</string>
 </resources>
