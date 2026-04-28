@@ -86,4 +86,18 @@
     <string name="label_my_price_alerts">Mis alertas de precio</string>
     <string name="btn_test_notifications">🔔 Probar notificaciones</string>
     <string name="label_markers_range_hint">Número de gasolineras mostradas en el mapa (1–150).</string>
+    <string name="hint_search_by_location">Buscar por localidad...</string>
+    <string name="title_distance_list">Estaciones por distancia</string>
+    <string name="title_favorites">Favoritas</string>
+    <string name="label_fuel">Combustible</string>
+    <string name="label_fill_cost">Coste de llenado</string>
+    <string name="label_arrival_cost">Coste de llegada</string>
+    <string name="label_distance">Distancia</string>
+    <string name="label_schedule">Horario</string>
+    <string name="btn_add_to_favorites">🤍 Añadir a favoritos</string>
+    <string name="btn_navigate">Navegar</string>
+    <string name="label_range_7_days">7 días</string>
+    <string name="label_range_15_days">15 días</string>
+    <string name="label_range_30_days">30 días</string>
+    <string name="msg_loading_reviews">Cargando opiniones...</string>
 </resources>
