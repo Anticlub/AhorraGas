@@ -147,7 +147,7 @@ public class PreferencesActivity extends BaseActivity {
             if (id == R.id.nav_preferences) return true;
             else if (id == R.id.nav_map) {
                 if (!VehiclePrefs.hasVehicles(this)) {
-                    Toast.makeText(this, "Añade al menos un vehículo para continuar.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.msg_add_vehicle_required), Toast.LENGTH_SHORT).show();
                     return false;
                 }
                 navigateToMap();
@@ -168,7 +168,7 @@ public class PreferencesActivity extends BaseActivity {
                 androidx.preference.PreferenceManager.getDefaultSharedPreferences(this)
                         .getString("pref_selected_fuel", FuelType.GASOLEO_A.name()));
         if (fuel == FuelType.ELECTRICO) {
-            bottomNav.getMenu().findItem(R.id.nav_price).setTitle("Por potencia");
+            bottomNav.getMenu().findItem(R.id.nav_price).setTitle(getString(R.string.label_by_power));
             bottomNav.getMenu().findItem(R.id.nav_price).setIcon(R.drawable.ic_bolt);
         }
     }
@@ -179,7 +179,7 @@ public class PreferencesActivity extends BaseActivity {
             public void handleOnBackPressed() {
                 if (!VehiclePrefs.hasVehicles(PreferencesActivity.this)) {
                     Toast.makeText(PreferencesActivity.this,
-                            "Añade al menos un vehículo para continuar.", Toast.LENGTH_SHORT).show();
+                            getString(R.string.msg_add_vehicle_required), Toast.LENGTH_SHORT).show();
                 } else {
                     finish();
                 }
@@ -200,7 +200,7 @@ public class PreferencesActivity extends BaseActivity {
     private void runAlertTest() {
         List<PriceAlert> alerts = PriceAlertPrefs.loadAll(this);
         if (alerts.isEmpty()) {
-            Toast.makeText(this, "No tienes alertas configuradas.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.msg_no_alerts_configured), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -214,9 +214,7 @@ public class PreferencesActivity extends BaseActivity {
                 .build();
 
         WorkManager.getInstance(this).enqueue(request);
-        Toast.makeText(this,
-                "🔔 Comprobando precios… Si alguno baja de tu alerta, te avisaremos.",
-                Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.msg_checking_prices), Toast.LENGTH_LONG).show();
     }
 
     // ─── UI Alertas ───────────────────────────────────────────────────────────
@@ -227,7 +225,7 @@ public class PreferencesActivity extends BaseActivity {
 
         if (alerts.isEmpty()) {
             TextView empty = new TextView(this);
-            empty.setText("Sin alertas. Créalas desde tus favoritas.");
+            empty.setText(getString(R.string.msg_no_alerts));
             empty.setTextColor(0xFFAAAAAA);
             empty.setPadding(dp(16), dp(24), dp(16), dp(8));
             alertListContainer.addView(empty);
@@ -277,13 +275,13 @@ public class PreferencesActivity extends BaseActivity {
         TextView btnDelete = makeTextButton("🗑", 0xFFEF5350);
         btnDelete.setOnClickListener(v -> {
             new AlertDialog.Builder(this)
-                    .setTitle("Eliminar alerta")
+                    .setTitle(getString(R.string.title_delete_alert))
                     .setMessage("¿Eliminar la alerta de " + alert.getGasolineraName() + "?")
-                    .setPositiveButton("Eliminar", (d, w) -> {
+                    .setPositiveButton(getString(R.string.btn_delete), (d, w) -> {
                         PriceAlertPrefs.remove(this, alert.getKey());
                         refreshAlertList();
                     })
-                    .setNegativeButton("Cancelar", null)
+                    .setNegativeButton(getString(R.string.btn_cancel), null)
                     .show();
         });
         card.addView(btnDelete);
@@ -307,7 +305,7 @@ public class PreferencesActivity extends BaseActivity {
 
         if (vehicles.isEmpty()) {
             TextView empty = new TextView(this);
-            empty.setText("Sin vehículos. Pulsa + para añadir uno.");
+            empty.setText(getString(R.string.msg_no_vehicles));
             empty.setTextColor(0xFFAAAAAA);
             empty.setPadding(dp(16), dp(24), dp(16), dp(8));
             vehicleListContainer.addView(empty);
@@ -387,7 +385,7 @@ public class PreferencesActivity extends BaseActivity {
             BottomNavigationView bottomNav = findViewById(R.id.bottomNavPrefs);
             FuelType fuel = vehicles.get(finalIndex).getFuelType();
             bottomNav.getMenu().findItem(R.id.nav_price).setTitle(
-                    fuel == FuelType.ELECTRICO ? "Por potencia" : "Por precio");
+                    fuel == FuelType.ELECTRICO ? getString(R.string.label_by_power) : getString(R.string.label_by_price));
             bottomNav.getMenu().findItem(R.id.nav_price).setIcon(
                     fuel == FuelType.ELECTRICO ? R.drawable.ic_bolt : R.drawable.ic_price);
         });
@@ -409,7 +407,7 @@ public class PreferencesActivity extends BaseActivity {
 
         if (discounts.isEmpty()) {
             TextView empty = new TextView(this);
-            empty.setText("Sin descuentos. Pulsa + para añadir uno.");
+            empty.setText(getString(R.string.msg_no_discounts));
             empty.setTextColor(0xFFAAAAAA);
             empty.setPadding(dp(16), dp(24), dp(16), dp(8));
             discountListContainer.addView(empty);
@@ -454,7 +452,7 @@ public class PreferencesActivity extends BaseActivity {
                 : String.format(Locale.getDefault(), "%.0f cts/L", discount.getValue());
 
         TextView tvDetail = new TextView(this);
-        tvDetail.setText("Descuento: " + typeLabel);
+        tvDetail.setText(getString(R.string.label_discount) + typeLabel);
         tvDetail.setTextColor(0xFFAAAAAA);
         tvDetail.setTextSize(12);
         textCol.addView(tvDetail);
@@ -488,13 +486,13 @@ public class PreferencesActivity extends BaseActivity {
         layout.setPadding(dp(20), dp(12), dp(20), dp(4));
 
         TextView labelName = new TextView(this);
-        labelName.setText("Nombre del vehículo *");
+        labelName.setText(getString(R.string.label_vehicle_name));
         labelName.setTextColor(0xFFCCCCCC);
         labelName.setTextSize(13);
         layout.addView(labelName);
 
         EditText etName = new EditText(this);
-        etName.setHint("Ej: Mi Coche, Furgoneta…");
+        etName.setHint(getString(R.string.dialogo_vehiculo_nombre_hint));
         etName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
         if (existing != null) etName.setText(existing.getName());
         layout.addView(etName);
@@ -503,14 +501,14 @@ public class PreferencesActivity extends BaseActivity {
         layout.addView(tvNameError);
 
         TextView labelCons = new TextView(this);
-        labelCons.setText("Consumo (L/100 km)  · opcional");
+        labelCons.setText(getString(R.string.label_consumption_fuel));
         labelCons.setTextColor(0xFFCCCCCC);
         labelCons.setTextSize(13);
         labelCons.setPadding(0, dp(12), 0, 0);
         layout.addView(labelCons);
 
         EditText etCons = new EditText(this);
-        etCons.setHint("Ej: 6.5  (entre 0.1 y 100)");
+        etCons.setHint(getString(R.string.hint_consumption_fuel));
         etCons.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         if (existing != null && existing.hasConsumption()) {
             etCons.setText(String.format(Locale.getDefault(), "%.1f", existing.getConsumption()));
@@ -521,14 +519,14 @@ public class PreferencesActivity extends BaseActivity {
         layout.addView(tvConsError);
 
         TextView labelTank = new TextView(this);
-        labelTank.setText("Capacidad depósito (L)  · opcional");
+        labelTank.setText(getString(R.string.label_tank_capacity));
         labelTank.setTextColor(0xFFCCCCCC);
         labelTank.setTextSize(13);
         labelTank.setPadding(0, dp(12), 0, 0);
         layout.addView(labelTank);
 
         EditText etTank = new EditText(this);
-        etTank.setHint("Ej: 50  (entre 1 y 200)");
+        etTank.setHint(getString(R.string.hint_tank_capacity));
         etTank.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         if (existing != null && existing.hasTankCapacity()) {
             etTank.setText(String.format(Locale.getDefault(), "%.0f", existing.getTankCapacity()));
@@ -540,14 +538,14 @@ public class PreferencesActivity extends BaseActivity {
 
         // ── Campo potencia de carga (solo eléctricos) ─────────────────────────
         TextView labelCharging = new TextView(this);
-        labelCharging.setText("Potencia de carga (kW)  · opcional");
+        labelCharging.setText(getString(R.string.label_charging_power));
         labelCharging.setTextColor(0xFFCCCCCC);
         labelCharging.setTextSize(13);
         labelCharging.setPadding(0, dp(12), 0, 0);
         layout.addView(labelCharging);
 
         EditText etCharging = new EditText(this);
-        etCharging.setHint("Ej: 11  (entre 1 y 500)");
+        etCharging.setHint(getString(R.string.hint_charging_power));
         etCharging.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         if (existing != null && existing.hasChargingPower()) {
             etCharging.setText(String.format(Locale.getDefault(), "%.0f", existing.getChargingPowerKw()));
@@ -564,14 +562,14 @@ public class PreferencesActivity extends BaseActivity {
         etCharging.setVisibility(initElectric ? View.VISIBLE : View.GONE);
 
         if (initElectric) {
-            labelCons.setText("Consumo (kWh/100 km)  · opcional");
-            etCons.setHint("Ej: 18  (entre 0.1 y 100)");
-            labelTank.setText("Batería (kWh)  · opcional");
-            etTank.setHint("Ej: 60  (entre 1 y 200)");
+            labelCons.setText(getString(R.string.label_consumption_ev));
+            etCons.setHint(getString(R.string.hint_consumption_ev));
+            labelTank.setText(getString(R.string.label_battery_capacity));
+            etTank.setHint(getString(R.string.hint_battery_capacity));
         }
 
         TextView labelFuel = new TextView(this);
-        labelFuel.setText("Tipo de combustible *");
+        labelFuel.setText(getString(R.string.label_fuel_type));
         labelFuel.setTextColor(0xFFCCCCCC);
         labelFuel.setTextSize(13);
         labelFuel.setPadding(0, dp(12), 0, 0);
@@ -598,32 +596,32 @@ public class PreferencesActivity extends BaseActivity {
                 if (fuels[i] == selectedFuel[0]) { checked = i; break; }
             }
             new AlertDialog.Builder(this)
-                    .setTitle("Combustible")
+                    .setTitle(getString(R.string.title_fuel_dialog))
                     .setSingleChoiceItems(fuelNames, checked, (d, which) -> {
                         selectedFuel[0] = fuels[which];
                         tvFuelSelector.setText(selectedFuel[0].displayName());
                         boolean isEv = (selectedFuel[0] == FuelType.ELECTRICO);
-                        labelCons.setText(isEv ? "Consumo (kWh/100 km)  · opcional" : "Consumo (L/100 km)  · opcional");
-                        etCons.setHint(isEv ? "Ej: 18  (entre 0.1 y 100)" : "Ej: 6.5  (entre 0.1 y 100)");
-                        labelTank.setText(isEv ? "Batería (kWh)  · opcional" : "Capacidad depósito (L)  · opcional");
-                        etTank.setHint(isEv ? "Ej: 60  (entre 1 y 200)" : "Ej: 50  (entre 1 y 200)");
+                        labelCons.setText(isEv ? getString(R.string.label_consumption_ev) : getString(R.string.label_consumption_fuel));
+                        etCons.setHint(isEv ? getString(R.string.hint_consumption_ev) : getString(R.string.hint_consumption_fuel));
+                        labelTank.setText(isEv ? getString(R.string.label_battery_capacity) : getString(R.string.label_tank_capacity));
+                        etTank.setHint(isEv ? getString(R.string.hint_battery_capacity) : getString(R.string.hint_tank_capacity));
                         labelCharging.setVisibility(isEv ? View.VISIBLE : View.GONE);
                         etCharging.setVisibility(isEv ? View.VISIBLE : View.GONE);
                         d.dismiss();
                     })
-                    .setNegativeButton("Cancelar", null)
+                    .setNegativeButton(getString(R.string.btn_cancel), null)
                     .show();
         });
         layout.addView(tvFuelSelector);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
-                .setTitle(mandatory ? "Añade tu vehículo para empezar"
-                        : (isNew ? "Añadir vehículo" : "Editar vehículo"))
+                .setTitle(mandatory ? getString(R.string.title_add_first_vehicle)
+                        : (isNew ? getString(R.string.title_add_vehicle) : getString(R.string.title_edit_vehicle)))
                 .setView(layout)
-                .setPositiveButton("Guardar", null);
+                .setPositiveButton(getString(R.string.btn_save), null);
 
         if (mandatory) builder.setCancelable(false);
-        else builder.setNegativeButton("Cancelar", null);
+        else builder.setNegativeButton(getString(R.string.btn_cancel), null);
 
         AlertDialog dialog = builder.create();
         dialog.show();
@@ -633,7 +631,7 @@ public class PreferencesActivity extends BaseActivity {
 
             String name = etName.getText().toString().trim();
             if (name.isEmpty()) {
-                tvNameError.setText("El nombre es obligatorio.");
+                tvNameError.setText(getString(R.string.error_name_required));
                 tvNameError.setVisibility(View.VISIBLE);
                 hasError = true;
             } else {
@@ -648,7 +646,7 @@ public class PreferencesActivity extends BaseActivity {
                     if (cons <= 0 || cons > 100) throw new NumberFormatException();
                     tvConsError.setVisibility(View.GONE);
                 } catch (Exception e) {
-                    tvConsError.setText("Valor no válido. Introduce un número entre 0.1 y 100.");
+                    tvConsError.setText(getString(R.string.error_invalid_value_0_100));
                     tvConsError.setVisibility(View.VISIBLE);
                     hasError = true;
                 }
@@ -664,7 +662,7 @@ public class PreferencesActivity extends BaseActivity {
                     if (tank <= 0 || tank > 200) throw new NumberFormatException();
                     tvTankError.setVisibility(View.GONE);
                 } catch (Exception e) {
-                    tvTankError.setText("Valor no válido. Introduce un número entre 1 y 200.");
+                    tvTankError.setText(getString(R.string.error_invalid_value_1_200));
                     tvTankError.setVisibility(View.VISIBLE);
                     hasError = true;
                 }
@@ -680,7 +678,7 @@ public class PreferencesActivity extends BaseActivity {
                     if (chargingPower <= 0 || chargingPower > 500) throw new NumberFormatException();
                     tvChargingError.setVisibility(View.GONE);
                 } catch (Exception e) {
-                    tvChargingError.setText("Valor no válido. Introduce un número entre 1 y 500.");
+                    tvChargingError.setText(getString(R.string.error_invalid_value_1_500));
                     tvChargingError.setVisibility(View.VISIBLE);
                     hasError = true;
                 }
@@ -694,7 +692,7 @@ public class PreferencesActivity extends BaseActivity {
             if (isNew) {
                 boolean added = VehiclePrefs.addVehicle(this, vehicle);
                 if (!added) {
-                    tvNameError.setText("Ya tienes el máximo de 10 vehículos.");
+                    tvNameError.setText(getString(R.string.error_max_vehicles));
                     tvNameError.setVisibility(View.VISIBLE);
                     return;
                 }
@@ -717,7 +715,7 @@ public class PreferencesActivity extends BaseActivity {
         layout.setPadding(dp(20), dp(12), dp(20), dp(4));
 
         TextView labelBrand = new TextView(this);
-        labelBrand.setText("Marca de gasolinera *");
+        labelBrand.setText(getString(R.string.label_station_brand));
         labelBrand.setTextColor(0xFFCCCCCC);
         labelBrand.setTextSize(13);
         layout.addView(labelBrand);
@@ -738,13 +736,13 @@ public class PreferencesActivity extends BaseActivity {
                 if (BRANDS[i].equals(selectedBrand[0])) { checked = i; break; }
             }
             new AlertDialog.Builder(this)
-                    .setTitle("Selecciona la marca")
+                    .setTitle(getString(R.string.title_select_brand))
                     .setSingleChoiceItems(BRANDS, checked, (d, which) -> {
                         selectedBrand[0] = BRANDS[which];
                         tvBrandSelector.setText(selectedBrand[0]);
                         d.dismiss();
                     })
-                    .setNegativeButton("Cancelar", null)
+                    .setNegativeButton(getString(R.string.btn_cancel), null)
                     .show();
         });
         layout.addView(tvBrandSelector);
@@ -753,7 +751,7 @@ public class PreferencesActivity extends BaseActivity {
         layout.addView(tvBrandError);
 
         TextView labelType = new TextView(this);
-        labelType.setText("Tipo de descuento *");
+        labelType.setText(getString(R.string.label_discount_type));
         labelType.setTextColor(0xFFCCCCCC);
         labelType.setTextSize(13);
         labelType.setPadding(0, dp(12), 0, 0);
@@ -762,7 +760,7 @@ public class PreferencesActivity extends BaseActivity {
         final Discount.Type[] selectedType = {
                 existing != null ? existing.getType() : Discount.Type.CENTS_PER_LITER
         };
-        final String[] typeNames = {"Céntimos por litro", "Porcentaje (%)"};
+        final String[] typeNames = {getString(R.string.label_cents_per_liter), getString(R.string.label_percentage)};
         final Discount.Type[] typeValues = {Discount.Type.CENTS_PER_LITER, Discount.Type.PERCENTAGE};
 
         TextView tvTypeSelector = new TextView(this);
@@ -776,26 +774,26 @@ public class PreferencesActivity extends BaseActivity {
         tvTypeSelector.setOnClickListener(v -> {
             int checked = selectedType[0] == Discount.Type.PERCENTAGE ? 1 : 0;
             new AlertDialog.Builder(this)
-                    .setTitle("Tipo de descuento")
+                    .setTitle(getString(R.string.title_discount_type_dialog))
                     .setSingleChoiceItems(typeNames, checked, (d, which) -> {
                         selectedType[0] = typeValues[which];
                         tvTypeSelector.setText(typeNames[which]);
                         d.dismiss();
                     })
-                    .setNegativeButton("Cancelar", null)
+                    .setNegativeButton(getString(R.string.btn_cancel), null)
                     .show();
         });
         layout.addView(tvTypeSelector);
 
         TextView labelValue = new TextView(this);
-        labelValue.setText("Valor del descuento *");
+        labelValue.setText(getString(R.string.label_discount_value));
         labelValue.setTextColor(0xFFCCCCCC);
         labelValue.setTextSize(13);
         labelValue.setPadding(0, dp(12), 0, 0);
         layout.addView(labelValue);
 
         EditText etValue = new EditText(this);
-        etValue.setHint("Ej: 6 para 6 cts/L  ó  5 para 5%");
+        etValue.setHint(getString(R.string.hint_discount_value));
         etValue.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         if (existing != null) {
             if (existing.getType() == Discount.Type.CENTS_PER_LITER) {
@@ -810,10 +808,10 @@ public class PreferencesActivity extends BaseActivity {
         layout.addView(tvValueError);
 
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(isNew ? "Añadir descuento" : "Editar descuento")
+                .setTitle(isNew ? getString(R.string.title_add_discount) : getString(R.string.title_edit_discount))
                 .setView(layout)
-                .setPositiveButton("Guardar", null)
-                .setNegativeButton("Cancelar", null)
+                .setPositiveButton(getString(R.string.btn_save), null)
+                .setNegativeButton(getString(R.string.btn_cancel), null)
                 .create();
 
         dialog.show();
@@ -824,7 +822,7 @@ public class PreferencesActivity extends BaseActivity {
             String valueStr = etValue.getText().toString().trim().replace(",", ".");
             double value = 0.0;
             if (valueStr.isEmpty()) {
-                tvValueError.setText("El valor es obligatorio.");
+                tvValueError.setText(getString(R.string.error_value_required));
                 tvValueError.setVisibility(View.VISIBLE);
                 hasError = true;
             } else {
@@ -838,8 +836,8 @@ public class PreferencesActivity extends BaseActivity {
                     tvValueError.setVisibility(View.GONE);
                 } catch (Exception e) {
                     tvValueError.setText(selectedType[0] == Discount.Type.PERCENTAGE
-                            ? "Introduce un porcentaje entre 0.1 y 100."
-                            : "Introduce céntimos entre 0.1 y 50.");
+                            ? getString(R.string.error_invalid_percentage)
+                            : getString(R.string.error_invalid_cents));
                     tvValueError.setVisibility(View.VISIBLE);
                     hasError = true;
                 }
@@ -851,7 +849,7 @@ public class PreferencesActivity extends BaseActivity {
             if (isNew) {
                 boolean added = DiscountPrefs.addDiscount(this, discount);
                 if (!added) {
-                    tvValueError.setText("Has alcanzado el máximo de descuentos.");
+                    tvValueError.setText(getString(R.string.error_max_discounts));
                     tvValueError.setVisibility(View.VISIBLE);
                     return;
                 }
@@ -869,29 +867,29 @@ public class PreferencesActivity extends BaseActivity {
     private void confirmDeleteVehicle(int index) {
         boolean isLast = vehicles.size() == 1;
         new AlertDialog.Builder(this)
-                .setTitle("Eliminar vehículo")
+                .setTitle(getString(R.string.title_delete_vehicle))
                 .setMessage(isLast
                         ? "Es el único vehículo. Si lo eliminas tendrás que añadir uno nuevo antes de usar la app."
                         : "¿Seguro que quieres eliminar \"" + vehicles.get(index).getName() + "\"?")
-                .setPositiveButton("Eliminar", (d, w) -> {
+                .setPositiveButton(getString(R.string.btn_delete), (d, w) -> {
                     VehiclePrefs.deleteVehicle(this, index);
                     refreshVehicleList();
                     if (isLast) showVehicleDialog(-1, null, true);
                 })
-                .setNegativeButton("Cancelar", null)
+                .setNegativeButton(getString(R.string.btn_cancel), null)
                 .show();
     }
 
     private void confirmDeleteDiscount(int index) {
         new AlertDialog.Builder(this)
-                .setTitle("Eliminar descuento")
+                .setTitle(getString(R.string.title_delete_discount))
                 .setMessage("¿Seguro que quieres eliminar el descuento de \""
                         + discounts.get(index).getBrandName() + "\"?")
-                .setPositiveButton("Eliminar", (d, w) -> {
+                .setPositiveButton(getString(R.string.btn_delete), (d, w) -> {
                     DiscountPrefs.deleteDiscount(this, index);
                     refreshDiscountList();
                 })
-                .setNegativeButton("Cancelar", null)
+                .setNegativeButton(getString(R.string.btn_cancel), null)
                 .show();
     }
 
