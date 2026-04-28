@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "885346413478",
+    "project_id": "ahorragas-287a7",
+    "storage_bucket": "ahorragas-287a7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:885346413478:android:eb5607931bd9be4ebf3d67",
+        "android_client_info": {
+          "package_name": "com.example.ahorragas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkuxdZIRqngDz5t7QTuT5MSX7ruI523Hg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
