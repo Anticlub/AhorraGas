@@ -94,7 +94,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void setupBottomNav(BottomNavigationView bottomNav, int selectedItem, FuelType fuelType) {
         setupBottomNav(bottomNav, selectedItem);
         if (fuelType == FuelType.ELECTRICO) {
-            bottomNav.getMenu().findItem(R.id.nav_price).setTitle("Por potencia");
+            bottomNav.getMenu().findItem(R.id.nav_price).setTitle(getString(R.string.label_by_power));
             bottomNav.getMenu().findItem(R.id.nav_price).setIcon(R.drawable.ic_bolt);
         }
     }
