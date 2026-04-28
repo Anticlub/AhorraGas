@@ -167,4 +167,14 @@
     <string name="msg_power_unavailable">N/D</string>
     <string name="btn_remove_from_favorites">❤️ Quitar de favoritos</string>
     <string name="msg_no_available">No disponible</string>
+    <!-- MainActivity -->
+    <string name="msg_location_not_found">No se encontró la localidad</string>
+    <string name="msg_error_searching_location">Error al buscar la localidad</string>
+    <string name="msg_no_stations_in_location">No hay estaciones en esa localidad</string>
+    <string name="msg_error_searching_stations">Error buscando estaciones</string>
+    <string name="msg_invalid_tank_capacity">Capacidad no válida. Introduce un número entre 1 y 200.</string>
+    <string name="msg_invalid_charging_power">Potencia no válida. Introduce un número entre 1 y 500.</string>
+    <string name="label_last_sync_format">Última actualización: %1$s</string>
+    <string name="label_last_sync_never">Última actualización: --</string>
+    <string name="msg_por_potencia">Por potencia</string>
 </resources>
