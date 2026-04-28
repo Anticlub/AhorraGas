@@ -86,4 +86,5 @@
     <string name="label_my_price_alerts">Mis alertas de precio</string>
     <string name="btn_test_notifications">🔔 Probar notificaciones</string>
     <string name="label_markers_range_hint">Número de gasolineras mostradas en el mapa (1–150).</string>
+    <string name="hint_search_by_location">Buscar por localidad...</string>
 </resources>
