@@ -150,7 +150,7 @@
     <string name="title_delete_vehicle">Eliminar vehículo</string>
     <string name="title_delete_discount">Eliminar descuento</string>
     <string name="msg_no_alerts_configured">No tienes alertas configuradas.</string>
-    <string name="msg_checking_prices">🔔 Comprobando precios… Si alguno baja de tu alerta, te avisaremos.</string>
+    <string name="msg_checking_prices">🔔 Comprobando precios…</string>
     <!-- GeneralFragment -->
     <string name="label_max_power">Potencia máxima</string>
     <string name="label_charge_time">Tiempo de carga estimado</string>
