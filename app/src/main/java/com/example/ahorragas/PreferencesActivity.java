@@ -200,7 +200,7 @@ public class PreferencesActivity extends BaseActivity {
     private void runAlertTest() {
         List<PriceAlert> alerts = PriceAlertPrefs.loadAll(this);
         if (alerts.isEmpty()) {
-            Toast.makeText(this, getString(R.string.msg_no_alerts_configured), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.msg_no_alerts_configured), Toast.LENGTH_LONG).show();
             return;
         }
 
