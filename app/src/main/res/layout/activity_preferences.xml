@@ -22,7 +22,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Preferencias"
+                android:text="@string/title_preferences"
                 android:textColor="#FFFFFF"
                 android:textSize="20sp"
                 android:textStyle="bold"
@@ -57,7 +57,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Mis vehículos  (toca uno para activarlo)"
+                        android:text="@string/label_my_vehicles_hint"
                         android:textColor="#4DB6AC"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -66,7 +66,7 @@
                         android:id="@+id/btnAddVehicle"
                         android:layout_width="wrap_content"
                         android:layout_height="40dp"
-                        android:text="+ Añadir"
+                        android:text="@string/btn_add_vehicle"
                         android:textAllCaps="false"
                         android:textSize="13sp"
                         android:gravity="center"
@@ -89,7 +89,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Radio de búsqueda"
+                    android:text="@string/label_search_radius"
                     android:textColor="#4DB6AC"
                     android:textSize="13sp"
                     android:textStyle="bold"
@@ -118,7 +118,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Distancia máxima"
+                            android:text="@string/label_max_distance"
                             android:textColor="#CCCCCC"
                             android:textSize="14sp" />
 
@@ -170,7 +170,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:text="Afecta a la busqueda de gasolineras."
+                        android:text="@string/label_affects_station_search"
                         android:textColor="#888888"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -181,7 +181,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Gasolineras visibles en el mapa"
+                    android:text="@string/label_visible_stations_on_map"
                     android:textColor="#4DB6AC"
                     android:textSize="13sp"
                     android:textStyle="bold"
@@ -210,7 +210,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Máximo de marcadores"
+                            android:text="@string/label_max_markers"
                             android:textColor="#CCCCCC"
                             android:textSize="14sp" />
 
@@ -239,7 +239,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:text="Número de gasolineras mostradas en el mapa (1–150)."
+                        android:text="@string/label_markers_range_hint"
                         android:textColor="#888888"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -261,7 +261,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Mis descuentos"
+                        android:text="@string/label_my_discounts"
                         android:textColor="#4DB6AC"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -270,7 +270,7 @@
                         android:id="@+id/btnAddDiscount"
                         android:layout_width="wrap_content"
                         android:layout_height="40dp"
-                        android:text="+ Añadir"
+                        android:text="@string/btn_add"
                         android:textAllCaps="false"
                         android:textSize="13sp"
                         android:gravity="center"
@@ -293,7 +293,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Mis alertas de precio"
+                    android:text="@string/label_my_price_alerts"
                     android:textColor="#4DB6AC"
                     android:textSize="13sp"
                     android:textStyle="bold"
@@ -317,7 +317,7 @@
                     android:layout_marginHorizontal="16dp"
                     android:layout_marginTop="12dp"
                     android:layout_marginBottom="4dp"
-                    android:text="🔔 Probar notificaciones"
+                    android:text="@string/btn_test_notifications"
                     android:textAllCaps="false"
                     android:textSize="14sp"
                     android:backgroundTint="#1A237E"
