@@ -73,4 +73,17 @@
     <!-- Main -->
     <string name="last_sync_never">EESS: sin actualizar</string>
     <string name="last_sync_format">EESS actualizadas a: %1$s</string>
+    <string name="title_preferences">Preferencias</string>
+    <string name="label_my_vehicles_hint">Mis vehículos (toca uno para activarlo)</string>
+    <string name="btn_add_vehicle">+ Añadir</string>
+    <string name="label_search_radius">Radio de búsqueda</string>
+    <string name="label_max_distance">Distancia máxima</string>
+    <string name="label_affects_station_search">Afecta a la busqueda de gasolineras.</string>
+    <string name="label_visible_stations_on_map">Gasolineras visibles en el mapa</string>
+    <string name="label_max_markers">Máximo de marcadores</string>
+    <string name="label_my_discounts">Mis descuentos</string>
+    <string name="btn_add">+ Añadir</string>
+    <string name="label_my_price_alerts">Mis alertas de precio</string>
+    <string name="btn_test_notifications">🔔 Probar notificaciones</string>
+    <string name="label_markers_range_hint">Número de gasolineras mostradas en el mapa (1–150).</string>
 </resources>
