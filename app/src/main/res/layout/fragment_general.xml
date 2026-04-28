@@ -13,7 +13,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Combustible"
+            android:text="@string/label_fuel"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
 
@@ -82,7 +82,7 @@
             android:id="@+id/tvFillLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Coste de llenado"
+            android:text="@string/label_fill_cost"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
 
@@ -105,7 +105,7 @@
             android:id="@+id/tvArrivalLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Coste de llegada"
+            android:text="@string/label_arrival_cost"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
 
@@ -127,7 +127,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Distancia"
+            android:text="@string/label_distance"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
 
@@ -149,7 +149,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Horario"
+            android:text="@string/label_schedule"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
 
@@ -172,7 +172,7 @@
             android:id="@+id/btnFavorite"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🤍 Añadir a favoritos"
+            android:text="@string/btn_add_to_favorites"
             android:textAllCaps="false"
             android:textSize="15sp" />
 
