@@ -189,4 +189,38 @@
     <string name="msg_invalid_price">Precio no válido.</string>
     <string name="msg_alert_saved">✅ Alerta guardada</string>
     <string name="msg_favorites_not_available_electric"> Las notificaciones para vehículos eléctricos estarán disponibles próximamente</string>
+
+    <!-- Tabs de detalle de estación -->
+    <string name="tab_general">General</string>
+    <string name="tab_location">Ubicación</string>
+    <string name="tab_prices">Precios</string>
+    <string name="tab_chargers">Cargadores</string>
+    <string name="tab_history">Histórico</string>
+    <string name="tab_promotions">Promociones</string>
+    <string name="tab_reviews">Opiniones</string>
+    <string name="fmt_alert_fuel_mismatch">⚠️ Tu alerta era de %1$s. Cambia tu combustible en preferencias para ver su precio.</string>
+
+    <!-- Formatos de texto dinámico -->
+    <string name="fmt_energy_to_arrive">%.2f kWh para llegar</string>
+    <string name="fmt_charge_time_minutes">~%d min (20%% → 80%%)</string>
+    <string name="fmt_charge_time_hours_minutes">~%dh %dmin (20%% → 80%%)</string>
+    <string name="fmt_discount_label">Precio con descuento %1$s (%2$s)</string>
+    <string name="fmt_fill_with_discount">Llenado con descuento: %.2f €</string>
+    <string name="fmt_history_title">%1$s — %2$s</string>
+
+    <!-- Mensajes de estado -->
+    <string name="msg_history_not_available_electric">Histórico no disponible para vehículos eléctricos</string>
+    <string name="msg_history_not_available_station">Histórico no disponible para esta estación</string>
+    <string name="msg_history_unavailable">El histórico de precios no está disponible en este momento</string>
+    <string name="msg_no_data">Sin datos</string>
+    <string name="msg_no_connector_data">Sin datos de conectores</string>
+
+    <!-- Etiquetas -->
+    <string name="label_charge_type_fast">Rápida (DC)</string>
+    <string name="label_charge_type_normal">Normal (AC)</string>
+    <string name="label_not_available_short">N/D</string>
+    <string name="label_gas_station">Gasolinera</string>
+
+    <!-- Chooser -->
+    <string name="chooser_navigate_with">Navegar con…</string>
 </resources>
