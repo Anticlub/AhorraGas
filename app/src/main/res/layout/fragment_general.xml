@@ -9,6 +9,19 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Banner alerta combustible no disponible -->
+        <TextView
+            android:id="@+id/tvAlertBanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="#FFF3CD"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="10dp"
+            android:textColor="#856404"
+            android:textSize="13sp"
+            android:visibility="gone" />
+
         <!-- Precio combustible activo -->
         <TextView
             android:layout_width="wrap_content"
