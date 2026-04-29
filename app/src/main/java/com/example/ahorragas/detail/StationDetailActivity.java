@@ -75,8 +75,18 @@ public class StationDetailActivity extends AppCompatActivity {
         ViewPager2 viewPager = findViewById(R.id.viewPager);
         TabLayout tabLayout  = findViewById(R.id.tabLayout);
 
-        String preciosTab = gasolinera.isElectric() ? "Cargadores" : "Precios";
-        String[] tabTitles = {"General", "Ubicación", preciosTab, "Histórico", "Promociones", "Opiniones"};
+        String preciosTab = gasolinera.isElectric()
+                ? getString(R.string.tab_chargers)
+                : getString(R.string.tab_prices);
+
+        String[] tabTitles = {
+                getString(R.string.tab_general),
+                getString(R.string.tab_location),
+                preciosTab,
+                getString(R.string.tab_history),
+                getString(R.string.tab_promotions),
+                getString(R.string.tab_reviews)
+        };
 
         viewPager.setAdapter(new FragmentStateAdapter(this) {
             @Override
