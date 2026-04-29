@@ -80,7 +80,7 @@ public class LocationFragment extends Fragment {
 
         double lat = args.getDouble(ARG_LAT);
         double lon = args.getDouble(ARG_LON);
-        stationMarca = args.getString(ARG_MARCA, "Gasolinera");
+        stationMarca = args.getString(ARG_MARCA, getString(R.string.label_gas_station));
         stationPoint = new GeoPoint(lat, lon);
 
         mapContainer = view.findViewById(R.id.mapContainer);
@@ -89,7 +89,7 @@ public class LocationFragment extends Fragment {
         btnNavigate.setOnClickListener(v -> {
             Uri geoUri = Uri.parse("geo:" + lat + "," + lon + "?q=" + lat + "," + lon);
             Intent intent = new Intent(Intent.ACTION_VIEW, geoUri);
-            startActivity(Intent.createChooser(intent, "Navegar con..."));
+            startActivity(Intent.createChooser(intent, getString(R.string.chooser_navigate_with)));
         });
     }
 
