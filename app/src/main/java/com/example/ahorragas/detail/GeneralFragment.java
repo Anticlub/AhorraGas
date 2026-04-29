@@ -151,8 +151,8 @@ public class GeneralFragment extends Fragment {
             Double selectedPrice = g.getPrecio(selectedFuel);
             boolean selectedFuelUnavailable = selectedPrice == null || selectedPrice <= 0;
             if (alertFuel != null && alertFuel != selectedFuel && selectedFuelUnavailable) {
-                tvAlertBanner.setText("⚠️ Tu alerta era de " + alertFuel.displayName()
-                        + ". Cambia tu combustible en preferencias para ver su precio.");
+                tvAlertBanner.setText(getString(R.string.fmt_alert_fuel_mismatch,
+                        alertFuel.displayName()));
                 tvAlertBanner.setVisibility(View.VISIBLE);
             } else {
                 tvAlertBanner.setVisibility(View.GONE);
@@ -188,7 +188,7 @@ public class GeneralFragment extends Fragment {
                 double distanceKm = g.getDistanceMeters() / 1000.0;
                 Double kwh = activeVehicle.estimateEnergyConsumption(distanceKm);
                 tvArrivalCost.setText(String.format(java.util.Locale.getDefault(),
-                        "%.2f kWh para llegar", kwh));
+                        getString(R.string.fmt_energy_to_arrive), kwh));
             }
 
             double maxPowerW = args.getDouble(ARG_MAX_POWER_W, 0);
@@ -206,12 +206,12 @@ public class GeneralFragment extends Fragment {
                     int minutes = (int) Math.round(hours * 60);
                     if (minutes < 60) {
                         tvFillCost.setText(String.format(java.util.Locale.getDefault(),
-                                "~%d min (20%% → 80%%)", minutes));
+                                getString(R.string.fmt_charge_time_minutes), minutes));
                     } else {
                         int h = minutes / 60;
                         int m = minutes % 60;
                         tvFillCost.setText(String.format(java.util.Locale.getDefault(),
-                                "~%dh %dmin (20%% → 80%%)", h, m));
+                                getString(R.string.fmt_charge_time_hours_minutes), h, m));
                     }
                 } else {
                     tvFillCost.setText(getString(R.string.msg_power_unavailable));
@@ -266,8 +266,8 @@ public class GeneralFragment extends Fragment {
                     }
                 }
 
-                tvDiscountLabel.setText("Precio con descuento " + discounts.get(0).getBrandName()
-                        + " (" + typeLabel + ")");
+                tvDiscountLabel.setText(getString(R.string.fmt_discount_label,
+                        discounts.get(0).getBrandName(), typeLabel.toString()));
                 tvDiscountPrice.setText(String.format(java.util.Locale.getDefault(),
                         "%.3f €", discountedPrice));
 
@@ -277,7 +277,7 @@ public class GeneralFragment extends Fragment {
 
                 if (activeVehicle != null && activeVehicle.hasTankCapacity()) {
                     tvDiscountFill.setText(String.format(java.util.Locale.getDefault(),
-                            "Llenado con descuento: %.2f €",
+                            getString(R.string.fmt_fill_with_discount),
                             activeVehicle.estimateFillCost(discountedPrice)));
                     tvDiscountFill.setVisibility(View.VISIBLE);
                 } else {
