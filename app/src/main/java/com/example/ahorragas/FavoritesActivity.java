@@ -1,5 +1,6 @@
 package com.example.ahorragas;
-
+import com.example.ahorragas.model.Vehicle;
+import com.example.ahorragas.util.VehiclePrefs;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -291,6 +292,13 @@ public class FavoritesActivity extends BaseActivity {
      */
     private void loadAndDisplay() {
         showLoading();
+
+        Vehicle activeVehicle = VehiclePrefs.loadActiveVehicle(this);
+        if (activeVehicle != null && activeVehicle.isElectric()) {
+            showEmpty();
+            tvEmpty.setText(getString(R.string.msg_favorites_not_available_electric));
+            return;
+        }
 
         List<Gasolinera> favorites = FavoritesPrefs.loadAll(this);
 
