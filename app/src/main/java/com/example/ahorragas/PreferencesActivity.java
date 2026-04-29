@@ -2,6 +2,9 @@ package com.example.ahorragas;
 
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -478,6 +481,24 @@ public class PreferencesActivity extends BaseActivity {
 
     // ─── Diálogo Vehículo ─────────────────────────────────────────────────────
 
+    /**
+     * Aplica color rojo al último carácter de un string (el asterisco *)
+     * para indicar que el campo es obligatorio.
+     *
+     * @param text Texto del label que termina en *
+     * @return SpannableString con el asterisco en rojo
+     */
+    private SpannableString makeRequiredLabel(String text) {
+        SpannableString span = new SpannableString(text);
+        span.setSpan(
+                new ForegroundColorSpan(0xFFEF5350),
+                span.length() - 1,
+                span.length(),
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        );
+        return span;
+    }
+
     private void showVehicleDialog(int index, Vehicle existing, boolean mandatory) {
         boolean isNew = (index == -1);
 
@@ -486,7 +507,7 @@ public class PreferencesActivity extends BaseActivity {
         layout.setPadding(dp(20), dp(12), dp(20), dp(4));
 
         TextView labelName = new TextView(this);
-        labelName.setText(getString(R.string.label_vehicle_name));
+        labelName.setText(makeRequiredLabel(getString(R.string.label_vehicle_name)));
         labelName.setTextColor(0xFFCCCCCC);
         labelName.setTextSize(13);
         layout.addView(labelName);
@@ -569,7 +590,7 @@ public class PreferencesActivity extends BaseActivity {
         }
 
         TextView labelFuel = new TextView(this);
-        labelFuel.setText(getString(R.string.label_fuel_type));
+        labelFuel.setText(makeRequiredLabel(getString(R.string.label_fuel_type)));
         labelFuel.setTextColor(0xFFCCCCCC);
         labelFuel.setTextSize(13);
         labelFuel.setPadding(0, dp(12), 0, 0);
@@ -715,7 +736,7 @@ public class PreferencesActivity extends BaseActivity {
         layout.setPadding(dp(20), dp(12), dp(20), dp(4));
 
         TextView labelBrand = new TextView(this);
-        labelBrand.setText(getString(R.string.label_station_brand));
+        labelBrand.setText(makeRequiredLabel(getString(R.string.label_station_brand)));
         labelBrand.setTextColor(0xFFCCCCCC);
         labelBrand.setTextSize(13);
         layout.addView(labelBrand);
@@ -751,7 +772,7 @@ public class PreferencesActivity extends BaseActivity {
         layout.addView(tvBrandError);
 
         TextView labelType = new TextView(this);
-        labelType.setText(getString(R.string.label_discount_type));
+        labelType.setText(makeRequiredLabel(getString(R.string.label_discount_type)));
         labelType.setTextColor(0xFFCCCCCC);
         labelType.setTextSize(13);
         labelType.setPadding(0, dp(12), 0, 0);
@@ -786,7 +807,7 @@ public class PreferencesActivity extends BaseActivity {
         layout.addView(tvTypeSelector);
 
         TextView labelValue = new TextView(this);
-        labelValue.setText(getString(R.string.label_discount_value));
+        labelValue.setText(makeRequiredLabel(getString(R.string.label_discount_value)));
         labelValue.setTextColor(0xFFCCCCCC);
         labelValue.setTextSize(13);
         labelValue.setPadding(0, dp(12), 0, 0);
