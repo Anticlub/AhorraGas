@@ -113,7 +113,7 @@ public class HistoryFragment extends Fragment {
         }
 
         if (stationId <= 0) {
-            showMessage("Histórico no disponible para esta estación");
+            showMessage(getString(R.string.msg_history_not_available_station));
             return;
         }
 
@@ -144,10 +144,10 @@ public class HistoryFragment extends Fragment {
         repository.getHistory(stationId, fuel, fechaInicio, fechaFin)
                 .observe(getViewLifecycleOwner(), entries -> {
                     if (entries == null || entries.isEmpty()) {
-                        showMessage("El histórico de precios no está disponible en este momento");
+                        showMessage(getString(R.string.msg_history_unavailable));
                         return;
                     }
-                    tvTitle.setText(fuel.displayName() + " — " + stationName);
+                    tvTitle.setText(getString(R.string.fmt_history_title, fuel.displayName(), stationName));
                     renderChart(entries, fuel);
                     showContent();
                 });
@@ -232,7 +232,7 @@ public class HistoryFragment extends Fragment {
 
             @Override
             public void onNothingSelected() {
-                tvTitle.setText(fuel.displayName() + " — " + stationName);
+                tvTitle.setText(getString(R.string.fmt_history_title, fuel.displayName(), stationName));
             }
         });
         chart.setData(new LineData(dataSet));
