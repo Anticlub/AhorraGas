@@ -111,7 +111,7 @@ public class PricesFragment extends Fragment {
             String conectoresRaw = args.getString(ARG_CONECTORES, "");
             if (conectoresRaw.isEmpty()) {
                 TextView tvEmpty = new TextView(requireContext());
-                tvEmpty.setText("Sin datos de conectores");
+                tvEmpty.setText(getString(R.string.msg_no_connector_data));
                 tvEmpty.setTextColor(0xFF757575);
                 tvEmpty.setTextSize(14);
                 container2.addView(tvEmpty);
@@ -128,11 +128,13 @@ public class PricesFragment extends Fragment {
                     try { potenciaW = Double.parseDouble(parts[2]); }
                     catch (NumberFormatException ignored) {}
 
-                    String tipoRecarga = modo.contains("DC") ? "Rápida (DC)" : "Normal (AC)";
+                    String tipoRecarga = modo.contains("DC")
+                            ? getString(R.string.label_charge_type_fast)
+                            : getString(R.string.label_charge_type_normal);
                     String potenciaStr = potenciaW > 0
                             ? String.format(java.util.Locale.getDefault(),
                             "%.0f kW", potenciaW / 1000.0)
-                            : "N/D";
+                            : getString(R.string.label_not_available_short);
 
                     LinearLayout row = new LinearLayout(requireContext());
                     row.setOrientation(LinearLayout.HORIZONTAL);
@@ -165,7 +167,7 @@ public class PricesFragment extends Fragment {
         } else {
             for (FuelType fuel : FuelType.values()) {
                 String price = g.getFormattedPrice(fuel);
-                if (price.equals("N/D")) continue;
+                if (price.equals(getString(R.string.label_not_available_short))) continue;
 
                 LinearLayout row = new LinearLayout(requireContext());
                 row.setOrientation(LinearLayout.HORIZONTAL);

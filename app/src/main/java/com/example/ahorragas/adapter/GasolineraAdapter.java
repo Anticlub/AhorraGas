@@ -176,7 +176,7 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
             // ── Precio ────────────────────────────────────────────────────────
             if (gasolinera.isElectric()) {
                 String resumen = gasolinera.getResumenMejorConector();
-                tvPrice.setText(resumen != null ? resumen : "Sin datos");
+                tvPrice.setText(resumen != null ? resumen : ctx.getString(R.string.msg_no_data));
                 tvPrice.setTextColor(MarkerBitmapFactory.getElectricColor());
                 vPriceStripe.setBackgroundColor(MarkerBitmapFactory.getElectricColor());
             } else {
