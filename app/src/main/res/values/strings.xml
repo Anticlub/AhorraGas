@@ -188,4 +188,5 @@
     <string name="hint_alert_price">Ej: 1.450</string>
     <string name="msg_invalid_price">Precio no válido.</string>
     <string name="msg_alert_saved">✅ Alerta guardada</string>
+    <string name="msg_favorites_not_available_electric"> Las notificaciones para vehículos eléctricos estarán disponibles próximamente</string>
 </resources>
