@@ -2,7 +2,9 @@ package com.example.ahorragas;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
@@ -25,9 +27,10 @@ import java.util.concurrent.TimeUnit;
 
 public class PriceAlertWorker extends Worker {
 
-    public static final String  KEY_IS_TEST     = "is_test";
-    private static final String CHANNEL_ID      = "price_alerts";
-    private static final long   MIN_INTERVAL_MS = TimeUnit.HOURS.toMillis(24);
+    public static final String  KEY_IS_TEST      = "is_test";
+    public static final String  EXTRA_ALERT_FUEL = "extra_alert_fuel";
+    private static final String CHANNEL_ID       = "price_alerts";
+    private static final long   MIN_INTERVAL_MS  = TimeUnit.HOURS.toMillis(24);
 
     public PriceAlertWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
@@ -111,14 +114,24 @@ public class PriceAlertWorker extends Worker {
                 >= MIN_INTERVAL_MS;
 
         if (priceBelowThreshold && cooldownPassed) {
-            sendNotification(ctx, alert, currentPrice);
+            sendNotification(ctx, alert, currentPrice, target);
             if (!isTest) {
                 PriceAlertPrefs.updateLastNotified(ctx, alert.getKey(), System.currentTimeMillis());
             }
         }
     }
 
-    private void sendNotification(Context ctx, PriceAlert alert, double currentPrice) {
+    /**
+     * Lanza una notificación de alerta de precio. Al tocarla, abre el detalle
+     * de la gasolinera correspondiente. Si el combustible de la alerta no está
+     * disponible en esa gasolinera, se pasa como extra para mostrar un aviso.
+     *
+     * @param ctx          Contexto de la aplicación.
+     * @param alert        Alerta que ha disparado la notificación.
+     * @param currentPrice Precio actual del combustible.
+     * @param gasolinera   Gasolinera a la que pertenece la alerta.
+     */
+    private void sendNotification(Context ctx, PriceAlert alert, double currentPrice, Gasolinera gasolinera) {
         NotificationManager manager =
                 (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager == null) return;
@@ -134,6 +147,18 @@ public class PriceAlertWorker extends Worker {
                 alert.getTargetPrice()
         );
 
+        Intent intent = new Intent(ctx, com.example.ahorragas.detail.StationDetailActivity.class);
+        intent.putExtra(com.example.ahorragas.detail.StationDetailActivity.EXTRA_GASOLINERA, gasolinera);
+        intent.putExtra(EXTRA_ALERT_FUEL, alert.getFuelType().name());
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                ctx,
+                alert.getKey().hashCode(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(ctx, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_alert)
                 .setContentTitle(title)
@@ -141,7 +166,8 @@ public class PriceAlertWorker extends Worker {
                 .setSound(soundUri)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setDefaults(NotificationCompat.DEFAULT_VIBRATE)
-                .setAutoCancel(true);
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent);
 
         manager.notify(alert.getKey().hashCode(), builder.build());
     }

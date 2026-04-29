@@ -7,8 +7,10 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.example.ahorragas.PriceAlertWorker;
 import com.example.ahorragas.R;
 import com.example.ahorragas.map.BrandLogoProvider;
+import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -45,6 +47,18 @@ public class StationDetailActivity extends AppCompatActivity {
         return getIntent().getParcelableExtra(EXTRA_GASOLINERA);
     }
 
+    /**
+     * Devuelve el FuelType de la alerta que originó esta apertura, o null
+     * si la pantalla se abrió de forma normal (no desde una notificación).
+     *
+     * @return FuelType de la alerta o null.
+     */
+    public FuelType getAlertFuelType() {
+        String fuelName = getIntent().getStringExtra(PriceAlertWorker.EXTRA_ALERT_FUEL);
+        if (fuelName == null) return null;
+        return FuelType.fromString(fuelName);
+    }
+
     private void setupHeader() {
         TextView tvBrand   = findViewById(R.id.tvDetailBrand);
         TextView tvAddress = findViewById(R.id.tvDetailAddress);
@@ -71,7 +85,7 @@ public class StationDetailActivity extends AppCompatActivity {
             @Override
             public Fragment createFragment(int position) {
                 switch (position) {
-                    case 0: return GeneralFragment.newInstance(gasolinera);
+                    case 0: return GeneralFragment.newInstance(gasolinera, getAlertFuelType());
                     case 1: return LocationFragment.newInstance(gasolinera);
                     case 2: return PricesFragment.newInstance(gasolinera);
                     case 4: return PromotionsFragment.newInstance(gasolinera.getMarca());

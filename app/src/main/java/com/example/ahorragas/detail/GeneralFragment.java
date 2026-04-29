@@ -38,14 +38,16 @@ public class GeneralFragment extends Fragment {
     private static final String ARG_IS_ELECTRIC   = "arg_is_electric";
     private static final String ARG_OPERADOR      = "arg_operador";
     private static final String ARG_MAX_POWER_W   = "arg_max_power_w";
+    private static final String ARG_ALERT_FUEL    = "arg_alert_fuel";
 
     /**
      * Crea una nueva instancia del fragment con los datos de la gasolinera.
      *
-     * @param gasolinera Gasolinera cuyos datos se mostrarán.
+     * @param gasolinera    Gasolinera cuyos datos se mostrarán.
+     * @param alertFuelType Combustible de la alerta que originó esta apertura, o null si no viene de notificación.
      * @return Nueva instancia de GeneralFragment.
      */
-    public static GeneralFragment newInstance(Gasolinera gasolinera) {
+    public static GeneralFragment newInstance(Gasolinera gasolinera, FuelType alertFuelType) {
         GeneralFragment fragment = new GeneralFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_ID, gasolinera.getId());
@@ -78,6 +80,9 @@ public class GeneralFragment extends Fragment {
                     args.putDouble(ARG_MAX_POWER_W, maxPowerW);
                 }
             }
+        }
+        if (alertFuelType != null) {
+            args.putString(ARG_ALERT_FUEL, alertFuelType.name());
         }
         fragment.setArguments(args);
         return fragment;
@@ -137,6 +142,24 @@ public class GeneralFragment extends Fragment {
         View dividerDiscount     = view.findViewById(R.id.dividerDiscount);
         TextView tvFillLabel     = view.findViewById(R.id.tvFillLabel);
         TextView tvArrivalLabel  = view.findViewById(R.id.tvArrivalLabel);
+        TextView tvAlertBanner   = view.findViewById(R.id.tvAlertBanner);
+
+        // ── Banner de combustible distinto al de la alerta ───────────────────
+        String alertFuelName = args.getString(ARG_ALERT_FUEL);
+        if (alertFuelName != null) {
+            FuelType alertFuel = FuelType.fromString(alertFuelName);
+            Double selectedPrice = g.getPrecio(selectedFuel);
+            boolean selectedFuelUnavailable = selectedPrice == null || selectedPrice <= 0;
+            if (alertFuel != null && alertFuel != selectedFuel && selectedFuelUnavailable) {
+                tvAlertBanner.setText("⚠️ Tu alerta era de " + alertFuel.displayName()
+                        + ". Cambia tu combustible en preferencias para ver su precio.");
+                tvAlertBanner.setVisibility(View.VISIBLE);
+            } else {
+                tvAlertBanner.setVisibility(View.GONE);
+            }
+        } else {
+            tvAlertBanner.setVisibility(View.GONE);
+        }
 
         boolean isElectric = args.getBoolean(ARG_IS_ELECTRIC, false);
         Vehicle activeVehicle = VehiclePrefs.loadActiveVehicle(requireContext());
@@ -155,7 +178,6 @@ public class GeneralFragment extends Fragment {
                 tvPrice.setText(getString(R.string.msg_power_unavailable));
             }
 
-            // ── Gasto energético hasta la estación ───────────────────────────
             if (activeVehicle == null || !activeVehicle.isElectric()) {
                 tvArrivalCost.setText(getString(R.string.msg_configure_electric_vehicle));
             } else if (!activeVehicle.hasConsumption()) {
@@ -169,7 +191,6 @@ public class GeneralFragment extends Fragment {
                         "%.2f kWh para llegar", kwh));
             }
 
-            // ── Tiempo de carga estimado ─────────────────────────────────────
             double maxPowerW = args.getDouble(ARG_MAX_POWER_W, 0);
             double maxPowerKw = maxPowerW / 1000.0;
 
@@ -204,7 +225,6 @@ public class GeneralFragment extends Fragment {
         } else {
             tvPrice.setText(g.getFormattedPrice(selectedFuel));
 
-            // ── Coste de llenado ─────────────────────────────────────────────────
             if (activeVehicle == null) {
                 tvFillCost.setText(getString(R.string.msg_configure_vehicle_fill));
             } else if (!activeVehicle.hasTankCapacity()) {
@@ -216,7 +236,6 @@ public class GeneralFragment extends Fragment {
                         "%.2f €", activeVehicle.estimateFillCost(price)));
             }
 
-            // ── Coste de llegada ─────────────────────────────────────────────────
             if (activeVehicle == null || !activeVehicle.hasConsumption()) {
                 tvArrivalCost.setText(getString(R.string.msg_configure_vehicle_cost));
             } else if (g.getDistanceMeters() == null || g.getDistanceMeters() <= 0) {
@@ -229,7 +248,6 @@ public class GeneralFragment extends Fragment {
                 tvArrivalCost.setText(String.format(java.util.Locale.getDefault(), "%.2f €", coste));
             }
 
-            // ── Descuento ────────────────────────────────────────────────────────
             List<Discount> discounts = DiscountPrefs.findAllForBrand(requireContext(), g.getMarca());
             if (!discounts.isEmpty() && price != null && price > 0) {
                 double discountedPrice = DiscountPrefs.applyAllDiscounts(
@@ -279,7 +297,6 @@ public class GeneralFragment extends Fragment {
         String horario = g.getFormattedHorario();
         tvHorario.setText(horario != null && !horario.isEmpty() ? horario : getString(R.string.msg_no_available));
 
-        // ── Botón favorito ───────────────────────────────────────────────────
         Button btnFavorite = view.findViewById(R.id.btnFavorite);
         boolean isFav = FavoritesPrefs.isFavorite(requireContext(), g);
         btnFavorite.setText(isFav ? getString(R.string.btn_remove_from_favorites) : getString(R.string.btn_add_to_favorites));
