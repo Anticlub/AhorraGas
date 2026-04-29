@@ -188,5 +188,4 @@
     <string name="hint_alert_price">Ej: 1.450</string>
     <string name="msg_invalid_price">Precio no válido.</string>
     <string name="msg_alert_saved">✅ Alerta guardada</string>
-    <string name="msg_max_alerts_3">Ya tienes 3 alertas. Elimina una antes de añadir otra.</string>
 </resources>

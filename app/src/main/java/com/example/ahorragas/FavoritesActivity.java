@@ -244,7 +244,7 @@ public class FavoritesActivity extends BaseActivity {
                         int pos = adapter.getPositionOf(gasolinera);
                         if (pos >= 0) adapter.notifyItemChanged(pos);
                     } else {
-                        Toast.makeText(this, getString(R.string.msg_max_alerts_3), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.msg_max_alerts), Toast.LENGTH_SHORT).show();
                     }
                 })
                 .setNegativeButton(getString(R.string.btn_cancel), null)
