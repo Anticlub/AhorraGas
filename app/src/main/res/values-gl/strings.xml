@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AhorraGas</string>
+    <string name="actualizar">Actualizar</string>
+    <string name="mostrar_cerca">Mostrar preto</string>
+    <string name="mi_ubicacion">A miña ubicación</string>
+    <string name="estaciones_cercanas">Estacións próximas</string>
+    <string name="abrir_test">Test</string>
+    <string name="stations_count_zero">0 estacións</string>
+    <string name="stations_count_format">%1$d estacións</string>
+    <string name="status_loading_data">Cargando gasolineiras…</string>
+    <string name="status_refreshing_data">Actualizando gasolineiras…</string>
+    <string name="status_location_pending">Ubicación: pendente</string>
+    <string name="status_location_loading">Ubicación: obtendo posición…</string>
+    <string name="status_location_disabled">Ubicación: GPS desactivado · mapa en España</string>
+    <string name="status_location_denied">Ubicación: permiso denegado · mapa en España</string>
+    <string name="status_location_error">Ubicación: non dispoñible · mapa en España</string>
+    <string name="status_location_format">Ubicación: %1$.5f, %2$.5f</string>
+    <string name="data_status_format">Orixe: %1$s · %2$d totais · %3$d con %4$s · %5$s</string>
+    <string name="order_by_distance">ordenadas por distancia</string>
+    <string name="order_by_price">ordenadas por prezo</string>
+    <string name="origin_remote">API remota</string>
+    <string name="origin_cache">caché local</string>
+    <string name="origin_fallback">fallback local</string>
+    <string name="origin_unknown">sen orixe</string>
+    <string name="no_stations_for_fuel">Non hai estacións con prezo para %1$s</string>
+    <string name="error_loading_data">Erro cargando gasolineiras</string>
+    <string name="location_permission_message">Sen permiso de ubicación. Móstrase España.</string>
+    <string name="location_gps_message">Activa o GPS para ordenar por proximidade.</string>
+    <string name="showing_nearest">Móstranse %1$d estacións próximas</string>
+    <string name="refreshing">Actualizando…</string>
+    <string name="brand_logo_desc">Logotipo da marca</string>
+    <string name="showing_nearest_radius">Móstranse %1$d estacións en %2$d km</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="sin_marca">Sen marca</string>
+    <string name="horario_no_disponible">Horario non dispoñible</string>
+    <string name="error_cargando_gasolineras">Erro cargando gasolineiras</string>
+    <string name="error_ubicacion">Non se puido obter a ubicación</string>
+    <string name="dialogo_vehiculo_titulo">Engade o teu vehículo para comezar</string>
+    <string name="dialogo_vehiculo_guardar">Gardar</string>
+    <string name="dialogo_vehiculo_cancelar">Cancelar</string>
+    <string name="dialogo_vehiculo_nombre">Nome do vehículo</string>
+    <string name="dialogo_vehiculo_nombre_hint">Ex: O meu coche, Furgoneta…</string>
+    <string name="dialogo_vehiculo_consumo">Consumo (L/100 km)</string>
+    <string name="dialogo_vehiculo_consumo_hint">Ex: 6.5</string>
+    <string name="dialogo_vehiculo_combustible">Tipo de combustible</string>
+    <string name="dialogo_vehiculo_combustible_titulo">Combustible</string>
+    <string name="error_sin_conexion">Sen conexión coa API</string>
+    <string name="error_api_timeout">A API tardou demasiado en responder</string>
+    <string name="error_respuesta_vacia">A API devolveu unha resposta baleira</string>
+    <string name="error_procesar_gasolineras">Non se puideron procesar as gasolineiras</string>
+    <string name="error_ubicacion_timeout">Non se puido obter a ubicación a tempo.</string>
+    <string name="error_ubicacion_actual">Non se puido obter a ubicación actual.</string>
+    <string name="dialogo_vehiculo_nombre_vacio">Escribe un nome.</string>
+    <string name="dialogo_vehiculo_consumo_invalido">Consumo non válido (ex: 6.5).</string>
+
+    <!-- Estados UI listas -->
+    <string name="loading_gasolineras">Cargando estacións…</string>
+    <string name="reintentar">Reintentar</string>
+    <string name="error_red">Erro de rede. Comproba a túa conexión.</string>
+    <string name="empty_price_list">Non hai estacións con prezo para o combustible seleccionado no teu radio.</string>
+    <string name="empty_distance_list">Non hai estacións no teu radio actual.</string>
+    <string name="empty_favorites">Aínda non tes gasolineiras favoritas.\nPreme ❤️ no detalle dunha gasolineira para engadila.</string>
+    <string name="error_favorites">Non se puideron cargar os favoritos.</string>
+
+    <!-- Promocións -->
+    <string name="promo_cargando">Cargando promocións…</string>
+    <string name="promo_sin_resultados">Non hai promocións dispoñibles neste momento.</string>
+    <string name="promo_error_red">Non se puideron cargar as promocións.\nComproba a túa conexión.</string>
+    <string name="promo_ver_mas">Ver máis</string>
+    <string name="promo_ver_menos">Ver menos</string>
+
+    <!-- Main -->
+    <string name="last_sync_never">EESS: sen actualizar</string>
+    <string name="last_sync_format">EESS actualizadas ás: %1$s</string>
+    <string name="title_preferences">Preferencias</string>
+    <string name="label_my_vehicles_hint">Os meus vehículos (toca un para activalo)</string>
+    <string name="btn_add_vehicle">+ Engadir</string>
+    <string name="label_search_radius">Radio de busca</string>
+    <string name="label_max_distance">Distancia máxima</string>
+    <string name="label_affects_station_search">Afecta á busca de gasolineiras.</string>
+    <string name="label_visible_stations_on_map">Gasolineiras visibles no mapa</string>
+    <string name="label_max_markers">Máximo de marcadores</string>
+    <string name="label_my_discounts">Os meus descontos</string>
+    <string name="btn_add">+ Engadir</string>
+    <string name="label_my_price_alerts">Os meus avisos de prezo</string>
+    <string name="btn_test_notifications">🔔 Probar notificacións</string>
+    <string name="label_markers_range_hint">Número de gasolineiras mostradas no mapa (1–150).</string>
+    <string name="hint_search_by_location">Buscar por localidade...</string>
+    <string name="title_distance_list">Estacións por distancia</string>
+    <string name="title_favorites">Favoritas</string>
+    <string name="label_fuel">Combustible</string>
+    <string name="label_fill_cost">Custo de enchido</string>
+    <string name="label_arrival_cost">Custo de chegada</string>
+    <string name="label_distance">Distancia</string>
+    <string name="label_schedule">Horario</string>
+    <string name="btn_add_to_favorites">🤍 Engadir a favoritas</string>
+    <string name="btn_navigate">Navegar</string>
+    <string name="label_range_7_days">7 días</string>
+    <string name="label_range_15_days">15 días</string>
+    <string name="label_range_30_days">30 días</string>
+    <string name="msg_loading_reviews">Cargando opinións...</string>
+
+    <!-- PreferencesActivity -->
+    <string name="msg_add_vehicle_required">Engade polo menos un vehículo para continuar.</string>
+    <string name="label_by_power">Por potencia</string>
+    <string name="label_by_price">Por prezo</string>
+    <string name="msg_no_alerts">Sen avisos. Créaos desde as túas favoritas.</string>
+    <string name="title_delete_alert">Eliminar aviso</string>
+    <string name="msg_no_vehicles">Sen vehículos. Preme + para engadir un.</string>
+    <string name="msg_no_discounts">Sen descontos. Preme + para engadir un.</string>
+    <string name="label_discount">Desconto: </string>
+    <string name="label_vehicle_name">Nome do vehículo *</string>
+    <string name="label_consumption_fuel">Consumo (L/100 km)</string>
+    <string name="hint_consumption_fuel">Ex: 6.5  (entre 0.1 e 100)</string>
+    <string name="label_tank_capacity">Capacidade depósito (L)</string>
+    <string name="hint_tank_capacity">Ex: 50  (entre 1 e 200)</string>
+    <string name="label_charging_power">Potencia de carga (kW)</string>
+    <string name="hint_charging_power">Ex: 11  (entre 1 e 500)</string>
+    <string name="label_consumption_ev">Consumo (kWh/100 km)</string>
+    <string name="hint_consumption_ev">Ex: 18  (entre 0.1 e 100)</string>
+    <string name="label_battery_capacity">Batería (kWh)</string>
+    <string name="hint_battery_capacity">Ex: 60  (entre 1 e 200)</string>
+    <string name="label_fuel_type">Tipo de combustible *</string>
+    <string name="title_fuel_dialog">Combustible</string>
+    <string name="btn_cancel">Cancelar</string>
+    <string name="title_add_first_vehicle">Engade o teu vehículo para comezar</string>
+    <string name="title_add_vehicle">Engadir vehículo</string>
+    <string name="title_edit_vehicle">Editar vehículo</string>
+    <string name="btn_save">Gardar</string>
+    <string name="btn_delete">Eliminar</string>
+    <string name="error_name_required">O nome é obrigatorio.</string>
+    <string name="error_invalid_value_0_100">Valor non válido. Introduce un número entre 0.1 e 100.</string>
+    <string name="error_invalid_value_1_200">Valor non válido. Introduce un número entre 1 e 200.</string>
+    <string name="error_invalid_value_1_500">Valor non válido. Introduce un número entre 1 e 500.</string>
+    <string name="error_max_vehicles">Xa tes o máximo de 10 vehículos.</string>
+    <string name="label_station_brand">Marca de gasolineira *</string>
+    <string name="title_select_brand">Selecciona a marca</string>
+    <string name="label_discount_type">Tipo de desconto *</string>
+    <string name="label_cents_per_liter">Céntimos por litro</string>
+    <string name="label_percentage">Porcentaxe (%)</string>
+    <string name="title_discount_type_dialog">Tipo de desconto</string>
+    <string name="label_discount_value">Valor do desconto *</string>
+    <string name="hint_discount_value">Ex: 6 para 6 cts/L  ou  5 para 5%</string>
+    <string name="title_add_discount">Engadir desconto</string>
+    <string name="title_edit_discount">Editar desconto</string>
+    <string name="error_value_required">O valor é obrigatorio.</string>
+    <string name="error_invalid_percentage">Introduce unha porcentaxe entre 0.1 e 100.</string>
+    <string name="error_invalid_cents">Introduce céntimos entre 0.1 e 50.</string>
+    <string name="error_max_discounts">Alcanzaches o máximo de descontos.</string>
+    <string name="title_delete_vehicle">Eliminar vehículo</string>
+    <string name="title_delete_discount">Eliminar desconto</string>
+    <string name="msg_no_alerts_configured">Non tes avisos configurados.</string>
+    <string name="msg_checking_prices">🔔 Comprobando prezos…</string>
+
+    <!-- GeneralFragment -->
+    <string name="label_max_power">Potencia máxima</string>
+    <string name="label_charge_time">Tempo de carga estimado</string>
+    <string name="label_energy_cost">Gasto enerxético ata a estación</string>
+    <string name="msg_configure_electric_vehicle">Configura un vehículo eléctrico para calcular</string>
+    <string name="msg_add_consumption_ev">Engade o consumo (kWh/100km) en preferencias</string>
+    <string name="msg_distance_unavailable">Distancia non dispoñible</string>
+    <string name="msg_configure_vehicle_fill">Configura o teu vehículo para calcular o custo de enchido</string>
+    <string name="msg_add_tank_capacity">Engade a capacidade do depósito en preferencias</string>
+    <string name="msg_price_unavailable">Prezo non dispoñible</string>
+    <string name="msg_configure_vehicle_cost">Configura o teu vehículo para calcular o custo</string>
+    <string name="msg_add_battery_and_power">Engade batería e potencia de carga en preferencias</string>
+    <string name="msg_station_power_unavailable">Potencia da estación non dispoñible</string>
+    <string name="msg_power_unavailable">N/D</string>
+    <string name="btn_remove_from_favorites">❤️ Quitar de favoritas</string>
+    <string name="msg_no_available">Non dispoñible</string>
+
+    <!-- MainActivity -->
+    <string name="msg_location_not_found">Non se atopou a localidade</string>
+    <string name="msg_error_searching_location">Erro ao buscar a localidade</string>
+    <string name="msg_no_stations_in_location">Non hai estacións nesa localidade</string>
+    <string name="msg_error_searching_stations">Erro buscando estacións</string>
+    <string name="msg_invalid_tank_capacity">Capacidade non válida. Introduce un número entre 1 e 200.</string>
+    <string name="msg_invalid_charging_power">Potencia non válida. Introduce un número entre 1 e 500.</string>
+    <string name="label_last_sync_format">Última actualización: %1$s</string>
+    <string name="label_last_sync_never">Última actualización: --</string>
+    <string name="msg_por_potencia">Por potencia</string>
+
+    <!-- FavoritesActivity -->
+    <string name="msg_no_notification_permission">Sen permiso de notificacións non poderemos avisarte. Podes activalo en Axustes.</string>
+    <string name="title_background_alerts">Activar avisos en segundo plano</string>
+    <string name="msg_background_alerts">Para recibir notificacións de prezo aínda que a app estea pechada, necesitas permitir que funcione sen restricións de batería.\n\nNon te preocupes: só comproba os prezos cada 4 horas e o impacto na batería é mínimo.\n\n</string>
+    <string name="btn_configure">Configurar</string>
+    <string name="btn_not_now">Agora non</string>
+    <string name="msg_alert_deleted">Aviso eliminado</string>
+    <string name="msg_max_alerts">Xa tes 5 avisos. Elimina un antes de engadir outro.</string>
+    <string name="hint_alert_price">Ex: 1.450</string>
+    <string name="msg_invalid_price">Prezo non válido.</string>
+    <string name="msg_alert_saved">✅ Aviso gardado</string>
+
+    <!-- Tabs de detalle de estación -->
+    <string name="tab_general">Xeral</string>
+    <string name="tab_location">Ubicación</string>
+    <string name="tab_prices">Prezos</string>
+    <string name="tab_chargers">Cargadores</string>
+    <string name="tab_history">Histórico</string>
+    <string name="tab_promotions">Promocións</string>
+    <string name="tab_reviews">Opinións</string>
+    <string name="fmt_alert_fuel_mismatch">⚠️ O teu aviso era de %1$s. Cambia o teu combustible en preferencias para ver o seu prezo.</string>
+
+    <!-- Formatos de texto dinámico -->
+    <string name="fmt_energy_to_arrive">%.2f kWh para chegar</string>
+    <string name="fmt_charge_time_minutes">~%d min (20%% → 80%%)</string>
+    <string name="fmt_charge_time_hours_minutes">~%dh %dmin (20%% → 80%%)</string>
+    <string name="fmt_discount_label">Prezo con desconto %1$s (%2$s)</string>
+    <string name="fmt_fill_with_discount">Enchido con desconto: %.2f €</string>
+    <string name="fmt_history_title">%1$s — %2$s</string>
+
+    <!-- Mensaxes de estado -->
+    <string name="msg_history_not_available_electric">Histórico non dispoñible para vehículos eléctricos</string>
+    <string name="msg_history_not_available_station">Histórico non dispoñible para esta estación</string>
+    <string name="msg_history_unavailable">O histórico de prezos non está dispoñible neste momento</string>
+    <string name="msg_no_data">Sen datos</string>
+    <string name="msg_no_connector_data">Sen datos de conectores</string>
+
+    <!-- Etiquetas -->
+    <string name="label_charge_type_fast">Rápida (DC)</string>
+    <string name="label_charge_type_normal">Normal (AC)</string>
+    <string name="label_not_available_short">N/D</string>
+    <string name="label_gas_station">Gasolineira</string>
+
+    <!-- Chooser -->
+    <string name="chooser_navigate_with">Navegar con…</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_map">Mapa</string>
+    <string name="nav_price">Por prezo</string>
+    <string name="nav_distance">Por distancia</string>
+    <string name="nav_favorites">Favoritas</string>
+    <string name="nav_preferences">Preferencias</string>
+
+    <string name="msg_favorites_not_available_electric">Proximamente poderás engadir electrolineiras a favoritas e xestionar notificacións</string>
+</resources>
