@@ -23,6 +23,14 @@ public final class BrandLogoProvider {
         LOGO_MAP.put("ballenoil", R.drawable.logo_ballenoil);
         LOGO_MAP.put("petroprix", R.drawable.logo_petroprix);
         LOGO_MAP.put("plenergy", R.drawable.logo_plenergy);
+        LOGO_MAP.put("bonarea",   R.drawable.logo_bonarea);
+        LOGO_MAP.put("campsa",    R.drawable.logo_campsa);
+        LOGO_MAP.put("disa",      R.drawable.logo_disa);
+        LOGO_MAP.put("eroski",    R.drawable.logo_eroski);
+        LOGO_MAP.put("leclerc",   R.drawable.logo_lecrerc);
+        LOGO_MAP.put("meroil",    R.drawable.logo_meroil);
+        LOGO_MAP.put("plenoil",   R.drawable.logo_plenoil);
+        LOGO_MAP.put("tamoil",    R.drawable.logo_tamoil);
         // Electrolineras
         LOGO_MAP.put("iberdrola",  R.drawable.ic_brand_iberdrola);
         LOGO_MAP.put("endesa",     R.drawable.ic_brand_endesa);
