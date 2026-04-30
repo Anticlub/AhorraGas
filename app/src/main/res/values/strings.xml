@@ -223,7 +223,12 @@
     <!-- Chooser -->
     <string name="chooser_navigate_with">Navegar con…</string>
 
-
+    <!-- Bottom Navigation -->
+    <string name="nav_map">Mapa</string>
+    <string name="nav_price">Por precio</string>
+    <string name="nav_distance">Por distancia</string>
+    <string name="nav_favorites">Favoritas</string>
+    <string name="nav_preferences">Preferencias</string>
 
     <string name="msg_favorites_not_available_electric"> Próximamente podrás añadir electrolineras a favoritos y gestionar notificaciones</string>
 </resources>
