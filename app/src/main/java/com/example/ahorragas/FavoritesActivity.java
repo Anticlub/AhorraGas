@@ -94,10 +94,6 @@ public class FavoritesActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        selectedFuel = FuelType.fromString(
-                PreferenceManager.getDefaultSharedPreferences(this)
-                        .getString("pref_selected_fuel", FuelType.GASOLEO_A.name())
-        );
         loadAndDisplay();
     }
 
@@ -260,16 +256,28 @@ public class FavoritesActivity extends BaseActivity {
         layoutError.setVisibility(View.GONE);
     }
 
-    private void showData(List<Gasolinera> data) {
-        PriceRange priceRange = GasolineraSorter.calculatePriceRange(data, selectedFuel);
+    private void showData(List<Gasolinera> data, FuelType fuel) {
+        // Ordenar: primero con precio de menor a mayor, N/D al final
+        data.sort((a, b) -> {
+            Double priceA = a.getPrecio(fuel);
+            Double priceB = b.getPrecio(fuel);
+            boolean aHasPrice = priceA != null && priceA > 0;
+            boolean bHasPrice = priceB != null && priceB > 0;
+            if (aHasPrice && bHasPrice) return Double.compare(priceA, priceB);
+            if (aHasPrice) return -1;
+            if (bHasPrice) return 1;
+            return 0;
+        });
+
+        PriceRange priceRange = GasolineraSorter.calculatePriceRange(data, fuel);
         for (Gasolinera g : data) {
-            g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(selectedFuel), priceRange));
+            g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(fuel), priceRange));
         }
         progressBar.setVisibility(View.GONE);
         layoutError.setVisibility(View.GONE);
         tvEmpty.setVisibility(View.GONE);
         recyclerView.setVisibility(View.VISIBLE);
-        adapter.updateData(data, selectedFuel, priceRange);
+        adapter.updateData(data, fuel, priceRange);
     }
 
     private void showEmpty() {
@@ -290,6 +298,8 @@ public class FavoritesActivity extends BaseActivity {
     /**
      * Carga la lista de favoritos desde Room en background, calcula la distancia
      * a cada gasolinera si la ubicación está disponible, y actualiza el adapter.
+     * Lee el combustible activo en el momento de la carga para evitar
+     * inconsistencias al cambiar de vehículo.
      */
     private void loadAndDisplay() {
         showLoading();
@@ -302,6 +312,11 @@ public class FavoritesActivity extends BaseActivity {
         }
 
         new Thread(() -> {
+            FuelType currentFuel = FuelType.fromString(
+                    PreferenceManager.getDefaultSharedPreferences(this)
+                            .getString("pref_selected_fuel", FuelType.GASOLEO_A.name()));
+            selectedFuel = currentFuel;
+
             List<Gasolinera> favorites = FavoritesPrefs.loadAll(this);
 
             if (favorites.isEmpty()) {
@@ -321,12 +336,12 @@ public class FavoritesActivity extends BaseActivity {
                         );
                         g.setDistanceMeters(distance);
                     }
-                    runOnUiThread(() -> showData(favorites));
+                    runOnUiThread(() -> showData(favorites, currentFuel));
                 }
 
                 @Override
                 public void onError(LocationHelper.LocationError error) {
-                    runOnUiThread(() -> showData(favorites));
+                    runOnUiThread(() -> showData(favorites, currentFuel));
                 }
             });
         }).start();
