@@ -189,5 +189,16 @@
             android:textAllCaps="false"
             android:textSize="15sp" />
 
+        <TextView
+            android:id="@+id/tvFavoritesNotAvailable"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="@string/msg_favorites_not_available_electric"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:visibility="gone" />
+
     </LinearLayout>
 </ScrollView>
