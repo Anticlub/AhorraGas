@@ -108,6 +108,13 @@ public class PromotionAdapter extends RecyclerView.Adapter<PromotionAdapter.View
 
         private void bindDiscount(PromotionPlan plan) {
             double value = plan.getDiscountValue();
+
+            if (value <= 0) {
+                tvDiscountValue.setText("-");
+                tvDiscountType.setText("");
+                return;
+            }
+
             // Sin decimales si el valor es entero, con un decimal si no
             if (value == Math.floor(value)) {
                 tvDiscountValue.setText(String.format(Locale.getDefault(), "%.0f", value));
