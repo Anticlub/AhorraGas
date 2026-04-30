@@ -13,8 +13,33 @@ import android.util.LruCache;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceLevel;
+import com.example.ahorragas.util.FavoritesPrefs;
 
 public final class MarkerBitmapFactory {
+    // ── Dimensiones del marker (en dp) ──────────────────────────────────────────
+    private static final int PILL_WIDTH_DP       = 72;
+    private static final int PILL_HEIGHT_DP      = 26;
+    private static final int PIN_HEIGHT_DP       = 8;
+    private static final int PIN_WIDTH_DP        = 7;
+    private static final int BORDER_WIDTH_DP     = 2;
+    private static final int STAR_SIZE_DP        = 22;
+    private static final int LOGO_MARGIN_DP      = 3;
+    private static final int LOGO_MARGIN_LEFT_DP = 3;
+    private static final int STAR_PADDING_DP     = 2;
+
+    // ── Tipografía (en sp, usados como dp en Canvas) ────────────────────────────
+    private static final float PRICE_TEXT_SIZE_SP = 10f;
+    private static final float STAR_TEXT_SIZE_SP  = 22f;
+
+    // ── Colores ──────────────────────────────────────────────────────────────────
+    private static final String COLOR_MARKER_BG   = "#1A1A1A";
+    private static final String COLOR_STAR        = "#FFD700";
+    private static final String COLOR_BRAND_DEFAULT = "#607D8B";
+    private static final String COLOR_CHEAP       = "#388E3C";
+    private static final String COLOR_MID         = "#F57C00";
+    private static final String COLOR_EXPENSIVE   = "#D32F2F";
+    private static final String COLOR_UNKNOWN     = "#757575";
+    private static final String COLOR_ELECTRIC    = "#1565C0";
 
     private static final int CACHE_SIZE = 40;
     private static final LruCache<String, Bitmap> CACHE = new LruCache<>(CACHE_SIZE);
@@ -26,51 +51,45 @@ public final class MarkerBitmapFactory {
     }
 
     public static int getBrandColor(String brand) {
-        if (brand == null) return Color.parseColor("#607D8B");
-        switch (brand.toLowerCase()) {
-            case "repsol":    return Color.parseColor("#EF3340");
-            case "cepsa":
-            case "moeve":     return Color.parseColor("#FF6600");
-            case "bp":        return Color.parseColor("#009900");
-            case "shell":     return Color.parseColor("#DD1D21");
-            case "galp":      return Color.parseColor("#FF6B00");
-            case "petronor":  return Color.parseColor("#003087");
-            case "carrefour": return Color.parseColor("#003CA6");
-            case "alcampo":   return Color.parseColor("#1976D2");
-            case "avia":      return Color.parseColor("#E31837");
-            case "ballenoil":
-            case "petroprix":
-            case "plenergy":  return Color.parseColor("#455A64");
-            default:          return Color.parseColor("#607D8B");
-        }
+        if (brand == null) return Color.parseColor(COLOR_BRAND_DEFAULT);
+        return switch (brand.toLowerCase()) {
+            case "repsol" -> Color.parseColor("#EF3340");
+            case "cepsa", "moeve" -> Color.parseColor("#FF6600");
+            case "bp" -> Color.parseColor("#009900");
+            case "shell" -> Color.parseColor("#DD1D21");
+            case "galp" -> Color.parseColor("#FF6B00");
+            case "petronor" -> Color.parseColor("#003087");
+            case "carrefour" -> Color.parseColor("#003CA6");
+            case "alcampo" -> Color.parseColor("#1976D2");
+            case "avia" -> Color.parseColor("#E31837");
+            case "ballenoil", "petroprix", "plenergy" -> Color.parseColor("#455A64");
+            default -> Color.parseColor(COLOR_BRAND_DEFAULT);
+        };
     }
 
     public static int getPriceLevelColor(PriceLevel level) {
-        if (level == null) return Color.parseColor("#757575");
-        switch (level) {
-            case CHEAP:     return Color.parseColor("#388E3C");
-            case MID:       return Color.parseColor("#F57C00");
-            case EXPENSIVE: return Color.parseColor("#D32F2F");
-            case UNKNOWN:
-            default:        return Color.parseColor("#757575");
-        }
+        if (level == null) return Color.parseColor(COLOR_UNKNOWN);
+        return switch (level) {
+            case CHEAP -> Color.parseColor(COLOR_CHEAP);
+            case MID -> Color.parseColor(COLOR_MID);
+            case EXPENSIVE -> Color.parseColor(COLOR_EXPENSIVE);
+            default -> Color.parseColor(COLOR_UNKNOWN);
+        };
     }
     /**
      * Devuelve el color azul eléctrico para marcadores de electrolineras.
      */
+
     public static int getElectricColor() {
-        return Color.parseColor("#1565C0");
+        return Color.parseColor(COLOR_ELECTRIC);
     }
 
     /**
-     * Crea el bitmap del marcador con precio y nivel de precio explícitos.
-     * Usar cuando el precio mostrado difiere del original (p.ej. con descuento).
+     * Crea el bitmap del marcador con precio y nivel de precio calculados automáticamente.
      *
-     * @param context           Contexto de la aplicación.
-     * @param gasolinera        Gasolinera a representar.
-     * @param fuelType          Tipo de combustible seleccionado.
-     * @param overridePriceText Texto de precio a mostrar, o null para usar el precio original.
-     * @param priceLevel        Nivel de precio a usar para el color del marcador.
+     * @param context    Contexto de la aplicación.
+     * @param gasolinera Gasolinera a representar.
+     * @param fuelType   Tipo de combustible seleccionado.
      * @return Bitmap del marcador.
      */
     public static Bitmap createMarker(Context context,
@@ -80,7 +99,6 @@ public final class MarkerBitmapFactory {
         int bgColor;
 
         if (gasolinera.isElectric()) {
-            // Para electrolineras mostramos la potencia máxima
             priceText = getMaxPotenciaLabel(gasolinera);
             bgColor   = getElectricColor();
         } else {
@@ -88,19 +106,22 @@ public final class MarkerBitmapFactory {
             bgColor   = getPriceLevelColor(gasolinera.getPriceLevel());
         }
 
+        boolean isFavourite = FavoritesPrefs.isFavorite(context, gasolinera);
+
         int logoResId = gasolinera.isElectric()
                 ? BrandLogoProvider.getLogoResId(gasolinera.getMarca(), gasolinera.getOperador())
                 : BrandLogoProvider.getLogoResId(gasolinera.getMarca());
-        String key    = logoResId + "|" + (gasolinera.isElectric() ? "electric" :
-                gasolinera.getPriceLevel().name()) + "|" + priceText;
+        String key = logoResId + "|" + (gasolinera.isElectric() ? "electric" :
+                gasolinera.getPriceLevel().name()) + "|" + priceText + "|" + isFavourite;
 
         Bitmap cached = CACHE.get(key);
         if (cached != null && !cached.isRecycled()) return cached;
 
-        Bitmap rendered = renderMarker(context, gasolinera, priceText, logoResId, bgColor);
+        Bitmap rendered = renderMarker(context, gasolinera, priceText, logoResId, bgColor, isFavourite);
         CACHE.put(key, rendered);
         return rendered;
     }
+
     /**
      * Crea el bitmap del marcador con un texto de precio personalizado.
      * Útil cuando el precio mostrado difiere del original (p.ej. con descuento).
@@ -121,15 +142,17 @@ public final class MarkerBitmapFactory {
                 ? getElectricColor()
                 : getPriceLevelColor(priceLevel);
 
+        boolean isFavourite = FavoritesPrefs.isFavorite(context, gasolinera);
+
         int logoResId = gasolinera.isElectric()
                 ? BrandLogoProvider.getLogoResId(gasolinera.getMarca(), gasolinera.getOperador())
                 : BrandLogoProvider.getLogoResId(gasolinera.getMarca());
-        String key = logoResId + "|" + priceLevel.name() + "|" + priceText;
+        String key = logoResId + "|" + priceLevel.name() + "|" + priceText + "|" + isFavourite;
 
         Bitmap cached = CACHE.get(key);
         if (cached != null && !cached.isRecycled()) return cached;
 
-        Bitmap rendered = renderMarker(context, gasolinera, priceText, logoResId, bgColor);
+        Bitmap rendered = renderMarker(context, gasolinera, priceText, logoResId, bgColor, isFavourite);
         CACHE.put(key, rendered);
         return rendered;
     }
@@ -157,55 +180,80 @@ public final class MarkerBitmapFactory {
                                        Gasolinera gasolinera,
                                        String priceText,
                                        int logoResId,
-                                       int bgColor) {
+                                       int bgColor,
+                                       boolean isFavourite) {
         float density = context.getResources().getDisplayMetrics().density;
 
-        int width        = px(density, 52);
-        int bubbleHeight = px(density, 40);
-        int pinHeight    = px(density, 10);
-        int height       = bubbleHeight + pinHeight;
-        int corner       = px(density, 8);
+        int starSize    = isFavourite ? px(density, STAR_SIZE_DP)    : 0;
+        int starPadding = isFavourite ? px(density, STAR_PADDING_DP) : 0;
 
-        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        int pillWidth   = px(density, PILL_WIDTH_DP);
+        int pillHeight  = px(density, PILL_HEIGHT_DP);
+        int pinHeight   = px(density, PIN_HEIGHT_DP);
+        int cornerRadii = pillHeight / 2;
+        int borderWidth = px(density, BORDER_WIDTH_DP);
+        int pillTop     = starSize + starPadding;
+
+        int totalHeight = pillHeight + pinHeight + starSize + starPadding;
+
+        Bitmap bitmap = Bitmap.createBitmap(pillWidth, totalHeight, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         Paint paint   = new Paint(Paint.ANTI_ALIAS_FLAG);
 
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(bgColor);
-        RectF bubble = new RectF(0, 0, width, bubbleHeight);
-        canvas.drawRoundRect(bubble, corner, corner, paint);
+        RectF borderRect = new RectF(0, pillTop, pillWidth, pillTop + pillHeight);
+        canvas.drawRoundRect(borderRect, cornerRadii, cornerRadii, paint);
 
-        paint.setStyle(Paint.Style.STROKE);
+        // ── Fondo negro interior ─────────────────────────────────────────────────
+        paint.setColor(Color.parseColor(COLOR_MARKER_BG));
+        RectF innerRect = new RectF(
+                borderWidth,
+                pillTop + borderWidth,
+                pillWidth - borderWidth,
+                pillTop + pillHeight - borderWidth);
+        canvas.drawRoundRect(innerRect, cornerRadii - borderWidth, cornerRadii - borderWidth, paint);
+
+        // ── Logo de marca ──────────────────────────────────
+        int logoMargin       = px(density, LOGO_MARGIN_DP);
+        int logoCircleRadius = (pillHeight / 2) - borderWidth - logoMargin;
+        int logoMarginLeft = px(density, LOGO_MARGIN_LEFT_DP);
+        float logoCx = borderWidth + logoMarginLeft + logoCircleRadius;
+        float logoCy = pillTop + pillHeight / 2f;
+
+        drawLogo(context, canvas, logoResId, logoCx, logoCy, logoCircleRadius);
+
+        // ── Texto precio ─────────────────────────────────────────────────────────
         paint.setColor(Color.WHITE);
-        paint.setStrokeWidth(density * 1.6f);
-        canvas.drawRoundRect(bubble, corner, corner, paint);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setTextSize(density * PRICE_TEXT_SIZE_SP);
+        paint.setFakeBoldText(true);
+        paint.setTextAlign(Paint.Align.CENTER);
 
+        float textX = logoCx + logoCircleRadius + (pillWidth - logoCx - logoCircleRadius) / 2f;
+        float textY = pillTop + pillHeight / 2f - (paint.descent() + paint.ascent()) / 2f;
+        canvas.drawText(priceText, textX, textY, paint);
+
+        // ── Pin triangular ───────────────────────────────────────────────────────
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(bgColor);
-        float pinWidth = px(density, 8);
+        float pinWidth = px(density, PIN_WIDTH_DP);
+        float pinBase  = pillTop + pillHeight;
         Path pin = new Path();
-        pin.moveTo(width / 2f - pinWidth, bubbleHeight - density);
-        pin.lineTo(width / 2f + pinWidth, bubbleHeight - density);
-        pin.lineTo(width / 2f, height);
+        pin.moveTo(pillWidth / 2f - pinWidth, pinBase);
+        pin.lineTo(pillWidth / 2f + pinWidth, pinBase);
+        pin.lineTo(pillWidth / 2f, pinBase + pinHeight);
         pin.close();
         canvas.drawPath(pin, paint);
 
-        float centerX  = width / 2f;
-        float centerY  = bubbleHeight * 0.40f;
-        int logoRadius = px(density, 9);
-        paint.setColor(Color.WHITE);
-        paint.setAlpha(255);
-        paint.setStyle(Paint.Style.FILL);
-        canvas.drawCircle(centerX, centerY, logoRadius, paint);
-
-        drawLogo(context, canvas, logoResId, centerX, centerY, logoRadius);
-
-        paint.setColor(Color.WHITE);
-        paint.setAlpha(255);
-        paint.setFakeBoldText(false);
-        paint.setTextSize(density * 7f);
-        paint.setTextAlign(Paint.Align.CENTER);
-        canvas.drawText(priceText, centerX, bubbleHeight * 0.83f, paint);
+        // ── Estrella favorito ────────────────────────────────────────────────────
+        if (isFavourite) {
+            paint.setColor(Color.parseColor(COLOR_STAR));
+            paint.setTextSize(density * STAR_TEXT_SIZE_SP);
+            paint.setTextAlign(Paint.Align.CENTER);
+            paint.setFakeBoldText(false);
+            canvas.drawText("★", pillWidth / 2f, starSize, paint);
+        }
 
         return bitmap;
     }
