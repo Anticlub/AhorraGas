@@ -57,6 +57,17 @@ public class GasolineraRepository {
     }
 
     /**
+     * Devuelve una gasolinera por su ID desde Room.
+     *
+     * @param id identificador de la gasolinera
+     * @return gasolinera encontrada o null si no existe
+     * @throws RepoError si hay fallo de acceso a la base de datos
+     */
+    public Gasolinera getById(String id) throws RepoError {
+        return roomDataSource.loadById(id);
+    }
+
+    /**
      * Invalida la caché en memoria forzando recarga en la siguiente llamada.
      */
     public void clearMemoryCache() {
