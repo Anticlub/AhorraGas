@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
 
 import com.example.ahorragas.R;
+import com.example.ahorragas.map.MarkerBitmapFactory;
 import com.example.ahorragas.model.Discount;
 import com.example.ahorragas.model.Electrolinera;
 import com.example.ahorragas.model.FuelType;
@@ -314,6 +315,7 @@ public class GeneralFragment extends Fragment {
                 FavoritesPrefs.add(requireContext(), finalG);
                 btnFavorite.setText(getString(R.string.btn_remove_from_favorites));
             }
+            MarkerBitmapFactory.clearCache();
         });
     }
 }
