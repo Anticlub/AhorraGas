@@ -130,19 +130,21 @@ public class GeneralFragment extends Fragment {
             g.setDistanceMeters(args.getDouble(ARG_DISTANCE));
         }
 
-        TextView tvFuelLabel     = view.findViewById(R.id.tvFuelLabel);
-        TextView tvPrice         = view.findViewById(R.id.tvDetailPrice);
-        TextView tvDistance      = view.findViewById(R.id.tvDetailDistance);
-        TextView tvHorario       = view.findViewById(R.id.tvDetailHorario);
-        TextView tvFillCost      = view.findViewById(R.id.tvFillCost);
-        TextView tvArrivalCost   = view.findViewById(R.id.tvArrivalCost);
-        TextView tvDiscountLabel = view.findViewById(R.id.tvDiscountLabel);
-        TextView tvDiscountPrice = view.findViewById(R.id.tvDiscountPrice);
-        TextView tvDiscountFill  = view.findViewById(R.id.tvDiscountFill);
-        View dividerDiscount     = view.findViewById(R.id.dividerDiscount);
-        TextView tvFillLabel     = view.findViewById(R.id.tvFillLabel);
-        TextView tvArrivalLabel  = view.findViewById(R.id.tvArrivalLabel);
-        TextView tvAlertBanner   = view.findViewById(R.id.tvAlertBanner);
+        TextView tvFuelLabel             = view.findViewById(R.id.tvFuelLabel);
+        TextView tvPrice                 = view.findViewById(R.id.tvDetailPrice);
+        TextView tvDistance              = view.findViewById(R.id.tvDetailDistance);
+        TextView tvHorario               = view.findViewById(R.id.tvDetailHorario);
+        TextView tvFillCost              = view.findViewById(R.id.tvFillCost);
+        TextView tvArrivalCost           = view.findViewById(R.id.tvArrivalCost);
+        TextView tvDiscountLabel         = view.findViewById(R.id.tvDiscountLabel);
+        TextView tvDiscountPrice         = view.findViewById(R.id.tvDiscountPrice);
+        TextView tvDiscountFill          = view.findViewById(R.id.tvDiscountFill);
+        View dividerDiscount             = view.findViewById(R.id.dividerDiscount);
+        TextView tvFillLabel             = view.findViewById(R.id.tvFillLabel);
+        TextView tvArrivalLabel          = view.findViewById(R.id.tvArrivalLabel);
+        TextView tvAlertBanner           = view.findViewById(R.id.tvAlertBanner);
+        Button btnFavorite               = view.findViewById(R.id.btnFavorite);
+        TextView tvFavoritesNotAvailable = view.findViewById(R.id.tvFavoritesNotAvailable);
 
         // ── Banner de combustible distinto al de la alerta ───────────────────
         String alertFuelName = args.getString(ARG_ALERT_FUEL);
@@ -218,6 +220,8 @@ public class GeneralFragment extends Fragment {
                 }
             }
 
+            btnFavorite.setVisibility(View.GONE);
+            tvFavoritesNotAvailable.setVisibility(View.VISIBLE);
             tvDiscountLabel.setVisibility(View.GONE);
             tvDiscountPrice.setVisibility(View.GONE);
             tvDiscountFill.setVisibility(View.GONE);
@@ -297,7 +301,6 @@ public class GeneralFragment extends Fragment {
         String horario = g.getFormattedHorario();
         tvHorario.setText(horario != null && !horario.isEmpty() ? horario : getString(R.string.msg_no_available));
 
-        Button btnFavorite = view.findViewById(R.id.btnFavorite);
         boolean isFav = FavoritesPrefs.isFavorite(requireContext(), g);
         btnFavorite.setText(isFav ? getString(R.string.btn_remove_from_favorites) : getString(R.string.btn_add_to_favorites));
 
