@@ -79,6 +79,24 @@ public class RoomGasolineraDataSource implements GasolineraDataSource {
     }
 
     /**
+     * Carga una gasolinera por su ID desde Room.
+     *
+     * @param id identificador de la gasolinera
+     * @return gasolinera encontrada o null si no existe
+     * @throws RepoError si hay fallo de acceso a la base de datos
+     */
+    public Gasolinera loadById(String id) throws RepoError {
+        try {
+            EstacionEntity entity = estacionDao.getGasolineraById(id);
+            if (entity == null) return null;
+            return EstacionMapper.toGasolinera(entity);
+        } catch (Exception e) {
+            throw new RepoError(RepoError.Type.NETWORK,
+                    "Error leyendo gasolinera por ID: " + e.getMessage());
+        }
+    }
+
+    /**
      * Reemplaza todas las gasolineras en Room con la lista proporcionada.
      *
      * @param gasolineras lista de gasolineras a persistir

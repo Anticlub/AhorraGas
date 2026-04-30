@@ -5,6 +5,10 @@ import android.content.SharedPreferences;
 
 import androidx.preference.PreferenceManager;
 
+import com.example.ahorragas.data.GasolineraRepository;
+import com.example.ahorragas.data.RepoError;
+import com.example.ahorragas.data.RoomGasolineraDataSource;
+import com.example.ahorragas.data.local.AppDatabase;
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 
@@ -16,8 +20,7 @@ import java.util.List;
 
 /**
  * Gestiona la persistencia de gasolineras favoritas en SharedPreferences.
- * Cada favorito se guarda como JSON con todos los datos necesarios para
- * mostrar la fila en la lista y abrir el detalle.
+ * Guarda solo el ID de cada gasolinera y obtiene los datos frescos desde Room.
  */
 public final class FavoritesPrefs {
 
@@ -27,8 +30,6 @@ public final class FavoritesPrefs {
 
     /**
      * Devuelve una clave única para identificar una estación.
-     * Para gasolineras usa el ID del Ministerio.
-     * Para electrolineras (id=0) usa lat+lon como identificador.
      *
      * @param gasolinera estación a identificar
      * @return clave única como string
@@ -47,13 +48,11 @@ public final class FavoritesPrefs {
      * @param gasolinera Gasolinera a guardar.
      */
     public static void add(Context ctx, Gasolinera gasolinera) {
-        List<Gasolinera> list = loadAll(ctx);
+        List<String> ids = loadIds(ctx);
         String key = uniqueKey(gasolinera);
-        for (Gasolinera g : list) {
-            if (uniqueKey(g).equals(key)) return;
-        }
-        list.add(gasolinera);
-        saveAll(ctx, list);
+        if (ids.contains(key)) return;
+        ids.add(key);
+        saveIds(ctx, ids);
     }
 
     /**
@@ -64,21 +63,21 @@ public final class FavoritesPrefs {
      */
     public static void remove(Context ctx, Gasolinera gasolinera) {
         String key = uniqueKey(gasolinera);
-        List<Gasolinera> list = loadAll(ctx);
-        list.removeIf(g -> uniqueKey(g).equals(key));
-        saveAll(ctx, list);
+        List<String> ids = loadIds(ctx);
+        ids.remove(key);
+        saveIds(ctx, ids);
     }
 
     /**
-     * Elimina una gasolinera de favoritos por su ID (solo gasolineras con ID válido).
+     * Elimina una gasolinera de favoritos por su ID.
      *
      * @param ctx Contexto de la aplicación.
      * @param id  ID de la gasolinera a eliminar.
      */
     public static void remove(Context ctx, int id) {
-        List<Gasolinera> list = loadAll(ctx);
-        list.removeIf(g -> g.getId() == id && id != 0);
-        saveAll(ctx, list);
+        List<String> ids = loadIds(ctx);
+        ids.remove("id:" + id);
+        saveIds(ctx, ids);
     }
 
     /**
@@ -89,15 +88,11 @@ public final class FavoritesPrefs {
      * @return true si está en favoritos.
      */
     public static boolean isFavorite(Context ctx, Gasolinera gasolinera) {
-        String key = uniqueKey(gasolinera);
-        for (Gasolinera g : loadAll(ctx)) {
-            if (uniqueKey(g).equals(key)) return true;
-        }
-        return false;
+        return loadIds(ctx).contains(uniqueKey(gasolinera));
     }
 
     /**
-     * Comprueba si una gasolinera está en favoritos por ID (solo gasolineras con ID válido).
+     * Comprueba si una gasolinera está en favoritos por ID.
      *
      * @param ctx Contexto de la aplicación.
      * @param id  ID de la gasolinera.
@@ -105,25 +100,107 @@ public final class FavoritesPrefs {
      */
     public static boolean isFavorite(Context ctx, int id) {
         if (id == 0) return false;
-        for (Gasolinera g : loadAll(ctx)) {
-            if (g.getId() == id) return true;
-        }
-        return false;
+        return loadIds(ctx).contains("id:" + id);
     }
 
     /**
-     * Devuelve la lista completa de gasolineras favoritas.
+     * Devuelve la lista completa de gasolineras favoritas con datos frescos de Room.
+     * Mantiene compatibilidad con el formato antiguo (objeto completo).
      *
      * @param ctx Contexto de la aplicación.
      * @return Lista de gasolineras favoritas, vacía si no hay ninguna.
      */
     public static List<Gasolinera> loadAll(Context ctx) {
-        List<Gasolinera> list = new ArrayList<>();
+        List<Gasolinera> result = new ArrayList<>();
         String raw = prefs(ctx).getString(KEY_FAVORITES, null);
-        if (raw == null || raw.isEmpty()) return list;
+        if (raw == null || raw.isEmpty()) return result;
 
         try {
             JSONArray arr = new JSONArray(raw);
+
+            // Detectar formato antiguo (objetos completos) y migrar
+            if (arr.length() > 0 && arr.get(0) instanceof JSONObject) {
+                result = loadAllLegacy(ctx, arr);
+                // Migrar al nuevo formato
+                List<String> ids = new ArrayList<>();
+                for (Gasolinera g : result) {
+                    ids.add(uniqueKey(g));
+                }
+                saveIds(ctx, ids);
+                return result;
+            }
+
+            // Formato nuevo: array de strings con keys
+            GasolineraRepository repo = GasolineraRepository.getInstance(
+                    new RoomGasolineraDataSource(
+                            AppDatabase.getInstance(ctx)));
+
+            for (int i = 0; i < arr.length(); i++) {
+                String key = arr.getString(i);
+                if (key.startsWith("id:")) {
+                    String idStr = key.substring(3);
+                    try {
+                        Gasolinera g = repo.getById(idStr);
+                        if (g != null) result.add(g);
+                    } catch (RepoError ignored) {}
+                }
+                // las claves "ll:" (electrolineras) se ignoran de momento
+            }
+
+        } catch (Exception e) {
+            android.util.Log.e("FavoritesPrefs", "Error leyendo favoritos: " + e.getMessage(), e);
+        }
+
+        return result;
+    }
+
+    // ─── PRIVADO ─────────────────────────────────────────────────────────────
+
+    private static List<String> loadIds(Context ctx) {
+        List<String> ids = new ArrayList<>();
+        String raw = prefs(ctx).getString(KEY_FAVORITES, null);
+        if (raw == null || raw.isEmpty()) return ids;
+
+        try {
+            JSONArray arr = new JSONArray(raw);
+            if (arr.length() == 0) return ids;
+
+            // Si es formato antiguo, extraer las keys
+            if (arr.get(0) instanceof JSONObject) {
+                List<Gasolinera> legacy = loadAllLegacy(ctx, arr);
+                for (Gasolinera g : legacy) {
+                    ids.add(uniqueKey(g));
+                }
+                saveIds(ctx, ids);
+                return ids;
+            }
+
+            for (int i = 0; i < arr.length(); i++) {
+                ids.add(arr.getString(i));
+            }
+        } catch (Exception e) {
+            android.util.Log.e("FavoritesPrefs", "Error leyendo IDs: " + e.getMessage(), e);
+        }
+
+        return ids;
+    }
+
+    private static void saveIds(Context ctx, List<String> ids) {
+        try {
+            JSONArray arr = new JSONArray();
+            for (String id : ids) arr.put(id);
+            prefs(ctx).edit().putString(KEY_FAVORITES, arr.toString()).apply();
+        } catch (Exception e) {
+            android.util.Log.e("FavoritesPrefs", "Error guardando IDs: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Carga favoritos en formato antiguo (objeto completo) para migración.
+     */
+    private static List<Gasolinera> loadAllLegacy(Context ctx, JSONArray arr) {
+        List<Gasolinera> list = new ArrayList<>();
+        try {
             for (int i = 0; i < arr.length(); i++) {
                 JSONObject obj = arr.getJSONObject(i);
                 Gasolinera g = new Gasolinera(
@@ -137,24 +214,6 @@ public final class FavoritesPrefs {
                 );
                 g.setHorario(obj.optString("horario"));
                 g.setElectric(obj.optBoolean("electric", false));
-                if (g.isElectric()) {
-                    g.setOperador(obj.optString("operador", ""));
-                    JSONArray conArr = obj.optJSONArray("conectores");
-                    if (conArr != null) {
-                        java.util.List<com.example.ahorragas.model.Electrolinera.Conector> conectores = new java.util.ArrayList<>();
-                        for (int j = 0; j < conArr.length(); j++) {
-                            JSONObject conObj = conArr.getJSONObject(j);
-                            com.example.ahorragas.model.ConnectorType tipo;
-                            try { tipo = com.example.ahorragas.model.ConnectorType.valueOf(conObj.optString("tipo", "UNKNOWN")); }
-                            catch (Exception e) { tipo = com.example.ahorragas.model.ConnectorType.UNKNOWN; }
-                            String modo = conObj.optString("modo", "");
-                            Double potenciaW = conObj.optDouble("potenciaW", 0);
-                            if (potenciaW == 0) potenciaW = null;
-                            conectores.add(new com.example.ahorragas.model.Electrolinera.Conector(tipo, modo, potenciaW));
-                        }
-                        g.setConectores(conectores);
-                    }
-                }
 
                 JSONObject prices = obj.optJSONObject("prices");
                 if (prices != null) {
@@ -167,54 +226,9 @@ public final class FavoritesPrefs {
                 list.add(g);
             }
         } catch (Exception e) {
-            android.util.Log.e("FavoritesPrefs", "Error leyendo favoritos: " + e.getMessage(), e);
+            android.util.Log.e("FavoritesPrefs", "Error leyendo legacy: " + e.getMessage(), e);
         }
-
         return list;
-    }
-
-    // ─── PRIVADO ─────────────────────────────────────────────────────────────
-
-    private static void saveAll(Context ctx, List<Gasolinera> list) {
-        try {
-            JSONArray arr = new JSONArray();
-            for (Gasolinera g : list) {
-                JSONObject obj = new JSONObject();
-                obj.put("id",        g.getId());
-                obj.put("marca",     g.getMarca());
-                obj.put("municipio", g.getMunicipio());
-                obj.put("direccion", g.getDireccion());
-                obj.put("lat",       g.getLat() != null ? g.getLat() : 0.0);
-                obj.put("lon",       g.getLon() != null ? g.getLon() : 0.0);
-                obj.put("horario",   g.getHorario());
-                obj.put("electric",  g.isElectric());
-                if (g.isElectric()) {
-                    obj.put("operador", g.getOperador() != null ? g.getOperador() : "");
-                    if (g.getConectores() != null && !g.getConectores().isEmpty()) {
-                        JSONArray conArr = new JSONArray();
-                        for (com.example.ahorragas.model.Electrolinera.Conector c : g.getConectores()) {
-                            JSONObject conObj = new JSONObject();
-                            conObj.put("tipo", c.getTipo() != null ? c.getTipo().name() : "UNKNOWN");
-                            conObj.put("modo", c.getModoRecarga() != null ? c.getModoRecarga() : "");
-                            conObj.put("potenciaW", c.getPotenciaW() != null ? c.getPotenciaW() : 0);
-                            conArr.put(conObj);
-                        }
-                        obj.put("conectores", conArr);
-                    }
-                }
-
-                JSONObject prices = new JSONObject();
-                for (FuelType fuel : FuelType.values()) {
-                    Double price = g.getPrecio(fuel);
-                    if (price != null) prices.put(fuel.name(), price);
-                }
-                obj.put("prices", prices);
-                arr.put(obj);
-            }
-            prefs(ctx).edit().putString(KEY_FAVORITES, arr.toString()).apply();
-        } catch (Exception e) {
-            android.util.Log.e("FavoritesPrefs", "Error guardando favoritos: " + e.getMessage(), e);
-        }
     }
 
     private static SharedPreferences prefs(Context ctx) {
