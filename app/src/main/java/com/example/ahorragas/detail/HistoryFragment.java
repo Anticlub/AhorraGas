@@ -43,10 +43,23 @@ public class HistoryFragment extends Fragment {
     private static final int COLOR_ACTIVE_RANGE = 0xFF4DB6AC;
     private static final int COLOR_INACTIVE_RANGE = 0xFF666666;
     private static final int COLOR_LINE = 0xFF4DB6AC;
+    private static final int DEFAULT_DAYS        = 30;
+    private static final int RANGE_7_DAYS        = 7;
+    private static final int RANGE_15_DAYS       = 15;
+    private static final int RANGE_30_DAYS       = 30;
+    private static final float CHART_TEXT_SIZE_X = 10f;
+    private static final float CHART_TEXT_SIZE_Y = 11f;
+    private static final float CHART_CIRCLE_RADIUS = 3f;
+    private static final float CHART_LINE_WIDTH    = 2f;
+    private static final int   CHART_FILL_ALPHA    = 30;
+    private static final float CHART_BOTTOM_OFFSET = 8f;
+    private static final float CHART_LABEL_ROTATION = -45f;
+    private static final int   DATE_DISPLAY_LENGTH  = 10;
+    private static final int   DATE_DISPLAY_START   = 5;
 
     private int stationId;
     private String stationName;
-    private int currentDays = 7;
+    private int currentDays = DEFAULT_DAYS;
 
     private ProgressBar pbLoading;
     private TextView tvMessage;
@@ -102,9 +115,9 @@ public class HistoryFragment extends Fragment {
         btnRange15 = view.findViewById(R.id.btnRange15);
         btnRange30 = view.findViewById(R.id.btnRange30);
 
-        btnRange7.setOnClickListener(v -> loadHistory(7));
-        btnRange15.setOnClickListener(v -> loadHistory(15));
-        btnRange30.setOnClickListener(v -> loadHistory(30));
+        btnRange7.setOnClickListener(v -> loadHistory(RANGE_7_DAYS));
+        btnRange15.setOnClickListener(v -> loadHistory(RANGE_15_DAYS));
+        btnRange30.setOnClickListener(v -> loadHistory(RANGE_30_DAYS));
 
         Vehicle active = VehiclePrefs.loadActiveVehicle(requireContext());
         if (active == null || active.getFuelType() == FuelType.ELECTRICO) {
@@ -118,7 +131,7 @@ public class HistoryFragment extends Fragment {
         }
 
         setupChart();
-        loadHistory(7);
+        loadHistory(DEFAULT_DAYS);
     }
 
     /**
@@ -166,19 +179,19 @@ public class HistoryFragment extends Fragment {
         chart.setDrawGridBackground(false);
         chart.setBackgroundColor(Color.TRANSPARENT);
         chart.getLegend().setEnabled(false);
-        chart.setExtraBottomOffset(8f);
+        chart.setExtraBottomOffset(CHART_BOTTOM_OFFSET);
 
         XAxis xAxis = chart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setTextColor(0xFF333333);
-        xAxis.setTextSize(10f);
+        xAxis.setTextSize(CHART_TEXT_SIZE_X);
         xAxis.setDrawGridLines(false);
         xAxis.setGranularity(1f);
-        xAxis.setLabelRotationAngle(-45f);
+        xAxis.setLabelRotationAngle(CHART_LABEL_ROTATION);
 
         YAxis leftAxis = chart.getAxisLeft();
         xAxis.setTextColor(0xFF333333);
-        leftAxis.setTextSize(11f);
+        leftAxis.setTextSize(CHART_TEXT_SIZE_Y);
         leftAxis.setDrawGridLines(true);
         leftAxis.setGridColor(0x1A000000);
         leftAxis.setValueFormatter(new com.github.mikephil.charting.formatter.ValueFormatter() {
@@ -205,19 +218,19 @@ public class HistoryFragment extends Fragment {
             PriceHistoryEntry e = entries.get(i);
             chartEntries.add(new Entry(i, (float) e.getPrice()));
             String date = e.getDate();
-            chartLabels.add(date.length() >= 10 ? date.substring(5) : date);
+            chartLabels.add(date.length() >= DATE_DISPLAY_LENGTH ? date.substring(DATE_DISPLAY_START) : date);
         }
 
         LineDataSet dataSet = new LineDataSet(chartEntries, fuel.displayName());
         dataSet.setColor(COLOR_LINE);
         dataSet.setCircleColor(COLOR_LINE);
-        dataSet.setCircleRadius(3f);
-        dataSet.setLineWidth(2f);
+        dataSet.setCircleRadius(CHART_CIRCLE_RADIUS);
+        dataSet.setLineWidth(CHART_LINE_WIDTH);
         dataSet.setDrawValues(false);
         dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
         dataSet.setDrawFilled(true);
         dataSet.setFillColor(COLOR_LINE);
-        dataSet.setFillAlpha(30);
+        dataSet.setFillAlpha(CHART_FILL_ALPHA);
 
         chart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(chartLabels));
         chart.setOnChartValueSelectedListener(new com.github.mikephil.charting.listener.OnChartValueSelectedListener() {
