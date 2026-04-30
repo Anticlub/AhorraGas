@@ -288,7 +288,7 @@ public class FavoritesActivity extends BaseActivity {
     }
 
     /**
-     * Carga la lista de favoritos desde SharedPreferences, calcula la distancia
+     * Carga la lista de favoritos desde Room en background, calcula la distancia
      * a cada gasolinera si la ubicación está disponible, y actualiza el adapter.
      */
     private void loadAndDisplay() {
@@ -301,33 +301,35 @@ public class FavoritesActivity extends BaseActivity {
             return;
         }
 
-        List<Gasolinera> favorites = FavoritesPrefs.loadAll(this);
+        new Thread(() -> {
+            List<Gasolinera> favorites = FavoritesPrefs.loadAll(this);
 
-        if (favorites.isEmpty()) {
-            showEmpty();
-            return;
-        }
+            if (favorites.isEmpty()) {
+                runOnUiThread(this::showEmpty);
+                return;
+            }
 
-        locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
-            @Override
-            public void onSuccess(Location location) {
-                for (Gasolinera g : favorites) {
-                    double distance = GeoUtils.distanceMeters(
-                            location.getLatitude(),
-                            location.getLongitude(),
-                            g.getLat(),
-                            g.getLon()
-                    );
-                    g.setDistanceMeters(distance);
+            locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
+                @Override
+                public void onSuccess(Location location) {
+                    for (Gasolinera g : favorites) {
+                        double distance = GeoUtils.distanceMeters(
+                                location.getLatitude(),
+                                location.getLongitude(),
+                                g.getLat(),
+                                g.getLon()
+                        );
+                        g.setDistanceMeters(distance);
+                    }
+                    runOnUiThread(() -> showData(favorites));
                 }
-                runOnUiThread(() -> showData(favorites));
-            }
 
-            @Override
-            public void onError(LocationHelper.LocationError error) {
-                runOnUiThread(() -> showData(favorites));
-            }
-        });
+                @Override
+                public void onError(LocationHelper.LocationError error) {
+                    runOnUiThread(() -> showData(favorites));
+                }
+            });
+        }).start();
     }
 
     private void setupBottomNav() {
