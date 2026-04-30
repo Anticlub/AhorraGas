@@ -245,7 +245,7 @@ public final class EstacionMapper {
         // Formato "NombreCastellano-NombreCooficial" con guión como separador de nombres
         // Solo aplica si ambas partes parecen palabras completas (no casos como "San Sebastián")
         java.util.regex.Matcher m3 = java.util.regex.Pattern
-                .compile("^(.{4,})-([A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]{3,})$")
+                .compile("^(.{4,}?)-([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑa-záéíóúüñ ]{3,})$")
                 .matcher(result);
         if (m3.matches()) {
             result = m3.group(1).trim();
