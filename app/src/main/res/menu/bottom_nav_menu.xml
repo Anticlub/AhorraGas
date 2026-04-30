@@ -3,21 +3,21 @@
     <item
         android:id="@+id/nav_map"
         android:icon="@drawable/ic_map"
-        android:title="Mapa" />
+        android:title="@string/nav_map" />
     <item
         android:id="@+id/nav_price"
         android:icon="@drawable/ic_price"
-        android:title="Por precio" />
+        android:title="@string/nav_price" />
     <item
         android:id="@+id/nav_distance"
         android:icon="@drawable/ic_near_me"
-        android:title="Por Distancia" />
+        android:title="@string/nav_distance" />
     <item
         android:id="@+id/nav_favorites"
         android:icon="@drawable/ic_favorites"
-        android:title="Favoritas" />
+        android:title="@string/nav_favorites" />
     <item
         android:id="@+id/nav_preferences"
         android:icon="@drawable/ic_settings"
-        android:title="Preferencias" />
+        android:title="@string/nav_preferences" />
 </menu>
