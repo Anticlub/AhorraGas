@@ -221,7 +221,8 @@ public final class MarkerBitmapFactory {
         float logoCx = borderWidth + logoMarginLeft + logoCircleRadius;
         float logoCy = pillTop + pillHeight / 2f;
 
-        drawLogo(context, canvas, logoResId, logoCx, logoCy, logoCircleRadius);
+        int logoSize = logoCircleRadius * 2;
+        drawLogo(context, canvas, logoResId, logoCx, logoCy, logoSize);
 
         // ── Texto precio ─────────────────────────────────────────────────────────
         paint.setColor(Color.WHITE);
@@ -259,25 +260,24 @@ public final class MarkerBitmapFactory {
     }
 
     private static void drawLogo(Context context, Canvas canvas,
-                                 int logoResId, float cx, float cy, int radius) {
+                                 int logoResId, float cx, float cy, int size) {
         Bitmap logoBitmap = BitmapFactory.decodeResource(context.getResources(), logoResId);
         if (logoBitmap == null) return;
 
-        int logoSize = radius * 2;
-        Bitmap scaled = Bitmap.createScaledBitmap(logoBitmap, logoSize, logoSize, true);
+        Bitmap scaled = Bitmap.createScaledBitmap(logoBitmap, size, size, true);
 
-        Bitmap circular = Bitmap.createBitmap(logoSize, logoSize, Bitmap.Config.ARGB_8888);
+        Bitmap circular = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         Canvas circularCanvas = new Canvas(circular);
 
         Paint clipPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        circularCanvas.drawCircle(logoSize / 2f, logoSize / 2f, logoSize / 2f, clipPaint);
+        circularCanvas.drawCircle(size / 2f, size / 2f, size / 2f, clipPaint);
 
         clipPaint.setXfermode(new android.graphics.PorterDuffXfermode(
                 android.graphics.PorterDuff.Mode.SRC_IN));
         circularCanvas.drawBitmap(scaled, 0, 0, clipPaint);
 
         Paint drawPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-        canvas.drawBitmap(circular, cx - logoSize / 2f, cy - logoSize / 2f, drawPaint);
+        canvas.drawBitmap(circular, cx - size / 2f, cy - size / 2f, drawPaint);
     }
 
     private static int px(float density, int dpValue) {
