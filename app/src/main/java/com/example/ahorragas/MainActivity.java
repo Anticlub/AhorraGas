@@ -792,9 +792,40 @@ public class MainActivity extends BaseActivity {
         mapView.getController().setZoom(ZOOM_STATION);
     }
 
+    /**
+     * Crea un bitmap del icono de ubicación teñido con el color indicado.
+     *
+     * @param color Color en formato ARGB
+     * @return Bitmap teñido
+     */
+    private android.graphics.Bitmap tintedLocationBitmap(int color) {
+        int size = dp(32);
+        android.graphics.Bitmap bmp = android.graphics.Bitmap.createBitmap(
+                size, size, android.graphics.Bitmap.Config.ARGB_8888);
+        android.graphics.Canvas canvas = new android.graphics.Canvas(bmp);
+        android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(color);
+
+        android.graphics.Path path = new android.graphics.Path();
+        path.moveTo(size / 2f, 0);
+        path.lineTo(size, size);
+        path.lineTo(size / 2f, size * 0.75f);
+        path.lineTo(0, size);
+        path.close();
+
+        canvas.drawPath(path, paint);
+        return bmp;
+    }
+
     private void addMyLocationOverlay() {
         if (locationOverlay != null || !locationHelper.hasLocationPermission()) return;
         locationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), mapView);
+        locationOverlay.setPersonIcon(
+                tintedLocationBitmap(android.graphics.Color.parseColor("#FF9800"))
+        );
+        locationOverlay.setDirectionIcon(
+                tintedLocationBitmap(android.graphics.Color.parseColor("#FF9800"))
+        );
         locationOverlay.enableMyLocation();
         mapView.getOverlays().add(locationOverlay);
         mapView.invalidate();
