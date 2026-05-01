@@ -12,6 +12,9 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
@@ -248,7 +251,6 @@ public class MainActivity extends BaseActivity {
 
                 @Override
                 public void onError(LocationHelper.LocationError error) {
-                    // si no podemos obtener ubicación, mantenemos la anterior
                 }
             });
         }
@@ -271,6 +273,26 @@ public class MainActivity extends BaseActivity {
         executor.shutdownNow();
     }
 
+    // ─── MÉTODO AUXILIAR ─────────────────────────────────────────────────────
+
+    /**
+     * Aplica color rojo al último carácter de un string (el asterisco *)
+     * para indicar que el campo es obligatorio.
+     *
+     * @param text Texto del label que termina en *
+     * @return SpannableString con el asterisco en rojo
+     */
+    private SpannableString makeRequiredLabel(String text) {
+        SpannableString span = new SpannableString(text);
+        span.setSpan(
+                new ForegroundColorSpan(0xFFEF5350),
+                span.length() - 1,
+                span.length(),
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        );
+        return span;
+    }
+
     // ─── DIÁLOGO PRIMER VEHÍCULO ─────────────────────────────────────────────
 
     private void showFirstVehicleDialog() {
@@ -279,7 +301,7 @@ public class MainActivity extends BaseActivity {
         layout.setPadding(dp(20), dp(12), dp(20), dp(4));
 
         TextView labelName = new TextView(this);
-        labelName.setText(getString(R.string.dialogo_vehiculo_nombre));
+        labelName.setText(makeRequiredLabel(getString(R.string.label_vehicle_name)));
         labelName.setTextColor(0xFF333333);
         labelName.setTextSize(13);
         layout.addView(labelName);
@@ -328,7 +350,7 @@ public class MainActivity extends BaseActivity {
         layout.addView(etCharging);
 
         TextView labelFuel = new TextView(this);
-        labelFuel.setText(getString(R.string.dialogo_vehiculo_combustible));
+        labelFuel.setText(makeRequiredLabel(getString(R.string.label_fuel_type)));
         labelFuel.setTextColor(0xFF333333);
         labelFuel.setTextSize(13);
         labelFuel.setPadding(0, dp(12), 0, 0);
@@ -1061,10 +1083,6 @@ public class MainActivity extends BaseActivity {
             intent.putParcelableArrayListExtra("gasolineras", new ArrayList<>(searchGasolineras));
         }
         startActivity(intent);
-    }
-
-    private String safeText(String value) {
-        return value == null ? "" : value.trim();
     }
 
     private int dp(int dp) {
