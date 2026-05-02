@@ -1,16 +1,24 @@
 package com.example.ahorragas;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public abstract class BaseActivity extends AppCompatActivity {
+
+    private static final int ANDROID_15_API = 35;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,5 +105,87 @@ public abstract class BaseActivity extends AppCompatActivity {
             bottomNav.getMenu().findItem(R.id.nav_price).setTitle(getString(R.string.label_by_power));
             bottomNav.getMenu().findItem(R.id.nav_price).setIcon(R.drawable.ic_bolt);
         }
+    }
+
+    protected void applySystemBarInsets(int topBarId, int bottomBarId) {
+        if (Build.VERSION.SDK_INT < ANDROID_15_API) return;
+
+        View topBar = topBarId != 0 ? findViewById(topBarId) : null;
+        View bottomBar = bottomBarId != 0 ? findViewById(bottomBarId) : null;
+
+        if (topBar != null) {
+            applyTopInset(topBar);
+        }
+        if (bottomBar != null) {
+            applyBottomInset(bottomBar);
+        }
+    }
+
+    private void applyTopInset(View view) {
+        final int initialLeft = view.getPaddingLeft();
+        final int initialTop = view.getPaddingTop();
+        final int initialRight = view.getPaddingRight();
+        final int initialBottom = view.getPaddingBottom();
+        final int initialHeight = view.getLayoutParams() != null
+                ? view.getLayoutParams().height
+                : ViewGroup.LayoutParams.WRAP_CONTENT;
+
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.systemBars()
+                            | WindowInsetsCompat.Type.displayCutout()
+            );
+
+            v.setPadding(initialLeft, initialTop + insets.top, initialRight, initialBottom);
+            if (initialHeight > 0) {
+                ViewGroup.LayoutParams params = v.getLayoutParams();
+                params.height = initialHeight + insets.top;
+                v.setLayoutParams(params);
+            }
+            return windowInsets;
+        });
+        requestApplyInsetsWhenAttached(view);
+    }
+
+    private void applyBottomInset(View view) {
+        final int initialLeft = view.getPaddingLeft();
+        final int initialTop = view.getPaddingTop();
+        final int initialRight = view.getPaddingRight();
+        final int initialBottom = view.getPaddingBottom();
+        final int initialHeight = view.getLayoutParams() != null
+                ? view.getLayoutParams().height
+                : ViewGroup.LayoutParams.WRAP_CONTENT;
+
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+            v.setPadding(initialLeft, initialTop, initialRight, initialBottom + insets.bottom);
+            if (initialHeight > 0) {
+                ViewGroup.LayoutParams params = v.getLayoutParams();
+                params.height = initialHeight + insets.bottom;
+                v.setLayoutParams(params);
+            }
+            return windowInsets;
+        });
+        requestApplyInsetsWhenAttached(view);
+    }
+
+    private void requestApplyInsetsWhenAttached(View view) {
+        if (ViewCompat.isAttachedToWindow(view)) {
+            ViewCompat.requestApplyInsets(view);
+            return;
+        }
+
+        view.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View attachedView) {
+                attachedView.removeOnAttachStateChangeListener(this);
+                ViewCompat.requestApplyInsets(attachedView);
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View detachedView) {
+            }
+        });
     }
 }
