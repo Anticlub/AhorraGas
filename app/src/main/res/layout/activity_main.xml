@@ -11,16 +11,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@color/surface"
+        android:background="@color/primary_dark"
         android:paddingHorizontal="16dp"
-        android:paddingTop="10dp"
+        android:paddingTop="36dp"
         android:paddingBottom="8dp">
 
         <TextView
             android:id="@+id/tvLastSync"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_primary"
+            android:textColor="@color/white"
             android:textSize="13sp"
             android:textStyle="bold"
             android:text="@string/last_sync_never" />
@@ -30,7 +30,7 @@
             android:layout_height="1dp"
             android:layout_marginTop="6dp"
             android:layout_marginBottom="2dp"
-            android:background="@color/text_secondary" />
+            android:background="@color/white" />
 
         <EditText
             android:id="@+id/etSearch"
@@ -42,9 +42,9 @@
             android:drawableEnd="@android:drawable/ic_menu_search"
             android:drawablePadding="8dp"
             android:textSize="13sp"
-            android:textColor="@color/text_primary"
-            android:textColorHint="@color/text_secondary"
-            android:background="@color/surface"
+            android:textColor="@color/white"
+            android:textColorHint="@color/white"
+            android:background="@color/primary_dark"
             android:inputType="text"
             android:imeOptions="actionSearch"
             android:maxLines="1" />
