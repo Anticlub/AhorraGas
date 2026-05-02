@@ -2,11 +2,11 @@ package com.example.ahorragas.detail;
 
 import android.os.Bundle;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.example.ahorragas.BaseActivity;
 import com.example.ahorragas.PriceAlertWorker;
 import com.example.ahorragas.R;
 import com.example.ahorragas.map.BrandLogoProvider;
@@ -18,7 +18,7 @@ import com.google.android.material.tabs.TabLayoutMediator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-public class StationDetailActivity extends AppCompatActivity {
+public class StationDetailActivity extends BaseActivity {
 
     public static final String EXTRA_GASOLINERA = "extra_gasolinera";
     private Gasolinera gasolinera;
@@ -27,6 +27,7 @@ public class StationDetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_station_detail);
+        applySystemBarInsets(R.id.headerLayout, 0);
 
         gasolinera = extractGasolineraFromIntent();
         if (gasolinera == null) {

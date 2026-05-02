@@ -210,4 +210,11 @@
     <string name="nav_distance">Distantziaren arabera</string>
     <string name="nav_favorites">Gogokoak</string>
     <string name="nav_preferences">Hobespenak</string>
+
+    <!-- Markaren iragazkia -->
+    <string name="brand_filter_default">Marka: Guztiak</string>
+    <string name="brand_filter_label">Marka: %1$s</string>
+    <string name="brand_filter_dialog_title">Marka</string>
+    <string name="brand_all">Guztiak</string>
+    <string name="cancel">Utzi</string>
 </resources>
