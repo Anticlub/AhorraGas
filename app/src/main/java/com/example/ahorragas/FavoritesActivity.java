@@ -79,6 +79,7 @@ public class FavoritesActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_favorites);
+        applySystemBarInsets(R.id.topBar, R.id.bottomNavFavorites);
 
         locationHelper = new LocationHelper(this);
 

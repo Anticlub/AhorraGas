@@ -67,6 +67,7 @@ import java.util.Map;
 public class MainActivity extends BaseActivity {
 
     private static final String PREF_SELECTED_FUEL = "pref_selected_fuel";
+    private static final String BRAND_ALL_FILTER_KEY = "__all__";
     private static final GeoPoint SPAIN_CENTER = new GeoPoint(40.4168, -3.7038);
     private static final double ZOOM_SPAIN = 6.0;
     private static final double ZOOM_USER = 14.0;
@@ -91,6 +92,7 @@ public class MainActivity extends BaseActivity {
     private String lastSearchQuery = null;
     private List<Gasolinera> visibleGasolineras = new ArrayList<>();
     private FuelType selectedFuel = FuelType.GASOLEO_A;
+    private String selectedBrand = null; // null = todas las marcas
     private Location userLocation;
     private Location searchLocation;
     private final Map<Integer, Marker> markerMap = new HashMap<>();
@@ -137,6 +139,8 @@ public class MainActivity extends BaseActivity {
         Configuration.getInstance().setUserAgentValue(getPackageName());
 
         setContentView(R.layout.activity_main);
+        applySystemBarInsets(R.id.topBar, R.id.bottomNav);
+        setupBrandFilter();
 
         AppDatabase db = AppDatabase.getInstance(this);
         RoomGasolineraDataSource roomGasolineraDs = new RoomGasolineraDataSource(db);
@@ -684,9 +688,9 @@ public class MainActivity extends BaseActivity {
     private void showStationsOnMap(int count) {
         MarkerBitmapFactory.clearCache();
         clearMapMarkers();
-        final List<Gasolinera> toRender = new ArrayList<>(
+        final List<Gasolinera> toRender = applyBrandFilter(new ArrayList<>(
                 visibleGasolineras.subList(0, Math.min(count, visibleGasolineras.size()))
-        );
+        ));
         final FuelType fuelSnapshot = selectedFuel;
         final PriceRange rangeSnapshot = currentPriceRange;
 
@@ -1158,5 +1162,82 @@ public class MainActivity extends BaseActivity {
             }
         }
         return variants;
+    }
+
+    private void setupBrandFilter() {
+        View button = findViewById(R.id.brandFilterButton);
+        if (button == null) return;
+        selectedBrand = com.example.ahorragas.util.BrandPrefs.get(this);
+        updateBrandFilterButton();
+        button.setOnClickListener(v -> showBrandFilterDialog());
+    }
+
+    private void updateBrandFilterButton() {
+        TextView label = findViewById(R.id.tvBrandFilterLabel);
+        android.widget.ImageView icon = findViewById(R.id.ivBrandFilterIcon);
+        if (label != null) {
+            label.setText(getString(R.string.brand_filter_label, displayBrandName(selectedBrand)));
+        }
+        if (icon != null) {
+            if (selectedBrand == null) {
+                icon.setVisibility(View.GONE);
+            } else {
+                icon.setImageResource(
+                        com.example.ahorragas.map.BrandLogoProvider.getLogoResId(selectedBrand));
+                icon.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    private String displayBrandName(String brandKey) {
+        if (brandKey == null || BRAND_ALL_FILTER_KEY.equals(brandKey)) {
+            return getString(R.string.brand_all);
+        }
+        if ("bp".equalsIgnoreCase(brandKey)) return "BP";
+        if ("glp".equalsIgnoreCase(brandKey)) return "GLP";
+        return Character.toUpperCase(brandKey.charAt(0)) + brandKey.substring(1).toLowerCase();
+    }
+
+    private void showBrandFilterDialog() {
+        java.util.List<String> keys = new ArrayList<>();
+        keys.add(BRAND_ALL_FILTER_KEY);
+        keys.addAll(com.example.ahorragas.map.BrandLogoProvider.FILTER_BRANDS);
+
+        String[] labels = new String[keys.size()];
+        int currentIndex = 0;
+        for (int i = 0; i < keys.size(); i++) {
+            String key = keys.get(i);
+            labels[i] = displayBrandName(key);
+            if ((BRAND_ALL_FILTER_KEY.equals(key) && selectedBrand == null)
+                    || (selectedBrand != null && key.equalsIgnoreCase(selectedBrand))) {
+                currentIndex = i;
+            }
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.brand_filter_dialog_title)
+                .setSingleChoiceItems(labels, currentIndex, (dialog, which) -> {
+                    String selectedKey = keys.get(which);
+                    String newBrand = BRAND_ALL_FILTER_KEY.equals(selectedKey) ? null : selectedKey;
+                    selectedBrand = newBrand;
+                    com.example.ahorragas.util.BrandPrefs.set(this, newBrand);
+                    updateBrandFilterButton();
+                    showStationsOnMap(lastMarkersCount);
+                    dialog.dismiss();
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private List<Gasolinera> applyBrandFilter(List<Gasolinera> input) {
+        if (selectedBrand == null || BRAND_ALL_FILTER_KEY.equals(selectedBrand)) return input;
+        List<Gasolinera> out = new ArrayList<>();
+        for (Gasolinera g : input) {
+            String marca = g.getMarca();
+            if (marca != null && marca.toLowerCase().contains(selectedBrand)) {
+                out.add(g);
+            }
+        }
+        return out;
     }
 }

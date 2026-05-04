@@ -8,19 +8,20 @@
     android:background="@color/background">
 
     <LinearLayout
+        android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@color/primary_dark"
+        android:background="@color/surface"
         android:paddingHorizontal="16dp"
-        android:paddingTop="36dp"
+        android:paddingTop="10dp"
         android:paddingBottom="8dp">
 
         <TextView
             android:id="@+id/tvLastSync"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/white"
+            android:textColor="@color/text_primary"
             android:textSize="13sp"
             android:textStyle="bold"
             android:text="@string/last_sync_never" />
@@ -30,7 +31,7 @@
             android:layout_height="1dp"
             android:layout_marginTop="6dp"
             android:layout_marginBottom="2dp"
-            android:background="@color/white" />
+            android:background="@color/text_secondary" />
 
         <EditText
             android:id="@+id/etSearch"
@@ -42,9 +43,9 @@
             android:drawableEnd="@android:drawable/ic_menu_search"
             android:drawablePadding="8dp"
             android:textSize="13sp"
-            android:textColor="@color/white"
-            android:textColorHint="@color/white"
-            android:background="@color/primary_dark"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_secondary"
+            android:background="@color/surface"
             android:inputType="text"
             android:imeOptions="actionSearch"
             android:maxLines="1" />
@@ -80,6 +81,50 @@
             app:tint="@color/primary"
             app:fabSize="normal"
             app:elevation="6dp" />
+
+        <LinearLayout
+            android:id="@+id/brandFilterButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:background="@drawable/bg_brand_filter_pill"
+            android:elevation="6dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?android:attr/selectableItemBackgroundBorderless">
+
+            <ImageView
+                android:id="@+id/ivBrandFilterIcon"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_marginEnd="8dp"
+                android:visibility="gone"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/tvBrandFilterLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#3D3D3D"
+                android:text="@string/brand_filter_default" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="▾"
+                android:textSize="16sp"
+                android:textColor="#3D3D3D"
+                android:paddingStart="8dp" />
+        </LinearLayout>
     </FrameLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView

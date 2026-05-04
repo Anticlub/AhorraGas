@@ -43,6 +43,13 @@ public final class BrandLogoProvider {
         LOGO_MAP.put("acciona", R.drawable.ic_brand_acciona);
     }
 
+    /** Marcas mostradas en el filtro rápido del mapa, en orden. */
+    public static final java.util.List<String> FILTER_BRANDS = java.util.Arrays.asList(
+            "repsol", "cepsa", "bp", "shell", "galp",
+            "petronor", "carrefour", "avia", "ballenoil", "petroprix", "plenergy",
+            "bonarea", "campsa", "disa", "eroski", "leclerc", "meroil", "plenoil", "tamoil"
+    );
+
     private BrandLogoProvider() {
     }
     public static int getLogoResId(String marca) {

@@ -59,6 +59,7 @@ public class PriceListActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_price_list);
+        applySystemBarInsets(R.id.topBar, R.id.bottomNavPrice);
 
         AppDatabase db = AppDatabase.getInstance(this);
         RoomGasolineraDataSource roomGasolineraDs = new RoomGasolineraDataSource(db);

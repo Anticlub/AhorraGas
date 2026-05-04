@@ -64,6 +64,7 @@ public class PreferencesActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_preferences);
+        applySystemBarInsets(R.id.topBar, R.id.bottomNavPrefs);
 
         vehicleListContainer  = findViewById(R.id.vehicleListContainer);
         discountListContainer = findViewById(R.id.discountListContainer);
