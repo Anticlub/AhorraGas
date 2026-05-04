@@ -39,6 +39,7 @@ import com.example.ahorragas.model.PriceLevel;
 import com.example.ahorragas.model.PriceRange;
 import com.example.ahorragas.model.Vehicle;
 import com.example.ahorragas.util.DiscountPrefs;
+import com.example.ahorragas.util.FavoritesPrefs;
 import com.example.ahorragas.util.GasolineraSorter;
 import com.example.ahorragas.util.GeoUtils;
 import com.example.ahorragas.util.PriceAlertScheduler;
@@ -84,6 +85,7 @@ public class MainActivity extends BaseActivity {
     private int lastRadiusKm = RadiusUtils.DEFAULT_KM;
     private int lastMarkersCount = RadiusUtils.DEFAULT_MARKERS;
     private int lastDiscountsVersion = -1;
+    private int lastFavoritesVersion = -1;
     private PriceRange currentPriceRange = new PriceRange(null, null, 0);
     private boolean vehicleDialogShown = false;
 
@@ -236,6 +238,16 @@ public class MainActivity extends BaseActivity {
         int currentDiscountsVersion = DiscountPrefs.getVersion(this);
         if (currentDiscountsVersion != lastDiscountsVersion) {
             lastDiscountsVersion = currentDiscountsVersion;
+            MarkerBitmapFactory.clearCache();
+            if (lastSearchQuery != null) {
+                filterMarkersByMunicipio(lastSearchQuery);
+            } else {
+                updateDisplayForFuel(selectedFuel);
+            }
+        }
+        int currentFavoritesVersion = FavoritesPrefs.getVersion(this);
+        if (currentFavoritesVersion != lastFavoritesVersion) {
+            lastFavoritesVersion = currentFavoritesVersion;
             MarkerBitmapFactory.clearCache();
             if (lastSearchQuery != null) {
                 filterMarkersByMunicipio(lastSearchQuery);
