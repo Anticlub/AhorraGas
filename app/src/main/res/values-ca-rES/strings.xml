@@ -210,4 +210,11 @@
     <string name="nav_distance">Per distància</string>
     <string name="nav_favorites">Favorites</string>
     <string name="nav_preferences">Preferències</string>
+
+    <!-- Filtre de marca -->
+    <string name="brand_filter_default">Marca: Totes</string>
+    <string name="brand_filter_label">Marca: %1$s</string>
+    <string name="brand_filter_dialog_title">Marca</string>
+    <string name="brand_all">Totes</string>
+    <string name="cancel">Cancel·lar</string>
 </resources>

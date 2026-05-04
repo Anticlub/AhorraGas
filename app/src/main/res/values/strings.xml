@@ -231,4 +231,11 @@
     <string name="nav_preferences">Preferencias</string>
 
     <string name="msg_favorites_not_available_electric"> Próximamente podrás añadir electrolineras a favoritos y gestionar notificaciones</string>
+
+    <!-- Filtro de marca -->
+    <string name="brand_filter_default">Marca: Todas</string>
+    <string name="brand_filter_label">Marca: %1$s</string>
+    <string name="brand_filter_dialog_title">Marca</string>
+    <string name="brand_all">Todas</string>
+    <string name="cancel">Cancelar</string>
 </resources>
