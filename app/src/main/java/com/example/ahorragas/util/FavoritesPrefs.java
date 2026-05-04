@@ -154,6 +154,17 @@ public final class FavoritesPrefs {
         return result;
     }
 
+    /**
+     * Devuelve un número que cambia cada vez que la lista de favoritos cambia.
+     * Se usa para detectar cambios al volver a MainActivity.
+     *
+     * @param ctx Contexto de la aplicación.
+     * @return Número de favoritos guardados actualmente.
+     */
+    public static int getVersion(Context ctx) {
+        return loadIds(ctx).size();
+    }
+
     // ─── PRIVADO ─────────────────────────────────────────────────────────────
 
     private static List<String> loadIds(Context ctx) {
