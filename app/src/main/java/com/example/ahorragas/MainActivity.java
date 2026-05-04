@@ -54,8 +54,6 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -94,11 +92,11 @@ public class MainActivity extends BaseActivity {
     private String lastSearchQuery = null;
     private List<Gasolinera> visibleGasolineras = new ArrayList<>();
     private FuelType selectedFuel = FuelType.GASOLEO_A;
-    private String selectedBrand = null; // null = todas las marcas
+    private String selectedBrand = null;
     private Location userLocation;
     private Location searchLocation;
     private final Map<Integer, Marker> markerMap = new HashMap<>();
-    private MyLocationNewOverlay locationOverlay;
+    private Marker myLocationMarker;
 
     private EstacionRepository repository;
     private LocationHelper locationHelper;
@@ -198,10 +196,6 @@ public class MainActivity extends BaseActivity {
         bottomNav.getMenu().findItem(R.id.nav_price).setIcon(
                 currentNavFuel == FuelType.ELECTRICO ? R.drawable.ic_bolt : R.drawable.ic_price);
 
-        if (locationOverlay != null && locationHelper.hasLocationPermission()) {
-            locationOverlay.enableMyLocation();
-        }
-
         if (bottomNav != null) {
             bottomNav.setSelectedItemId(R.id.nav_map);
         }
@@ -276,11 +270,6 @@ public class MainActivity extends BaseActivity {
     protected void onPause() {
         super.onPause();
         mapView.onPause();
-
-        if (locationOverlay != null) {
-            locationOverlay.disableMyLocation();
-            locationOverlay.disableFollowLocation();
-        }
     }
 
     @Override
@@ -529,14 +518,7 @@ public class MainActivity extends BaseActivity {
         mapView.setBuiltInZoomControls(false);
         showSpainFallback();
 
-        mapView.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                if (locationOverlay != null) {
-                    locationOverlay.disableFollowLocation();
-                }
-            }
-            return false;
-        });
+        mapView.setOnTouchListener((v, event) -> false);
     }
 
     private void setupBottomNav() {
@@ -581,14 +563,31 @@ public class MainActivity extends BaseActivity {
     }
 
     private void applyUserLocation(Location location) {
-        userLocation = location;
-        addMyLocationOverlay();
+        Location smoothed = getSmoothedLocation(location);
+        userLocation = smoothed;
+        updateMyLocationMarker(smoothed);
 
-        GeoPoint point = new GeoPoint(location.getLatitude(), location.getLongitude());
+        GeoPoint point = new GeoPoint(smoothed.getLatitude(), smoothed.getLongitude());
         mapView.getController().animateTo(point);
         mapView.getController().setZoom(ZOOM_USER);
 
-        loadByRadius(location.getLatitude(), location.getLongitude());
+        loadByRadius(smoothed.getLatitude(), smoothed.getLongitude());
+    }
+
+    private void updateMyLocationMarker(Location location) {
+        GeoPoint point = new GeoPoint(location.getLatitude(), location.getLongitude());
+        if (myLocationMarker == null) {
+            myLocationMarker = new Marker(mapView);
+            myLocationMarker.setAnchor(0.5f, 0.5f);
+            myLocationMarker.setInfoWindow(null);
+            myLocationMarker.setIcon(new android.graphics.drawable.BitmapDrawable(
+                    getResources(),
+                    tintedLocationBitmap(android.graphics.Color.parseColor("#FF9800"))
+            ));
+            mapView.getOverlays().add(0, myLocationMarker);
+        }
+        myLocationMarker.setPosition(point);
+        mapView.invalidate();
     }
 
     private void loadGasolineras() {
@@ -794,7 +793,9 @@ public class MainActivity extends BaseActivity {
     private void clearMapMarkers() {
         List<Overlay> toRemove = new ArrayList<>();
         for (Overlay overlay : mapView.getOverlays()) {
-            if (overlay instanceof Marker) toRemove.add(overlay);
+            if (overlay instanceof Marker && overlay != myLocationMarker) {
+                toRemove.add(overlay);
+            }
         }
         mapView.getOverlays().removeAll(toRemove);
         markerMap.clear();
@@ -821,30 +822,35 @@ public class MainActivity extends BaseActivity {
         android.graphics.Canvas canvas = new android.graphics.Canvas(bmp);
         android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
         paint.setColor(color);
-
         android.graphics.Path path = new android.graphics.Path();
         path.moveTo(size / 2f, 0);
         path.lineTo(size, size);
         path.lineTo(size / 2f, size * 0.75f);
         path.lineTo(0, size);
         path.close();
-
         canvas.drawPath(path, paint);
         return bmp;
     }
 
-    private void addMyLocationOverlay() {
-        if (locationOverlay != null || !locationHelper.hasLocationPermission()) return;
-        locationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), mapView);
-        locationOverlay.setPersonIcon(
-                tintedLocationBitmap(android.graphics.Color.parseColor("#FF9800"))
-        );
-        locationOverlay.setDirectionIcon(
-                tintedLocationBitmap(android.graphics.Color.parseColor("#FF9800"))
-        );
-        locationOverlay.enableMyLocation();
-        mapView.getOverlays().add(locationOverlay);
-        mapView.invalidate();
+    private static final int LOCATION_FILTER_SIZE = 5;
+    private final java.util.ArrayDeque<double[]> locationFilterBuffer = new java.util.ArrayDeque<>();
+
+    private Location getSmoothedLocation(Location raw) {
+        locationFilterBuffer.addLast(new double[]{raw.getLatitude(), raw.getLongitude()});
+        if (locationFilterBuffer.size() > LOCATION_FILTER_SIZE) {
+            locationFilterBuffer.removeFirst();
+        }
+        double avgLat = 0, avgLon = 0;
+        for (double[] point : locationFilterBuffer) {
+            avgLat += point[0];
+            avgLon += point[1];
+        }
+        avgLat /= locationFilterBuffer.size();
+        avgLon /= locationFilterBuffer.size();
+        Location smoothed = new Location(raw);
+        smoothed.setLatitude(avgLat);
+        smoothed.setLongitude(avgLon);
+        return smoothed;
     }
 
     private void showSpainFallback() {
@@ -1092,9 +1098,6 @@ public class MainActivity extends BaseActivity {
     private void setupFab() {
         fabMiUbicacion.setOnClickListener(v -> {
             if (userLocation != null) {
-                if (locationOverlay != null) {
-                    locationOverlay.enableFollowLocation();
-                }
                 searchLocation = null;
                 searchGasolineras = null;
                 lastSearchQuery = null;
