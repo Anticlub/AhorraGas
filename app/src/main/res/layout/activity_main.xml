@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@color/surface"
+        android:background="#1A237E"
         android:paddingHorizontal="16dp"
         android:paddingTop="10dp"
         android:paddingBottom="8dp">
@@ -21,7 +21,7 @@
             android:id="@+id/tvLastSync"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_primary"
+            android:textColor="#FFFFFF"
             android:textSize="13sp"
             android:textStyle="bold"
             android:text="@string/last_sync_never" />
@@ -43,9 +43,9 @@
             android:drawableEnd="@android:drawable/ic_menu_search"
             android:drawablePadding="8dp"
             android:textSize="13sp"
-            android:textColor="@color/text_primary"
-            android:textColorHint="@color/text_secondary"
-            android:background="@color/surface"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#AAAAAA"
+            android:background="#1A237E"
             android:inputType="text"
             android:imeOptions="actionSearch"
             android:maxLines="1" />
