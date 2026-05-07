@@ -217,4 +217,6 @@
     <string name="brand_filter_dialog_title">Marka</string>
     <string name="brand_all">Guztiak</string>
     <string name="cancel">Utzi</string>
+    <string name="pref_contact_title">Akatsen bat aurkitu al duzu? Jakinarazi hemen:</string>
+    <string name="pref_contact_email">ahorragas.soporte@gmail.com</string>
 </resources>

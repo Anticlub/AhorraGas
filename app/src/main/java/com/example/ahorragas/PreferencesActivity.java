@@ -53,6 +53,9 @@ public class PreferencesActivity extends BaseActivity {
     private SeekBar seekBarMarkers;
     private TextView tvMarkersValue;
 
+    // ── Easter egg ────────────────────────────────────────────────────────────
+    private int easterEggTapCount = 0;
+
     // ── Marcas disponibles ────────────────────────────────────────────────────
     private static final String[] BRANDS = {
             "Repsol", "Cepsa", "Moeve", "BP", "Shell", "Galp",
@@ -78,9 +81,26 @@ public class PreferencesActivity extends BaseActivity {
         setupBackPress();
         setupMarkersSelector();
         setupAlertTestButton();
+        setupEasterEgg();
         refreshVehicleList();
         refreshDiscountList();
         refreshAlertList();
+    }
+
+    // ─── Easter egg ───────────────────────────────────────────────────────────
+
+    /**
+     * Activa un easter egg al pulsar 7 veces seguidas el título de la cabecera.
+     * Muestra un AlertDialog con la firma del desarrollador.
+     */
+    private void setupEasterEgg() {
+        findViewById(R.id.topBar).setOnClickListener(v -> {
+            easterEggTapCount++;
+            if (easterEggTapCount == 7) {
+                easterEggTapCount = 0;
+                Toast.makeText(this, getString(R.string.easter_egg_message), Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     // ─── Marcadores ───────────────────────────────────────────────────────────
@@ -558,7 +578,6 @@ public class PreferencesActivity extends BaseActivity {
         TextView tvTankError = makeErrorLabel();
         layout.addView(tvTankError);
 
-        // ── Campo potencia de carga (solo eléctricos) ─────────────────────────
         TextView labelCharging = new TextView(this);
         labelCharging.setText(getString(R.string.label_charging_power));
         labelCharging.setTextColor(0xFFCCCCCC);
@@ -577,7 +596,6 @@ public class PreferencesActivity extends BaseActivity {
         TextView tvChargingError = makeErrorLabel();
         layout.addView(tvChargingError);
 
-        // Visibilidad inicial: solo si es eléctrico
         boolean initElectric = (existing != null && existing.isElectric())
                 || (existing == null && FuelType.GASOLEO_A == FuelType.ELECTRICO);
         labelCharging.setVisibility(initElectric ? View.VISIBLE : View.GONE);
