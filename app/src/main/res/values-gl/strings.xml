@@ -242,4 +242,6 @@
     <string name="brand_filter_dialog_title">Marca</string>
     <string name="brand_all">Todas</string>
     <string name="cancel">Cancelar</string>
+    <string name="pref_contact_title">Atopaches un erro? Repórtao aquí:</string>
+    <string name="pref_contact_email">ahorragas.soporte@gmail.com</string>
 </resources>

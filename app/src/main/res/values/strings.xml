@@ -238,4 +238,9 @@
     <string name="brand_filter_dialog_title">Marca</string>
     <string name="brand_all">Todas</string>
     <string name="cancel">Cancelar</string>
+
+
+    <string name="pref_contact_title">¿Has encontrado un error? Repórtalo aquí:</string>
+    <string name="pref_contact_email">ahorragas.soporte@gmail.com</string>
+    <string name="easter_egg_message">🤑 MRK was here</string>
 </resources>
