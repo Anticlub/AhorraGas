@@ -34,6 +34,7 @@ import com.example.ahorragas.model.FuelType;
 import com.example.ahorragas.model.Gasolinera;
 import com.example.ahorragas.model.PriceAlert;
 import com.example.ahorragas.model.PriceRange;
+import com.example.ahorragas.util.DiscountPrefs;
 import com.example.ahorragas.util.FavoritesPrefs;
 import com.example.ahorragas.util.GasolineraSorter;
 import com.example.ahorragas.util.GeoUtils;
@@ -258,22 +259,36 @@ public class FavoritesActivity extends BaseActivity {
     }
 
     private void showData(List<Gasolinera> data, FuelType fuel) {
-        // Ordenar: primero con precio de menor a mayor, N/D al final
+        // Ordenar por precio con descuento aplicado: menor a mayor, N/D al final
         data.sort((a, b) -> {
             Double priceA = a.getPrecio(fuel);
             Double priceB = b.getPrecio(fuel);
             boolean aHasPrice = priceA != null && priceA > 0;
             boolean bHasPrice = priceB != null && priceB > 0;
-            if (aHasPrice && bHasPrice) return Double.compare(priceA, priceB);
+            if (aHasPrice && bHasPrice) return Double.compare(
+                    DiscountPrefs.applyAllDiscounts(this, a.getMarca(), priceA),
+                    DiscountPrefs.applyAllDiscounts(this, b.getMarca(), priceB));
             if (aHasPrice) return -1;
             if (bHasPrice) return 1;
             return 0;
         });
 
-        PriceRange priceRange = GasolineraSorter.calculatePriceRange(data, fuel);
+        // Calcular rango con precios descontados para que el color sea coherente
+        Double minPrice = null, maxPrice = null;
         for (Gasolinera g : data) {
-            g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(fuel), priceRange));
+            Double raw = g.getPrecio(fuel);
+            if (raw == null || raw <= 0) continue;
+            double discounted = DiscountPrefs.applyAllDiscounts(this, g.getMarca(), raw);
+            if (minPrice == null || discounted < minPrice) minPrice = discounted;
+            if (maxPrice == null || discounted > maxPrice) maxPrice = discounted;
         }
+        PriceRange priceRange = new PriceRange(minPrice, maxPrice, data.size());
+        for (Gasolinera g : data) {
+            Double raw = g.getPrecio(fuel);
+            double discounted = raw != null ? DiscountPrefs.applyAllDiscounts(this, g.getMarca(), raw) : 0;
+            g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, priceRange));
+        }
+
         progressBar.setVisibility(View.GONE);
         layoutError.setVisibility(View.GONE);
         tvEmpty.setVisibility(View.GONE);
