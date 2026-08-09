@@ -1,21 +1,32 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Reglas ProGuard/R8 para el build de release.
+# Documentación: http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Mantener números de línea para poder desofuscar los stack traces (Crashlytics)
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# ── WorkManager ─────────────────────────────────────────────────────────────
+# WorkManager instancia los Workers por reflexión a partir del nombre de clase.
+-keep class * extends androidx.work.ListenableWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
+}
+-keep class com.example.ahorragas.PriceAlertWorker
+-keep class com.example.ahorragas.SyncWorker
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# ── Modelos ─────────────────────────────────────────────────────────────────
+# Seguro barato: aunque el parseo es manual (no Gson), mantenemos los modelos
+# intactos para no arriesgar el paso por Intents/Parcelable ni futuros cambios.
+-keep class com.example.ahorragas.model.** { *; }
+
+# Parcelable (además de lo que ya cubre proguard-android-optimize)
+-keepclassmembers class * implements android.os.Parcelable {
+    public static final android.os.Parcelable$Creator CREATOR;
+}
+
+# ── Room ────────────────────────────────────────────────────────────────────
+-keep class * extends androidx.room.RoomDatabase { *; }
+-dontwarn androidx.room.paging.**
+
+# ── osmdroid / MPAndroidChart (usan recursos y algo de reflexión) ────────────
+-dontwarn org.osmdroid.**
+-dontwarn com.github.mikephil.charting.**
