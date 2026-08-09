@@ -20,6 +20,16 @@ jobs:
       - name: Checkout del código
         uses: actions/checkout@v4
 
+      - name: Verificar que no se sube google-services.json
+        run: |
+          if git ls-files | grep -q 'google-services\.json'; then
+            echo "::error::Se ha detectado un google-services.json trackeado en el repositorio. Contiene claves de Firebase y NO debe subirse. Quítalo con: git rm --cached <ruta>/google-services.json"
+            echo "Archivos detectados:"
+            git ls-files | grep 'google-services\.json'
+            exit 1
+          fi
+          echo "OK: ningún google-services.json trackeado en git."
+
       - name: Configurar JDK 17
         uses: actions/setup-java@v4
         with:
