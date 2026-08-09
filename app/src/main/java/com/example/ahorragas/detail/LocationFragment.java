@@ -16,13 +16,11 @@ import androidx.fragment.app.Fragment;
 import com.example.ahorragas.R;
 import com.example.ahorragas.model.Gasolinera;
 
-import org.osmdroid.config.Configuration;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import com.example.ahorragas.map.OsmTiles;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 
-import androidx.preference.PreferenceManager;
 
 public class LocationFragment extends Fragment {
 
@@ -64,10 +62,7 @@ public class LocationFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        Configuration.getInstance().load(
-                requireContext(),
-                PreferenceManager.getDefaultSharedPreferences(requireContext())
-        );
+        // osmdroid (User-Agent incluido) se inicializa en AhorraGasApp.
         return inflater.inflate(R.layout.fragment_location, container, false);
     }
 
@@ -118,7 +113,7 @@ public class LocationFragment extends Fragment {
         destroyMap();
 
         mapView = new MapView(requireContext());
-        mapView.setTileSource(TileSourceFactory.MAPNIK);
+        mapView.setTileSource(OsmTiles.OPENSTREETMAP);
         mapView.setMultiTouchControls(true);
         mapView.setBuiltInZoomControls(false);
         mapView.getController().setZoom(16.0);
