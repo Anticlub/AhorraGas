@@ -17,7 +17,7 @@ Ahora bien, para llevarlo a producción hay **3 bloqueantes reales de Play Store
 
 | # | Problema | Detalle | Fix |
 |---|----------|---------|-----|
-| B1 | **`applicationId = "com.example.ahorragas"`** | Play **rechaza** cualquier paquete que empiece por `com.example`. Es el fallo más importante. | Renombrar a un dominio propio, p. ej. `com.ahorragas.app` o `es.ahorragas`. Cambia `applicationId`, `namespace` y el paquete de las clases (refactor de IDE). |
+| B1 | **`applicationId = "com.ahorragas.app"`** | Play **rechaza** cualquier paquete que empiece por `com.example`. Es el fallo más importante. | Renombrar a un dominio propio, p. ej. `com.ahorragas.app` o `es.ahorragas`. Cambia `applicationId`, `namespace` y el paquete de las clases (refactor de IDE). |
 | B2 | **Release sin ofuscar ni firmar** | `isMinifyEnabled = false`, sin `shrinkResources`, sin `signingConfig`. Se sube un APK debug-like, pesado y sin R8. | Activar R8 (`isMinifyEnabled = true`, `isShrinkResources = true`) y crear un `signingConfig` de release con keystore fuera del repo. |
 | B3 | **`versionCode = 1` / `versionName = "1.0"`** | Correcto para la primera subida, pero hay que tener el flujo de incremento claro. No bloquea la primera vez. | Definir esquema de versionado antes de la primera release. |
 

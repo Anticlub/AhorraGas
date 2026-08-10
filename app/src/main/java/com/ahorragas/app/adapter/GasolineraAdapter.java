@@ -1,0 +1,219 @@
+package com.ahorragas.app.adapter;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.ahorragas.app.R;
+import com.ahorragas.app.map.BrandLogoProvider;
+import com.ahorragas.app.map.MarkerBitmapFactory;
+import com.ahorragas.app.model.FuelType;
+import com.ahorragas.app.model.Gasolinera;
+import com.ahorragas.app.model.PriceLevel;
+import com.ahorragas.app.model.PriceRange;
+import com.ahorragas.app.util.DiscountPrefs;
+import com.ahorragas.app.util.GasolineraSorter;
+import com.ahorragas.app.util.PriceAlertPrefs;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.ViewHolder> {
+
+    public interface OnGasolineraClickListener {
+        void onGasolineraClick(Gasolinera gasolinera);
+    }
+
+    public interface OnAlertClickListener {
+        void onAlertClick(Gasolinera gasolinera);
+    }
+
+    private List<Gasolinera> gasolineras;
+    private FuelType currentFuel;
+    private PriceRange currentPriceRange;
+    private final OnGasolineraClickListener clickListener;
+    private OnAlertClickListener alertListener;
+
+    public GasolineraAdapter(List<Gasolinera> gasolineras,
+                             FuelType fuel,
+                             OnGasolineraClickListener clickListener) {
+        this.gasolineras = new ArrayList<>(gasolineras);
+        this.currentFuel = fuel;
+        this.currentPriceRange = new PriceRange(null, null, 0);
+        this.clickListener = clickListener;
+    }
+
+    /**
+     * Establece el listener para el botón de alerta. Si se llama con un
+     * listener no nulo, el botón 🔔 se muestra en cada fila.
+     *
+     * @param listener Listener a invocar al pulsar el botón de alerta.
+     */
+    public void setOnAlertClickListener(OnAlertClickListener listener) {
+        this.alertListener = listener;
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Actualiza los datos mostrados en la lista usando DiffUtil
+     * para calcular las diferencias y animar solo los cambios.
+     *
+     * @param newGasolineras Lista de gasolineras a mostrar.
+     * @param fuel           Tipo de combustible seleccionado.
+     * @param priceRange     Rango de precios para calcular el nivel de precio con descuento.
+     */
+    public void updateData(List<Gasolinera> newGasolineras, FuelType fuel, PriceRange priceRange) {
+        List<Gasolinera> oldList = this.gasolineras;
+        List<Gasolinera> newList = new ArrayList<>(newGasolineras);
+
+        DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() { return oldList.size(); }
+
+            @Override
+            public int getNewListSize() { return newList.size(); }
+
+            @Override
+            public boolean areItemsTheSame(int oldPos, int newPos) {
+                return oldList.get(oldPos).getId() == newList.get(newPos).getId();
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldPos, int newPos) {
+                Gasolinera oldG = oldList.get(oldPos);
+                Gasolinera newG = newList.get(newPos);
+                Double oldPrice = oldG.getPrecio(fuel);
+                Double newPrice = newG.getPrecio(fuel);
+                boolean samePrice = (oldPrice == null && newPrice == null)
+                        || (oldPrice != null && oldPrice.equals(newPrice));
+                boolean sameLevel = oldG.getPriceLevel() == newG.getPriceLevel();
+                boolean sameDist = java.util.Objects.equals(
+                        oldG.getDistanceMeters(), newG.getDistanceMeters());
+                return samePrice && sameLevel && sameDist;
+            }
+        });
+
+        this.gasolineras = newList;
+        this.currentFuel = fuel;
+        this.currentPriceRange = priceRange != null ? priceRange : new PriceRange(null, null, 0);
+        result.dispatchUpdatesTo(this);
+    }
+    public int getPositionOf(Gasolinera target) {
+        for (int i = 0; i < gasolineras.size(); i++) {
+            if (gasolineras.get(i).getId() == target.getId()) return i;
+        }
+        return -1;
+    }
+
+    @NonNull
+    @Override
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_gasolinera, parent, false);
+        return new ViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        holder.bind(gasolineras.get(position), currentFuel, currentPriceRange,
+                clickListener, alertListener);
+    }
+
+    @Override
+    public int getItemCount() {
+        return gasolineras.size();
+    }
+
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        private final View      vPriceStripe;
+        private final ImageView ivBrandLogo;
+        private final TextView  tvBrandName;
+        private final TextView  tvAddress;
+        private final TextView  tvPrice;
+        private final TextView  tvDistance;
+        private final TextView  btnAlert;
+        private final View      vAlertDivider;
+
+        ViewHolder(View itemView) {
+            super(itemView);
+            vPriceStripe  = itemView.findViewById(R.id.vPriceStripe);
+            ivBrandLogo   = itemView.findViewById(R.id.ivBrandLogo);
+            tvBrandName   = itemView.findViewById(R.id.tvBrandName);
+            tvAddress     = itemView.findViewById(R.id.tvAddress);
+            tvPrice       = itemView.findViewById(R.id.tvPrice);
+            tvDistance    = itemView.findViewById(R.id.tvDistance);
+            btnAlert      = itemView.findViewById(R.id.btnAlert);
+            vAlertDivider = itemView.findViewById(R.id.vAlertDivider);
+        }
+
+        void bind(Gasolinera gasolinera,
+                  FuelType fuel,
+                  PriceRange priceRange,
+                  OnGasolineraClickListener clickListener,
+                  OnAlertClickListener alertListener) {
+
+            Context ctx = itemView.getContext();
+
+            // ── Logo y nombre ─────────────────────────────────────────────────
+            int logoResId = gasolinera.isElectric()
+                    ? BrandLogoProvider.getLogoResId(gasolinera.getMarca(), gasolinera.getOperador())
+                    : BrandLogoProvider.getLogoResId(gasolinera.getMarca());
+            ivBrandLogo.setImageResource(logoResId);
+
+            String marca = gasolinera.getMarca();
+            tvBrandName.setText(marca == null || marca.trim().isEmpty()
+                    ? ctx.getString(R.string.sin_marca)
+                    : marca);
+            tvAddress.setText(gasolinera.getDisplayAddress());
+
+            // ── Precio ────────────────────────────────────────────────────────
+            if (gasolinera.isElectric()) {
+                String resumen = gasolinera.getResumenMejorConector();
+                tvPrice.setText(resumen != null ? resumen : ctx.getString(R.string.msg_no_data));
+                tvPrice.setTextColor(MarkerBitmapFactory.getElectricColor());
+                vPriceStripe.setBackgroundColor(MarkerBitmapFactory.getElectricColor());
+            } else {
+                Double originalPrice = gasolinera.getPrecio(fuel);
+                if (originalPrice != null && originalPrice > 0) {
+                    double discounted = DiscountPrefs.applyAllDiscounts(
+                            ctx, gasolinera.getMarca(), originalPrice);
+                    tvPrice.setText(String.format(java.util.Locale.getDefault(),
+                            "%.3f €", discounted));
+                } else {
+                    tvPrice.setText(gasolinera.getFormattedPrice(fuel));
+                }
+                int priceColor = MarkerBitmapFactory.getPriceLevelColor(gasolinera.getPriceLevel());
+                tvPrice.setTextColor(priceColor);
+                vPriceStripe.setBackgroundColor(priceColor);
+            }
+
+            // ── Distancia ─────────────────────────────────────────────────────
+            String distance = gasolinera.getFormattedDistance();
+            tvDistance.setText(distance.isEmpty() ? "" : "\uD83D\uDCCD " + distance);
+
+            // ── Botón alerta ──────────────────────────────────────────────────
+            if (alertListener != null) {
+                btnAlert.setVisibility(View.VISIBLE);
+                vAlertDivider.setVisibility(View.VISIBLE);
+
+                String alertKey = gasolinera.getId() + "_" + fuel.name();
+                boolean hasAlert = PriceAlertPrefs.exists(ctx, alertKey);
+
+                btnAlert.setAlpha(hasAlert ? 1.0f : 0.3f);
+                btnAlert.setOnClickListener(v -> alertListener.onAlertClick(gasolinera));
+            } else {
+                btnAlert.setVisibility(View.GONE);
+                vAlertDivider.setVisibility(View.GONE);
+            }
+
+            itemView.setOnClickListener(v -> clickListener.onGasolineraClick(gasolinera));
+        }
+    }
+}

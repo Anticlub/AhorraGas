@@ -10,13 +10,13 @@
 -keep class * extends androidx.work.ListenableWorker {
     public <init>(android.content.Context, androidx.work.WorkerParameters);
 }
--keep class com.example.ahorragas.PriceAlertWorker
--keep class com.example.ahorragas.SyncWorker
+-keep class com.ahorragas.app.PriceAlertWorker
+-keep class com.ahorragas.app.SyncWorker
 
 # ── Modelos ─────────────────────────────────────────────────────────────────
 # Seguro barato: aunque el parseo es manual (no Gson), mantenemos los modelos
 # intactos para no arriesgar el paso por Intents/Parcelable ni futuros cambios.
--keep class com.example.ahorragas.model.** { *; }
+-keep class com.ahorragas.app.model.** { *; }
 
 # Parcelable (además de lo que ya cubre proguard-android-optimize)
 -keepclassmembers class * implements android.os.Parcelable {

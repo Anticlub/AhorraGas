@@ -1,0 +1,283 @@
+package com.ahorragas.app;
+
+import android.content.Intent;
+import android.location.Location;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+
+import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.ahorragas.app.adapter.GasolineraAdapter;
+import com.ahorragas.app.data.ElectrolineraRepository;
+import com.ahorragas.app.data.EstacionRepository;
+import com.ahorragas.app.data.GasolineraRepository;
+import com.ahorragas.app.data.remote.RemoteDgtDataSource;
+import com.ahorragas.app.data.RoomElectrolineraDataSource;
+import com.ahorragas.app.data.RoomGasolineraDataSource;
+import com.ahorragas.app.data.local.AppDatabase;
+import com.ahorragas.app.location.LocationHelper;
+import com.ahorragas.app.model.FuelType;
+import com.ahorragas.app.model.Gasolinera;
+import com.ahorragas.app.model.PriceRange;
+import com.ahorragas.app.util.DiscountPrefs;
+import com.ahorragas.app.util.GasolineraSorter;
+import com.ahorragas.app.util.RadiusUtils;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class DistanceListActivity extends BaseActivity {
+
+    private EstacionRepository repository;
+    private LocationHelper locationHelper;
+    private GasolineraAdapter adapter;
+    private FuelType selectedFuel;
+
+    private boolean dataLoaded = false;
+    private FuelType lastLoadedFuel = null;
+
+    private ProgressBar progressBar;
+    private RecyclerView recyclerView;
+    private TextView tvEmpty;
+    private TextView tvError;
+    private View layoutError;
+    private Button btnRetry;
+    private final java.util.concurrent.ExecutorService executor =
+            java.util.concurrent.Executors.newSingleThreadExecutor();
+    private final android.os.Handler mainHandler =
+            new android.os.Handler(android.os.Looper.getMainLooper());
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_distance_list);
+        applySystemBarInsets(R.id.topBar, R.id.bottomNavDistance);
+
+        AppDatabase db = AppDatabase.getInstance(this);
+        RoomGasolineraDataSource roomGasolineraDs = new RoomGasolineraDataSource(db);
+        RoomElectrolineraDataSource roomElectrolineraDs = new RoomElectrolineraDataSource(db);
+        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(roomGasolineraDs);
+        ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
+                new RemoteDgtDataSource(), roomElectrolineraDs);
+        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo);
+        locationHelper = new LocationHelper(this);
+
+        bindViews();
+        setupRecyclerView();
+        selectedFuel = FuelType.fromString(
+                PreferenceManager.getDefaultSharedPreferences(this)
+                        .getString("pref_selected_fuel", FuelType.GASOLEO_A.name()));
+        setupBottomNav();
+        btnRetry.setOnClickListener(v -> loadAndDisplay());
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        FuelType currentFuel = FuelType.fromString(
+                PreferenceManager.getDefaultSharedPreferences(this)
+                        .getString("pref_selected_fuel", FuelType.GASOLEO_A.name())
+        );
+        if (!dataLoaded || currentFuel != lastLoadedFuel) {
+            selectedFuel = currentFuel;
+            lastLoadedFuel = currentFuel;
+            loadAndDisplay();
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        dataLoaded = false;
+        loadAndDisplay();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        locationHelper.cancel();
+        executor.shutdownNow();
+    }
+
+    private void bindViews() {
+        progressBar  = findViewById(R.id.progressBarDistance);
+        recyclerView = findViewById(R.id.recyclerViewDistance);
+        tvEmpty      = findViewById(R.id.tvEmptyDistance);
+        layoutError  = findViewById(R.id.layoutErrorDistance);
+        tvError      = findViewById(R.id.tvErrorDistance);
+        btnRetry     = findViewById(R.id.btnRetryDistance);
+    }
+
+    private void setupBottomNav() {
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNavDistance);
+        setupBottomNav(bottomNav, R.id.nav_distance, selectedFuel);
+    }
+
+    private void setupRecyclerView() {
+        adapter = new GasolineraAdapter(
+                new ArrayList<>(),
+                selectedFuel,
+                gasolinera -> navigateToDetail(gasolinera)
+        );
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(adapter);
+    }
+
+    /**
+     * Carga y muestra las gasolineras. Si vienen en el Intent las usa
+     * directamente, si no las obtiene por GPS y radio.
+     */
+    private void loadAndDisplay() {
+        showLoading();
+
+        ArrayList<Gasolinera> fromIntent = getIntent().getParcelableArrayListExtra("gasolineras");
+        if (fromIntent != null && !fromIntent.isEmpty()) {
+            loadFromIntent(fromIntent);
+        } else {
+            locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
+                @Override
+                public void onSuccess(Location location) {
+                    loadWithCoordinates(location.getLatitude(), location.getLongitude());
+                }
+
+                @Override
+                public void onError(LocationHelper.LocationError error) {
+                    runOnUiThread(() -> {
+                        if (isDestroyed() || isFinishing()) return;
+                        showError(getString(R.string.error_ubicacion));
+                    });
+                }
+            });
+        }
+    }
+
+    /**
+     * Usa las gasolineras recibidas desde el Intent, las ordena por distancia.
+     *
+     * @param gasolineras Lista de gasolineras del municipio buscado.
+     */
+    private void loadFromIntent(List<Gasolinera> gasolineras) {
+        executor.execute(() -> {
+            List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
+
+            PriceRange range = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
+            for (Gasolinera g : filtered) {
+                double discounted = g.getPrecio(selectedFuel) != null
+                        ? DiscountPrefs.applyAllDiscounts(
+                        DistanceListActivity.this, g.getMarca(),
+                        g.getPrecio(selectedFuel))
+                        : 0;
+                g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, range));
+            }
+
+            mainHandler.post(() -> {
+                if (isDestroyed() || isFinishing()) return;
+                if (filtered.isEmpty()) showEmpty();
+                else showData(filtered, range);
+            });
+        });
+    }
+
+    /**
+     * Carga y muestra las gasolineras ordenadas por distancia para las coordenadas dadas.
+     *
+     * @param lat Latitud del punto de referencia.
+     * @param lon Longitud del punto de referencia.
+     */
+    private void loadWithCoordinates(double lat, double lon) {
+        executor.execute(() -> {
+            try {
+
+                int radiusKm = RadiusUtils.loadRadiusKm(DistanceListActivity.this);
+                double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
+                int maxMarkers = RadiusUtils.loadMarkersCount(DistanceListActivity.this);
+
+                List<Gasolinera> gasolineras;
+                if (selectedFuel == FuelType.ELECTRICO) {
+                    gasolineras = new ArrayList<>(
+                            repository.getElectrolinerasByRadius(lat, lon, radiusMeters));
+                } else {
+                    gasolineras = new ArrayList<>(
+                            repository.getGasolinerasByRadius(lat, lon, radiusMeters));
+                }
+
+                List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
+
+                List<Gasolinera> sorted = GasolineraSorter.getWithinRadius(
+                        filtered, lat, lon, radiusMeters, maxMarkers);
+
+                PriceRange range = GasolineraSorter.calculatePriceRange(sorted, selectedFuel);
+                for (Gasolinera g : sorted) {
+                    double discounted = g.getPrecio(selectedFuel) != null
+                            ? DiscountPrefs.applyAllDiscounts(
+                            DistanceListActivity.this, g.getMarca(),
+                            g.getPrecio(selectedFuel))
+                            : 0;
+                    g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, range));
+                }
+
+                mainHandler.post(() -> {
+                    if (isDestroyed() || isFinishing()) return;
+                    if (sorted.isEmpty()) showEmpty();
+                    else showData(sorted, range);
+                });
+
+            } catch (Exception e) {
+                mainHandler.post(() -> {
+                    if (isDestroyed() || isFinishing()) return;
+                    showError(getString(R.string.error_cargando_gasolineras));
+                });
+            }
+        });
+    }
+
+    private void showLoading() {
+        progressBar.setVisibility(View.VISIBLE);
+        recyclerView.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.GONE);
+        layoutError.setVisibility(View.GONE);
+    }
+
+    private void showData(List<Gasolinera> data, PriceRange priceRange) {
+        dataLoaded = true;
+        progressBar.setVisibility(View.GONE);
+        layoutError.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.VISIBLE);
+        adapter.updateData(data, selectedFuel, priceRange);
+    }
+
+    private void showEmpty() {
+        progressBar.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.GONE);
+        layoutError.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.VISIBLE);
+    }
+
+    private void showError(String message) {
+        progressBar.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.GONE);
+        tvEmpty.setVisibility(View.GONE);
+        tvError.setText(message);
+        layoutError.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    protected void navigateToPrice() {
+        Intent intent = new Intent(this, PriceListActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        ArrayList<Gasolinera> gasolineras =
+                getIntent().getParcelableArrayListExtra("gasolineras");
+        if (gasolineras != null) {
+            intent.putParcelableArrayListExtra("gasolineras", gasolineras);
+        }
+        startActivity(intent);
+    }
+}
