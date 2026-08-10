@@ -48,8 +48,7 @@ import com.example.ahorragas.util.VehiclePrefs;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import org.osmdroid.config.Configuration;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import com.example.ahorragas.map.OsmTiles;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
@@ -132,11 +131,7 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Configuration.getInstance().load(
-                getApplicationContext(),
-                PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
-        );
-        Configuration.getInstance().setUserAgentValue(getPackageName());
+        // osmdroid se inicializa (User-Agent incluido) en AhorraGasApp.
 
         setContentView(R.layout.activity_main);
         applySystemBarInsets(R.id.topBar, R.id.bottomNav);
@@ -513,7 +508,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void setupMap() {
-        mapView.setTileSource(TileSourceFactory.MAPNIK);
+        mapView.setTileSource(OsmTiles.OPENSTREETMAP);
         mapView.setMultiTouchControls(true);
         mapView.setBuiltInZoomControls(false);
         showSpainFallback();
