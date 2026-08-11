@@ -41,7 +41,9 @@ public final class MarkerBitmapFactory {
     private static final String COLOR_UNKNOWN     = "#757575";
     private static final String COLOR_ELECTRIC    = "#1565C0";
 
-    private static final int CACHE_SIZE = 40;
+    // Cabe con holgura el máximo de marcadores en pantalla (RadiusUtils.MAX_MARKERS = 150),
+    // para que la caché sea efectiva y no haya thrashing al re-renderizar el mapa.
+    private static final int CACHE_SIZE = 160;
     private static final LruCache<String, Bitmap> CACHE = new LruCache<>(CACHE_SIZE);
 
     private MarkerBitmapFactory() {}

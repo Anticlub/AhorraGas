@@ -694,7 +694,10 @@ public class MainActivity extends BaseActivity {
     }
 
     private void showStationsOnMap(int count) {
-        MarkerBitmapFactory.clearCache();
+        // No se limpia la caché aquí a propósito: la clave del bitmap ya incluye
+        // marca, nivel, precio (con descuento) y favorito, así que re-renderizar el
+        // mapa (mover, zoom, filtrar) reutiliza los bitmaps en vez de recrearlos.
+        // Los cambios de combustible/descuentos/favoritos ya invalidan en onResume.
         clearMapMarkers();
         final List<Gasolinera> toRender = applyBrandFilter(new ArrayList<>(
                 visibleGasolineras.subList(0, Math.min(count, visibleGasolineras.size()))
