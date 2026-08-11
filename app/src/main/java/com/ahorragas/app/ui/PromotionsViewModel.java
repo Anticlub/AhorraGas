@@ -2,7 +2,6 @@ package com.ahorragas.app.ui;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Transformations;
 import androidx.lifecycle.ViewModel;
 
 import com.ahorragas.app.data.repository.PromotionRepository;

@@ -18,6 +18,7 @@ import com.ahorragas.app.model.Gasolinera;
 
 import com.ahorragas.app.map.OsmTiles;
 import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 
@@ -115,7 +116,7 @@ public class LocationFragment extends Fragment {
         mapView = new MapView(requireContext());
         mapView.setTileSource(OsmTiles.OPENSTREETMAP);
         mapView.setMultiTouchControls(true);
-        mapView.setBuiltInZoomControls(false);
+        mapView.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
         mapView.getController().setZoom(16.0);
         mapView.getController().setCenter(stationPoint);
 

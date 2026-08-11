@@ -2,6 +2,7 @@ package com.ahorragas.app.detail;
 
 import android.os.Bundle;
 
+import androidx.core.content.IntentCompat;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
@@ -45,7 +46,7 @@ public class StationDetailActivity extends BaseActivity {
      * @return Gasolinera reconstruida o null si faltan datos esenciales.
      */
     private Gasolinera extractGasolineraFromIntent() {
-        return getIntent().getParcelableExtra(EXTRA_GASOLINERA);
+        return IntentCompat.getParcelableExtra(getIntent(), EXTRA_GASOLINERA, Gasolinera.class);
     }
 
     /**

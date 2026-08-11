@@ -50,6 +50,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import com.ahorragas.app.map.OsmTiles;
 import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
@@ -510,7 +511,7 @@ public class MainActivity extends BaseActivity {
     private void setupMap() {
         mapView.setTileSource(OsmTiles.OPENSTREETMAP);
         mapView.setMultiTouchControls(true);
-        mapView.setBuiltInZoomControls(false);
+        mapView.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
         showSpainFallback();
 
         mapView.setOnTouchListener((v, event) -> false);
