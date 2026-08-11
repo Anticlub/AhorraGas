@@ -40,10 +40,10 @@ public class ElectrolineraRepository {
         if (fromRemote == null || fromRemote.isEmpty()) {
             throw new RepoError(RepoError.Type.EMPTY_RESPONSE, "Sin datos de electrolineras");
         }
-        new Thread(() -> {
+        AppExecutors.io().execute(() -> {
             try { roomDataSource.saveAll(fromRemote); }
             catch (RepoError ignored) {}
-        }).start();
+        });
         return fromRemote;
     }
 
