@@ -1,0 +1,268 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "e4aa14f9d9550feb0fb3819542befabc",
+    "entities": [
+      {
+        "tableName": "gasolineras",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`station_id` TEXT NOT NULL, `marca` TEXT, `municipio` TEXT, `direccion` TEXT, `horario` TEXT, `lat` REAL, `lon` REAL, `es_electrica` INTEGER NOT NULL, `operador` TEXT, `precio_gasolina95` REAL, `precio_gasolina95_premium` REAL, `precio_gasolina98` REAL, `precio_gasoleo_a` REAL, `precio_gasoleo_premium` REAL, `precio_gasoleo_b` REAL, `precio_gasoleo_c` REAL, `precio_biodiesel` REAL, `precio_bioetanol` REAL, `precio_glp` REAL, `precio_gnc` REAL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`station_id`))",
+        "fields": [
+          {
+            "fieldPath": "stationId",
+            "columnName": "station_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "marca",
+            "columnName": "marca",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "municipio",
+            "columnName": "municipio",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "direccion",
+            "columnName": "direccion",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "horario",
+            "columnName": "horario",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "lat",
+            "columnName": "lat",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "lon",
+            "columnName": "lon",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "esElectrica",
+            "columnName": "es_electrica",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "operador",
+            "columnName": "operador",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "precioGasolina95",
+            "columnName": "precio_gasolina95",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "precioGasolina95Premium",
+            "columnName": "precio_gasolina95_premium",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "precioGasolina98",
+            "columnName": "precio_gasolina98",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "precioGasoleoA",
+            "columnName": "precio_gasoleo_a",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "precioGasoleoPremium",
+            "columnName": "precio_gasoleo_premium",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "precioGasoleoB",
+            "columnName": "precio_gasoleo_b",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "precioGasoleoC",
+            "columnName": "precio_gasoleo_c",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "precioBiodiesel",
+            "columnName": "precio_biodiesel",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "precioBioetanol",
+            "columnName": "precio_bioetanol",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "precioGlp",
+            "columnName": "precio_glp",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "precioGnc",
+            "columnName": "precio_gnc",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "station_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_gasolineras_es_electrica_lat_lon",
+            "unique": false,
+            "columnNames": [
+              "es_electrica",
+              "lat",
+              "lon"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_gasolineras_es_electrica_lat_lon` ON `${TABLE_NAME}` (`es_electrica`, `lat`, `lon`)"
+          },
+          {
+            "name": "index_gasolineras_es_electrica_municipio",
+            "unique": false,
+            "columnNames": [
+              "es_electrica",
+              "municipio"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_gasolineras_es_electrica_municipio` ON `${TABLE_NAME}` (`es_electrica`, `municipio`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "conectores",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `estacion_id` TEXT, `tipo` TEXT, `modo_recarga` TEXT, `potencia_w` REAL, FOREIGN KEY(`estacion_id`) REFERENCES `gasolineras`(`station_id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "estacionId",
+            "columnName": "estacion_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "tipo",
+            "columnName": "tipo",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "modoRecarga",
+            "columnName": "modo_recarga",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "potenciaW",
+            "columnName": "potencia_w",
+            "affinity": "REAL",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_conectores_estacion_id",
+            "unique": false,
+            "columnNames": [
+              "estacion_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_conectores_estacion_id` ON `${TABLE_NAME}` (`estacion_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "gasolineras",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "estacion_id"
+            ],
+            "referencedColumns": [
+              "station_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "metadata",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`clave` TEXT NOT NULL, `valor` TEXT, PRIMARY KEY(`clave`))",
+        "fields": [
+          {
+            "fieldPath": "clave",
+            "columnName": "clave",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "valor",
+            "columnName": "valor",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "clave"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e4aa14f9d9550feb0fb3819542befabc')"
+    ]
+  }
+}

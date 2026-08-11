@@ -9,7 +9,7 @@ import androidx.room.RoomDatabase;
 @Database(
         entities = {EstacionEntity.class, ConectorEntity.class, MetadataEntity.class},
         version = 2,
-        exportSchema = false
+        exportSchema = true
 )
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -34,6 +34,12 @@ public abstract class AppDatabase extends RoomDatabase {
                             AppDatabase.class,
                             DB_NAME)
                     .createFromAsset("ahorragas.db")
+                    // Migración destructiva INTENCIONAL: esta base de datos solo
+                    // contiene el dataset de estaciones (regenerable desde el asset
+                    // y la sincronización de red). Los datos del usuario (favoritos,
+                    // vehículos, alertas, descuentos) viven en SharedPreferences, no
+                    // aquí, así que ante un cambio de esquema es correcto y más simple
+                    // recrear la BD desde el asset en lugar de escribir migraciones.
                     .fallbackToDestructiveMigration()
                     .build();
         }
