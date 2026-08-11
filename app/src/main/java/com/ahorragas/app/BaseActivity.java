@@ -171,7 +171,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     private void requestApplyInsetsWhenAttached(View view) {
-        if (ViewCompat.isAttachedToWindow(view)) {
+        if (view.isAttachedToWindow()) {
             ViewCompat.requestApplyInsets(view);
             return;
         }

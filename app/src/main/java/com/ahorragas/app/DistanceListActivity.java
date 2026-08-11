@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.core.content.IntentCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -137,7 +138,7 @@ public class DistanceListActivity extends BaseActivity {
     private void loadAndDisplay() {
         showLoading();
 
-        ArrayList<Gasolinera> fromIntent = getIntent().getParcelableArrayListExtra("gasolineras");
+        ArrayList<Gasolinera> fromIntent = IntentCompat.getParcelableArrayListExtra(getIntent(), "gasolineras", Gasolinera.class);
         if (fromIntent != null && !fromIntent.isEmpty()) {
             loadFromIntent(fromIntent);
         } else {
@@ -274,7 +275,7 @@ public class DistanceListActivity extends BaseActivity {
         Intent intent = new Intent(this, PriceListActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         ArrayList<Gasolinera> gasolineras =
-                getIntent().getParcelableArrayListExtra("gasolineras");
+                IntentCompat.getParcelableArrayListExtra(getIntent(), "gasolineras", Gasolinera.class);
         if (gasolineras != null) {
             intent.putParcelableArrayListExtra("gasolineras", gasolineras);
         }
