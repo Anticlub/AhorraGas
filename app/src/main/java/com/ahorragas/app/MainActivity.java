@@ -933,27 +933,10 @@ public class MainActivity extends BaseActivity {
 
         executor.execute(() -> {
             try {
-                String encoded = java.net.URLEncoder.encode(query, "UTF-8");
-                String url = "https://nominatim.openstreetmap.org/search?city="
-                        + encoded
-                        + "&country=Spain&limit=1&format=json";
+                double[] coords = com.ahorragas.app.data.repository.GeocodingRepository
+                        .getInstance().geocodeCity(query);
 
-                java.net.HttpURLConnection conn = (java.net.HttpURLConnection)
-                        new java.net.URL(url).openConnection();
-                conn.setRequestProperty("User-Agent", getPackageName());
-                conn.setConnectTimeout(5000);
-                conn.setReadTimeout(5000);
-
-                java.io.InputStream is = conn.getInputStream();
-                String response = new java.util.Scanner(is).useDelimiter("\\A").next();
-                conn.disconnect();
-
-                int latStart = response.indexOf("\"lat\":\"") + 7;
-                int latEnd   = response.indexOf("\"", latStart);
-                int lonStart = response.indexOf("\"lon\":\"") + 7;
-                int lonEnd   = response.indexOf("\"", lonStart);
-
-                if (latStart < 7 || lonStart < 7) {
+                if (coords == null) {
                     mainHandler.post(() -> {
                         progressBarSearch.setVisibility(View.GONE);
                         Toast.makeText(this,
@@ -962,8 +945,8 @@ public class MainActivity extends BaseActivity {
                     return;
                 }
 
-                double lat = Double.parseDouble(response.substring(latStart, latEnd));
-                double lon = Double.parseDouble(response.substring(lonStart, lonEnd));
+                double lat = coords[0];
+                double lon = coords[1];
 
                 mainHandler.post(() -> {
                     GeoPoint point = new GeoPoint(lat, lon);
