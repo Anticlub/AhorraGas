@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 /**
@@ -66,6 +67,26 @@ public final class ApiClient {
                 .baseUrl(baseUrl)
                 .client(okHttpClient)
                 .addConverterFactory(ScalarsConverterFactory.create())
+                .build();
+        return retrofit.create(service);
+    }
+
+    /**
+     * Crea una implementación de la interfaz Retrofit indicada usando
+     * GsonConverterFactory, para servicios cuyo JSON se mapea a DTOs
+     * (p. ej. Nominatim). Las APIs de la DGT siguen usando createService
+     * (String + parseo manual).
+     *
+     * @param baseUrl  URL base del servicio (debe terminar en /)
+     * @param service  clase de la interfaz Retrofit
+     * @param <T>      tipo de la interfaz
+     * @return implementación lista para usar
+     */
+    public <T> T createGsonService(String baseUrl, Class<T> service) {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .client(okHttpClient)
+                .addConverterFactory(GsonConverterFactory.create())
                 .build();
         return retrofit.create(service);
     }
