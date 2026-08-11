@@ -327,7 +327,7 @@ public class FavoritesActivity extends BaseActivity {
             return;
         }
 
-        new Thread(() -> {
+        com.ahorragas.app.data.AppExecutors.io().execute(() -> {
             FuelType currentFuel = FuelType.fromString(
                     PreferenceManager.getDefaultSharedPreferences(this)
                             .getString("pref_selected_fuel", FuelType.GASOLEO_A.name()));
@@ -360,7 +360,7 @@ public class FavoritesActivity extends BaseActivity {
                     runOnUiThread(() -> showData(favorites, currentFuel));
                 }
             });
-        }).start();
+        });
     }
 
     private void setupBottomNav() {

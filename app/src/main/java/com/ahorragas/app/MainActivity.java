@@ -701,7 +701,7 @@ public class MainActivity extends BaseActivity {
         final FuelType fuelSnapshot = selectedFuel;
         final PriceRange rangeSnapshot = currentPriceRange;
 
-        new Thread(() -> {
+        executor.execute(() -> {
             final java.util.LinkedHashMap<Gasolinera, android.graphics.Bitmap> bitmaps =
                     new java.util.LinkedHashMap<>();
             for (Gasolinera g : toRender) {
@@ -745,7 +745,7 @@ public class MainActivity extends BaseActivity {
                 }
                 mapView.invalidate();
             });
-        }).start();
+        });
     }
 
     private void addMarker(Gasolinera gasolinera) {
