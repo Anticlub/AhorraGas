@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.ahorragas.app.R;
@@ -112,7 +113,7 @@ public class PricesFragment extends Fragment {
             if (conectoresRaw.isEmpty()) {
                 TextView tvEmpty = new TextView(requireContext());
                 tvEmpty.setText(getString(R.string.msg_no_connector_data));
-                tvEmpty.setTextColor(0xFF757575);
+                tvEmpty.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary));
                 tvEmpty.setTextSize(14);
                 container2.addView(tvEmpty);
             } else {
@@ -144,12 +145,12 @@ public class PricesFragment extends Fragment {
                     tvConector.setLayoutParams(new LinearLayout.LayoutParams(
                             0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
                     tvConector.setText(tipo.getDisplayName() + " · " + tipoRecarga);
-                    tvConector.setTextColor(0xFF212121);
+                    tvConector.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary));
                     tvConector.setTextSize(14);
 
                     TextView tvPotencia = new TextView(requireContext());
                     tvPotencia.setText(potenciaStr);
-                    tvPotencia.setTextColor(0xFF1976D2);
+                    tvPotencia.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary_light));
                     tvPotencia.setTextSize(14);
                     tvPotencia.setTypeface(null, android.graphics.Typeface.BOLD);
 
@@ -160,7 +161,7 @@ public class PricesFragment extends Fragment {
                     View divider = new View(requireContext());
                     divider.setLayoutParams(new LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.MATCH_PARENT, 1));
-                    divider.setBackgroundColor(0xFFE0E0E0);
+                    divider.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.divider));
                     container2.addView(divider);
                 }
             }
@@ -177,12 +178,12 @@ public class PricesFragment extends Fragment {
                 tvFuel.setLayoutParams(new LinearLayout.LayoutParams(
                         0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
                 tvFuel.setText(fuel.displayName());
-                tvFuel.setTextColor(0xFF212121);
+                tvFuel.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary));
                 tvFuel.setTextSize(14);
 
                 TextView tvPrice = new TextView(requireContext());
                 tvPrice.setText(price);
-                tvPrice.setTextColor(0xFF388E3C);
+                tvPrice.setTextColor(ContextCompat.getColor(requireContext(), R.color.price_cheap));
                 tvPrice.setTextSize(14);
                 tvPrice.setTypeface(null, android.graphics.Typeface.BOLD);
 
@@ -193,7 +194,7 @@ public class PricesFragment extends Fragment {
                 View divider = new View(requireContext());
                 divider.setLayoutParams(new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT, 1));
-                divider.setBackgroundColor(0xFFE0E0E0);
+                divider.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.divider));
                 container2.addView(divider);
             }
         }    }

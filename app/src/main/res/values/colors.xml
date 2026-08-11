@@ -19,4 +19,18 @@
     <color name="price_medium">#F57C00</color>
     <color name="price_expensive">#D32F2F</color>
     <color name="price_unknown">#757575</color>
+
+    <!-- Acentos y texto -->
+    <color name="error_red">#EF5350</color>
+    <color name="teal_accent">#4DB6AC</color>
+    <color name="text_dark">#333333</color>
+    <color name="text_muted">#AAAAAA</color>
+    <color name="input_light">#EEEEEE</color>
+
+    <!-- Tarjetas oscuras de Preferencias (vehículos / marcas) -->
+    <color name="pref_card">#383848</color>
+    <color name="pref_card_active">#1A237E</color>
+    <color name="pref_input">#2C2C3A</color>
+    <color name="pref_separator">#444455</color>
+    <color name="pref_label">#CCCCCC</color>
 </resources>

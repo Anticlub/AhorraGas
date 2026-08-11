@@ -26,6 +26,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 
 import com.ahorragas.app.data.DataSourceOrigin;
@@ -286,7 +287,7 @@ public class MainActivity extends BaseActivity {
     private SpannableString makeRequiredLabel(String text) {
         SpannableString span = new SpannableString(text);
         span.setSpan(
-                new ForegroundColorSpan(0xFFEF5350),
+                new ForegroundColorSpan(ContextCompat.getColor(this, R.color.error_red)),
                 span.length() - 1,
                 span.length(),
                 Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -303,7 +304,7 @@ public class MainActivity extends BaseActivity {
 
         TextView labelName = new TextView(this);
         labelName.setText(makeRequiredLabel(getString(R.string.label_vehicle_name)));
-        labelName.setTextColor(0xFF333333);
+        labelName.setTextColor(ContextCompat.getColor(this, R.color.text_dark));
         labelName.setTextSize(13);
         layout.addView(labelName);
 
@@ -314,7 +315,7 @@ public class MainActivity extends BaseActivity {
 
         TextView labelCons = new TextView(this);
         labelCons.setText(getString(R.string.dialogo_vehiculo_consumo));
-        labelCons.setTextColor(0xFF333333);
+        labelCons.setTextColor(ContextCompat.getColor(this, R.color.text_dark));
         labelCons.setTextSize(13);
         labelCons.setPadding(0, dp(12), 0, 0);
         layout.addView(labelCons);
@@ -326,7 +327,7 @@ public class MainActivity extends BaseActivity {
 
         TextView labelTank = new TextView(this);
         labelTank.setText(getString(R.string.label_tank_capacity));
-        labelTank.setTextColor(0xFF333333);
+        labelTank.setTextColor(ContextCompat.getColor(this, R.color.text_dark));
         labelTank.setTextSize(13);
         labelTank.setPadding(0, dp(12), 0, 0);
         layout.addView(labelTank);
@@ -338,7 +339,7 @@ public class MainActivity extends BaseActivity {
 
         TextView labelCharging = new TextView(this);
         labelCharging.setText(getString(R.string.label_charging_power));
-        labelCharging.setTextColor(0xFF333333);
+        labelCharging.setTextColor(ContextCompat.getColor(this, R.color.text_dark));
         labelCharging.setTextSize(13);
         labelCharging.setPadding(0, dp(12), 0, 0);
         labelCharging.setVisibility(View.GONE);
@@ -352,7 +353,7 @@ public class MainActivity extends BaseActivity {
 
         TextView labelFuel = new TextView(this);
         labelFuel.setText(makeRequiredLabel(getString(R.string.label_fuel_type)));
-        labelFuel.setTextColor(0xFF333333);
+        labelFuel.setTextColor(ContextCompat.getColor(this, R.color.text_dark));
         labelFuel.setTextSize(13);
         labelFuel.setPadding(0, dp(12), 0, 0);
         layout.addView(labelFuel);
@@ -365,8 +366,8 @@ public class MainActivity extends BaseActivity {
 
         TextView tvFuelSelector = new TextView(this);
         tvFuelSelector.setText(selectedFuelLocal[0].displayName());
-        tvFuelSelector.setTextColor(0xFF000000);
-        tvFuelSelector.setBackgroundColor(0xFFEEEEEE);
+        tvFuelSelector.setTextColor(ContextCompat.getColor(this, R.color.black));
+        tvFuelSelector.setBackgroundColor(ContextCompat.getColor(this, R.color.input_light));
         tvFuelSelector.setPadding(dp(12), dp(10), dp(12), dp(10));
         tvFuelSelector.setTextSize(14);
         tvFuelSelector.setClickable(true);
@@ -578,7 +579,7 @@ public class MainActivity extends BaseActivity {
             myLocationMarker.setInfoWindow(null);
             myLocationMarker.setIcon(new android.graphics.drawable.BitmapDrawable(
                     getResources(),
-                    tintedLocationBitmap(android.graphics.Color.parseColor("#FF9800"))
+                    tintedLocationBitmap(ContextCompat.getColor(this, R.color.secondary))
             ));
             mapView.getOverlays().add(0, myLocationMarker);
         }
