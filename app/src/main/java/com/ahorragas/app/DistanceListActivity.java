@@ -9,25 +9,17 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.core.content.IntentCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.ahorragas.app.adapter.GasolineraAdapter;
-import com.ahorragas.app.data.ElectrolineraRepository;
-import com.ahorragas.app.data.EstacionRepository;
-import com.ahorragas.app.data.GasolineraRepository;
-import com.ahorragas.app.data.remote.RemoteDgtDataSource;
-import com.ahorragas.app.data.RoomElectrolineraDataSource;
-import com.ahorragas.app.data.RoomGasolineraDataSource;
-import com.ahorragas.app.data.local.AppDatabase;
 import com.ahorragas.app.location.LocationHelper;
 import com.ahorragas.app.model.FuelType;
 import com.ahorragas.app.model.Gasolinera;
 import com.ahorragas.app.model.PriceRange;
-import com.ahorragas.app.util.DiscountPrefs;
-import com.ahorragas.app.util.GasolineraSorter;
-import com.ahorragas.app.util.RadiusUtils;
+import com.ahorragas.app.ui.DistanceListViewModel;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
@@ -35,7 +27,7 @@ import java.util.List;
 
 public class DistanceListActivity extends BaseActivity {
 
-    private EstacionRepository repository;
+    private DistanceListViewModel viewModel;
     private LocationHelper locationHelper;
     private GasolineraAdapter adapter;
     private FuelType selectedFuel;
@@ -49,10 +41,6 @@ public class DistanceListActivity extends BaseActivity {
     private TextView tvError;
     private View layoutError;
     private Button btnRetry;
-    private final java.util.concurrent.ExecutorService executor =
-            java.util.concurrent.Executors.newSingleThreadExecutor();
-    private final android.os.Handler mainHandler =
-            new android.os.Handler(android.os.Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,13 +48,7 @@ public class DistanceListActivity extends BaseActivity {
         setContentView(R.layout.activity_distance_list);
         applySystemBarInsets(R.id.topBar, R.id.bottomNavDistance);
 
-        AppDatabase db = AppDatabase.getInstance(this);
-        RoomGasolineraDataSource roomGasolineraDs = new RoomGasolineraDataSource(db);
-        RoomElectrolineraDataSource roomElectrolineraDs = new RoomElectrolineraDataSource(db);
-        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(roomGasolineraDs);
-        ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
-                new RemoteDgtDataSource(), roomElectrolineraDs);
-        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo);
+        viewModel = new ViewModelProvider(this).get(DistanceListViewModel.class);
         locationHelper = new LocationHelper(this);
 
         bindViews();
@@ -76,6 +58,8 @@ public class DistanceListActivity extends BaseActivity {
                         .getString("pref_selected_fuel", FuelType.GASOLEO_A.name()));
         setupBottomNav();
         btnRetry.setOnClickListener(v -> loadAndDisplay());
+
+        viewModel.getState().observe(this, this::render);
     }
 
     @Override
@@ -104,7 +88,6 @@ public class DistanceListActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         locationHelper.cancel();
-        executor.shutdownNow();
     }
 
     private void bindViews() {
@@ -132,20 +115,21 @@ public class DistanceListActivity extends BaseActivity {
     }
 
     /**
-     * Carga y muestra las gasolineras. Si vienen en el Intent las usa
-     * directamente, si no las obtiene por GPS y radio.
+     * Pide al ViewModel que cargue las gasolineras. Si vienen en el Intent las
+     * usa directamente; si no, obtiene la ubicación por GPS y carga por radio.
      */
     private void loadAndDisplay() {
         showLoading();
 
-        ArrayList<Gasolinera> fromIntent = IntentCompat.getParcelableArrayListExtra(getIntent(), "gasolineras", Gasolinera.class);
+        ArrayList<Gasolinera> fromIntent = IntentCompat.getParcelableArrayListExtra(
+                getIntent(), "gasolineras", Gasolinera.class);
         if (fromIntent != null && !fromIntent.isEmpty()) {
-            loadFromIntent(fromIntent);
+            viewModel.loadFromIntent(fromIntent, selectedFuel);
         } else {
             locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
                 @Override
                 public void onSuccess(Location location) {
-                    loadWithCoordinates(location.getLatitude(), location.getLongitude());
+                    viewModel.loadByRadius(location.getLatitude(), location.getLongitude(), selectedFuel);
                 }
 
                 @Override
@@ -159,84 +143,14 @@ public class DistanceListActivity extends BaseActivity {
         }
     }
 
-    /**
-     * Usa las gasolineras recibidas desde el Intent, las ordena por distancia.
-     *
-     * @param gasolineras Lista de gasolineras del municipio buscado.
-     */
-    private void loadFromIntent(List<Gasolinera> gasolineras) {
-        executor.execute(() -> {
-            List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
-
-            PriceRange range = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
-            for (Gasolinera g : filtered) {
-                double discounted = g.getPrecio(selectedFuel) != null
-                        ? DiscountPrefs.applyAllDiscounts(
-                        DistanceListActivity.this, g.getMarca(),
-                        g.getPrecio(selectedFuel))
-                        : 0;
-                g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, range));
-            }
-
-            mainHandler.post(() -> {
-                if (isDestroyed() || isFinishing()) return;
-                if (filtered.isEmpty()) showEmpty();
-                else showData(filtered, range);
-            });
-        });
-    }
-
-    /**
-     * Carga y muestra las gasolineras ordenadas por distancia para las coordenadas dadas.
-     *
-     * @param lat Latitud del punto de referencia.
-     * @param lon Longitud del punto de referencia.
-     */
-    private void loadWithCoordinates(double lat, double lon) {
-        executor.execute(() -> {
-            try {
-
-                int radiusKm = RadiusUtils.loadRadiusKm(DistanceListActivity.this);
-                double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
-                int maxMarkers = RadiusUtils.loadMarkersCount(DistanceListActivity.this);
-
-                List<Gasolinera> gasolineras;
-                if (selectedFuel == FuelType.ELECTRICO) {
-                    gasolineras = new ArrayList<>(
-                            repository.getElectrolinerasByRadius(lat, lon, radiusMeters));
-                } else {
-                    gasolineras = new ArrayList<>(
-                            repository.getGasolinerasByRadius(lat, lon, radiusMeters));
-                }
-
-                List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
-
-                List<Gasolinera> sorted = GasolineraSorter.getWithinRadius(
-                        filtered, lat, lon, radiusMeters, maxMarkers);
-
-                PriceRange range = GasolineraSorter.calculatePriceRange(sorted, selectedFuel);
-                for (Gasolinera g : sorted) {
-                    double discounted = g.getPrecio(selectedFuel) != null
-                            ? DiscountPrefs.applyAllDiscounts(
-                            DistanceListActivity.this, g.getMarca(),
-                            g.getPrecio(selectedFuel))
-                            : 0;
-                    g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, range));
-                }
-
-                mainHandler.post(() -> {
-                    if (isDestroyed() || isFinishing()) return;
-                    if (sorted.isEmpty()) showEmpty();
-                    else showData(sorted, range);
-                });
-
-            } catch (Exception e) {
-                mainHandler.post(() -> {
-                    if (isDestroyed() || isFinishing()) return;
-                    showError(getString(R.string.error_cargando_gasolineras));
-                });
-            }
-        });
+    /** Pinta el estado emitido por el ViewModel. */
+    private void render(DistanceListViewModel.UiState st) {
+        switch (st.status) {
+            case LOADING: showLoading(); break;
+            case DATA:    showData(st.data, st.priceRange); break;
+            case EMPTY:   showEmpty(); break;
+            case ERROR:   showError(st.errorMessage); break;
+        }
     }
 
     private void showLoading() {
