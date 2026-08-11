@@ -14,6 +14,7 @@ import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
@@ -250,7 +251,7 @@ public class PreferencesActivity extends BaseActivity {
         if (alerts.isEmpty()) {
             TextView empty = new TextView(this);
             empty.setText(getString(R.string.msg_no_alerts));
-            empty.setTextColor(0xFFAAAAAA);
+            empty.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
             empty.setPadding(dp(16), dp(24), dp(16), dp(8));
             alertListContainer.addView(empty);
             return;
@@ -264,7 +265,7 @@ public class PreferencesActivity extends BaseActivity {
     private void addAlertRow(PriceAlert alert) {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.HORIZONTAL);
-        card.setBackgroundColor(0xFF383848);
+        card.setBackgroundColor(ContextCompat.getColor(this, R.color.pref_card));
         card.setPadding(dp(16), dp(14), dp(12), dp(14));
 
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
@@ -281,7 +282,7 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView tvName = new TextView(this);
         tvName.setText(alert.getGasolineraName());
-        tvName.setTextColor(0xFFFFFFFF);
+        tvName.setTextColor(ContextCompat.getColor(this, R.color.white));
         tvName.setTextSize(15);
         tvName.setTypeface(null, android.graphics.Typeface.BOLD);
         textCol.addView(tvName);
@@ -290,13 +291,13 @@ public class PreferencesActivity extends BaseActivity {
         tvDetail.setText(alert.getFuelType().displayName()
                 + " · alerta ≤ "
                 + String.format(Locale.getDefault(), "%.3f €/L", alert.getTargetPrice()));
-        tvDetail.setTextColor(0xFFAAAAAA);
+        tvDetail.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
         tvDetail.setTextSize(12);
         textCol.addView(tvDetail);
 
         card.addView(textCol);
 
-        TextView btnDelete = makeTextButton("🗑", 0xFFEF5350);
+        TextView btnDelete = makeTextButton("🗑", ContextCompat.getColor(this, R.color.error_red));
         btnDelete.setOnClickListener(v -> {
             new AlertDialog.Builder(this)
                     .setTitle(getString(R.string.title_delete_alert))
@@ -315,7 +316,7 @@ public class PreferencesActivity extends BaseActivity {
         View sep = new View(this);
         sep.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 1));
-        sep.setBackgroundColor(0xFF444455);
+        sep.setBackgroundColor(ContextCompat.getColor(this, R.color.pref_separator));
         alertListContainer.addView(sep);
     }
 
@@ -330,7 +331,7 @@ public class PreferencesActivity extends BaseActivity {
         if (vehicles.isEmpty()) {
             TextView empty = new TextView(this);
             empty.setText(getString(R.string.msg_no_vehicles));
-            empty.setTextColor(0xFFAAAAAA);
+            empty.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
             empty.setPadding(dp(16), dp(24), dp(16), dp(8));
             vehicleListContainer.addView(empty);
         }
@@ -349,7 +350,7 @@ public class PreferencesActivity extends BaseActivity {
 
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.HORIZONTAL);
-        card.setBackgroundColor(isActive ? 0xFF1A237E : 0xFF383848);
+        card.setBackgroundColor(isActive ? ContextCompat.getColor(this, R.color.pref_card_active) : ContextCompat.getColor(this, R.color.pref_card));
         card.setPadding(dp(16), dp(14), dp(12), dp(14));
 
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
@@ -366,7 +367,7 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView tvName = new TextView(this);
         tvName.setText((isActive ? "✔ " : "") + vehicle.getName());
-        tvName.setTextColor(0xFFFFFFFF);
+        tvName.setTextColor(ContextCompat.getColor(this, R.color.white));
         tvName.setTextSize(15);
         tvName.setTypeface(null, android.graphics.Typeface.BOLD);
         textCol.addView(tvName);
@@ -384,17 +385,17 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView tvDetail = new TextView(this);
         tvDetail.setText(vehicle.getFuelType().displayName() + " · " + consDetail + tankDetail + chargingDetail);
-        tvDetail.setTextColor(0xFFAAAAAA);
+        tvDetail.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
         tvDetail.setTextSize(12);
         textCol.addView(tvDetail);
 
         card.addView(textCol);
 
-        TextView btnEdit = makeTextButton("✏", 0xFF4DB6AC);
+        TextView btnEdit = makeTextButton("✏", ContextCompat.getColor(this, R.color.teal_accent));
         btnEdit.setOnClickListener(v -> showVehicleDialog(index, vehicle, false));
         card.addView(btnEdit);
 
-        TextView btnDelete = makeTextButton("🗑", 0xFFEF5350);
+        TextView btnDelete = makeTextButton("🗑", ContextCompat.getColor(this, R.color.error_red));
         btnDelete.setOnClickListener(v -> confirmDeleteVehicle(index));
         card.addView(btnDelete);
 
@@ -419,7 +420,7 @@ public class PreferencesActivity extends BaseActivity {
         View sep = new View(this);
         sep.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 1));
-        sep.setBackgroundColor(0xFF444455);
+        sep.setBackgroundColor(ContextCompat.getColor(this, R.color.pref_separator));
         vehicleListContainer.addView(sep);
     }
 
@@ -432,7 +433,7 @@ public class PreferencesActivity extends BaseActivity {
         if (discounts.isEmpty()) {
             TextView empty = new TextView(this);
             empty.setText(getString(R.string.msg_no_discounts));
-            empty.setTextColor(0xFFAAAAAA);
+            empty.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
             empty.setPadding(dp(16), dp(24), dp(16), dp(8));
             discountListContainer.addView(empty);
         }
@@ -449,7 +450,7 @@ public class PreferencesActivity extends BaseActivity {
     private void addDiscountRow(int index, Discount discount) {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.HORIZONTAL);
-        card.setBackgroundColor(0xFF383848);
+        card.setBackgroundColor(ContextCompat.getColor(this, R.color.pref_card));
         card.setPadding(dp(16), dp(14), dp(12), dp(14));
 
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
@@ -466,7 +467,7 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView tvName = new TextView(this);
         tvName.setText(discount.getBrandName());
-        tvName.setTextColor(0xFFFFFFFF);
+        tvName.setTextColor(ContextCompat.getColor(this, R.color.white));
         tvName.setTextSize(15);
         tvName.setTypeface(null, android.graphics.Typeface.BOLD);
         textCol.addView(tvName);
@@ -477,17 +478,17 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView tvDetail = new TextView(this);
         tvDetail.setText(getString(R.string.label_discount) + typeLabel);
-        tvDetail.setTextColor(0xFFAAAAAA);
+        tvDetail.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
         tvDetail.setTextSize(12);
         textCol.addView(tvDetail);
 
         card.addView(textCol);
 
-        TextView btnEdit = makeTextButton("✏", 0xFF4DB6AC);
+        TextView btnEdit = makeTextButton("✏", ContextCompat.getColor(this, R.color.teal_accent));
         btnEdit.setOnClickListener(v -> showDiscountDialog(index, discount));
         card.addView(btnEdit);
 
-        TextView btnDelete = makeTextButton("🗑", 0xFFEF5350);
+        TextView btnDelete = makeTextButton("🗑", ContextCompat.getColor(this, R.color.error_red));
         btnDelete.setOnClickListener(v -> confirmDeleteDiscount(index));
         card.addView(btnDelete);
 
@@ -496,7 +497,7 @@ public class PreferencesActivity extends BaseActivity {
         View sep = new View(this);
         sep.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 1));
-        sep.setBackgroundColor(0xFF444455);
+        sep.setBackgroundColor(ContextCompat.getColor(this, R.color.pref_separator));
         discountListContainer.addView(sep);
     }
 
@@ -512,7 +513,7 @@ public class PreferencesActivity extends BaseActivity {
     private SpannableString makeRequiredLabel(String text) {
         SpannableString span = new SpannableString(text);
         span.setSpan(
-                new ForegroundColorSpan(0xFFEF5350),
+                new ForegroundColorSpan(ContextCompat.getColor(this, R.color.error_red)),
                 span.length() - 1,
                 span.length(),
                 Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -529,7 +530,7 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView labelName = new TextView(this);
         labelName.setText(makeRequiredLabel(getString(R.string.label_vehicle_name)));
-        labelName.setTextColor(0xFFCCCCCC);
+        labelName.setTextColor(ContextCompat.getColor(this, R.color.pref_label));
         labelName.setTextSize(13);
         layout.addView(labelName);
 
@@ -544,7 +545,7 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView labelCons = new TextView(this);
         labelCons.setText(getString(R.string.label_consumption_fuel));
-        labelCons.setTextColor(0xFFCCCCCC);
+        labelCons.setTextColor(ContextCompat.getColor(this, R.color.pref_label));
         labelCons.setTextSize(13);
         labelCons.setPadding(0, dp(12), 0, 0);
         layout.addView(labelCons);
@@ -562,7 +563,7 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView labelTank = new TextView(this);
         labelTank.setText(getString(R.string.label_tank_capacity));
-        labelTank.setTextColor(0xFFCCCCCC);
+        labelTank.setTextColor(ContextCompat.getColor(this, R.color.pref_label));
         labelTank.setTextSize(13);
         labelTank.setPadding(0, dp(12), 0, 0);
         layout.addView(labelTank);
@@ -580,7 +581,7 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView labelCharging = new TextView(this);
         labelCharging.setText(getString(R.string.label_charging_power));
-        labelCharging.setTextColor(0xFFCCCCCC);
+        labelCharging.setTextColor(ContextCompat.getColor(this, R.color.pref_label));
         labelCharging.setTextSize(13);
         labelCharging.setPadding(0, dp(12), 0, 0);
         layout.addView(labelCharging);
@@ -610,7 +611,7 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView labelFuel = new TextView(this);
         labelFuel.setText(makeRequiredLabel(getString(R.string.label_fuel_type)));
-        labelFuel.setTextColor(0xFFCCCCCC);
+        labelFuel.setTextColor(ContextCompat.getColor(this, R.color.pref_label));
         labelFuel.setTextSize(13);
         labelFuel.setPadding(0, dp(12), 0, 0);
         layout.addView(labelFuel);
@@ -624,8 +625,8 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView tvFuelSelector = new TextView(this);
         tvFuelSelector.setText(selectedFuel[0].displayName());
-        tvFuelSelector.setTextColor(0xFFFFFFFF);
-        tvFuelSelector.setBackgroundColor(0xFF2C2C3A);
+        tvFuelSelector.setTextColor(ContextCompat.getColor(this, R.color.white));
+        tvFuelSelector.setBackgroundColor(ContextCompat.getColor(this, R.color.pref_input));
         tvFuelSelector.setPadding(dp(12), dp(10), dp(12), dp(10));
         tvFuelSelector.setTextSize(14);
         tvFuelSelector.setClickable(true);
@@ -756,7 +757,7 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView labelBrand = new TextView(this);
         labelBrand.setText(makeRequiredLabel(getString(R.string.label_station_brand)));
-        labelBrand.setTextColor(0xFFCCCCCC);
+        labelBrand.setTextColor(ContextCompat.getColor(this, R.color.pref_label));
         labelBrand.setTextSize(13);
         layout.addView(labelBrand);
 
@@ -764,8 +765,8 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView tvBrandSelector = new TextView(this);
         tvBrandSelector.setText(selectedBrand[0]);
-        tvBrandSelector.setTextColor(0xFFFFFFFF);
-        tvBrandSelector.setBackgroundColor(0xFF2C2C3A);
+        tvBrandSelector.setTextColor(ContextCompat.getColor(this, R.color.white));
+        tvBrandSelector.setBackgroundColor(ContextCompat.getColor(this, R.color.pref_input));
         tvBrandSelector.setPadding(dp(12), dp(10), dp(12), dp(10));
         tvBrandSelector.setTextSize(14);
         tvBrandSelector.setClickable(true);
@@ -792,7 +793,7 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView labelType = new TextView(this);
         labelType.setText(makeRequiredLabel(getString(R.string.label_discount_type)));
-        labelType.setTextColor(0xFFCCCCCC);
+        labelType.setTextColor(ContextCompat.getColor(this, R.color.pref_label));
         labelType.setTextSize(13);
         labelType.setPadding(0, dp(12), 0, 0);
         layout.addView(labelType);
@@ -805,8 +806,8 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView tvTypeSelector = new TextView(this);
         tvTypeSelector.setText(selectedType[0] == Discount.Type.PERCENTAGE ? typeNames[1] : typeNames[0]);
-        tvTypeSelector.setTextColor(0xFFFFFFFF);
-        tvTypeSelector.setBackgroundColor(0xFF2C2C3A);
+        tvTypeSelector.setTextColor(ContextCompat.getColor(this, R.color.white));
+        tvTypeSelector.setBackgroundColor(ContextCompat.getColor(this, R.color.pref_input));
         tvTypeSelector.setPadding(dp(12), dp(10), dp(12), dp(10));
         tvTypeSelector.setTextSize(14);
         tvTypeSelector.setClickable(true);
@@ -827,7 +828,7 @@ public class PreferencesActivity extends BaseActivity {
 
         TextView labelValue = new TextView(this);
         labelValue.setText(makeRequiredLabel(getString(R.string.label_discount_value)));
-        labelValue.setTextColor(0xFFCCCCCC);
+        labelValue.setTextColor(ContextCompat.getColor(this, R.color.pref_label));
         labelValue.setTextSize(13);
         labelValue.setPadding(0, dp(12), 0, 0);
         layout.addView(labelValue);
@@ -937,7 +938,7 @@ public class PreferencesActivity extends BaseActivity {
 
     private TextView makeErrorLabel() {
         TextView tv = new TextView(this);
-        tv.setTextColor(0xFFEF5350);
+        tv.setTextColor(ContextCompat.getColor(this, R.color.error_red));
         tv.setTextSize(12);
         tv.setPadding(dp(2), dp(2), 0, 0);
         tv.setVisibility(View.GONE);
