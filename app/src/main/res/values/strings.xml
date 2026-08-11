@@ -242,5 +242,5 @@
 
     <string name="pref_contact_title">¿Has encontrado un error? Repórtalo aquí:</string>
     <string name="pref_contact_email">ahorragas.soporte@gmail.com</string>
-    <string name="easter_egg_message">🤑 MRK was here</string>
+    <string name="easter_egg_message" translatable="false">🤑 MRK was here</string>
 </resources>
