@@ -77,7 +77,6 @@ public class MainActivity extends BaseActivity {
     private int lastFavoritesVersion = -1;
     private boolean vehicleDialogShown = false;
 
-    private FuelType selectedFuel = FuelType.GASOLEO_A;
     private String selectedBrand = null;
     private Location userLocation;
     private final Map<Integer, Marker> markerMap = new HashMap<>();
@@ -122,11 +121,6 @@ public class MainActivity extends BaseActivity {
         viewModel = new ViewModelProvider(this).get(MapViewModel.class);
         locationHelper = new LocationHelper(this);
         observeViewModel();
-
-        selectedFuel = FuelType.fromString(
-                PreferenceManager.getDefaultSharedPreferences(this)
-                        .getString(PREF_SELECTED_FUEL, FuelType.GASOLEO_A.name())
-        );
 
         initViews();
         setupMap();
@@ -182,9 +176,9 @@ public class MainActivity extends BaseActivity {
                 PreferenceManager.getDefaultSharedPreferences(this)
                         .getString(PREF_SELECTED_FUEL, FuelType.GASOLEO_A.name())
         );
-        if (savedFuel != selectedFuel) {
+        if (savedFuel != viewModel.getSelectedFuel()) {
             MarkerBitmapFactory.clearCache();
-            updateDisplayForFuel(savedFuel);
+            viewModel.changeFuel(savedFuel, userLocation);
             return;
         }
 
@@ -196,9 +190,9 @@ public class MainActivity extends BaseActivity {
             lastRadiusKm = currentRadius;
             lastMarkersCount = currentMarkers;
             if (activeSearch == null && userLocation != null) {
-                viewModel.loadByRadius(userLocation.getLatitude(), userLocation.getLongitude(), selectedFuel);
+                viewModel.loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
             } else if (activeSearch != null) {
-                viewModel.filterByMunicipio(activeSearch, selectedFuel, userLocation);
+                viewModel.filterByMunicipio(activeSearch, userLocation);
             }
             return;
         }
@@ -207,21 +201,13 @@ public class MainActivity extends BaseActivity {
         if (currentDiscountsVersion != lastDiscountsVersion) {
             lastDiscountsVersion = currentDiscountsVersion;
             MarkerBitmapFactory.clearCache();
-            if (activeSearch != null) {
-                viewModel.filterByMunicipio(activeSearch, selectedFuel, userLocation);
-            } else {
-                updateDisplayForFuel(selectedFuel);
-            }
+            refreshActiveView(activeSearch);
         }
         int currentFavoritesVersion = FavoritesPrefs.getVersion(this);
         if (currentFavoritesVersion != lastFavoritesVersion) {
             lastFavoritesVersion = currentFavoritesVersion;
             MarkerBitmapFactory.clearCache();
-            if (activeSearch != null) {
-                viewModel.filterByMunicipio(activeSearch, selectedFuel, userLocation);
-            } else {
-                updateDisplayForFuel(selectedFuel);
-            }
+            refreshActiveView(activeSearch);
         }
         if (activeSearch == null && userLocation != null) {
             locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
@@ -284,7 +270,7 @@ public class MainActivity extends BaseActivity {
             case EMPTY_FUEL:
                 clearMapMarkers();
                 Toast.makeText(this,
-                        getString(R.string.no_stations_for_fuel, selectedFuel.displayName()),
+                        getString(R.string.no_stations_for_fuel, viewModel.getSelectedFuel().displayName()),
                         Toast.LENGTH_SHORT).show();
                 break;
             case NO_DATA:
@@ -510,12 +496,12 @@ public class MainActivity extends BaseActivity {
             Vehicle vehicle = new Vehicle(name, selectedFuelLocal[0], cons, tank, charging);
             VehiclePrefs.addVehicle(this, vehicle);
 
-            selectedFuel = selectedFuelLocal[0];
+            viewModel.setSelectedFuel(selectedFuelLocal[0]);
             MarkerBitmapFactory.clearCache();
             if (userLocation != null) {
-                viewModel.loadByRadius(userLocation.getLatitude(), userLocation.getLongitude(), selectedFuel);
+                viewModel.loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
             } else {
-                updateDisplayForFuel(selectedFuel);
+                viewModel.updateVisible();
             }
             vehicleDialogShown = false;
             dialog.dismiss();
@@ -569,7 +555,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void setupBottomNav() {
-        setupBottomNav(bottomNav, R.id.nav_map, selectedFuel);
+        setupBottomNav(bottomNav, R.id.nav_map, viewModel.getSelectedFuel());
     }
 
     private void requestLocationPermission() {
@@ -604,7 +590,7 @@ public class MainActivity extends BaseActivity {
                         buildLocationToast(error),
                         Toast.LENGTH_LONG
                 ).show();
-                updateDisplayForFuel(selectedFuel);
+                viewModel.updateVisible();
             }
         });
     }
@@ -618,7 +604,7 @@ public class MainActivity extends BaseActivity {
         mapView.getController().animateTo(point);
         mapView.getController().setZoom(ZOOM_USER);
 
-        viewModel.loadByRadius(smoothed.getLatitude(), smoothed.getLongitude(), selectedFuel);
+        viewModel.loadByRadius(smoothed.getLatitude(), smoothed.getLongitude());
     }
 
     private void updateMyLocationMarker(Location location) {
@@ -639,29 +625,22 @@ public class MainActivity extends BaseActivity {
 
     private void loadGasolineras() {
         if (userLocation != null) {
-            viewModel.loadByRadius(userLocation.getLatitude(), userLocation.getLongitude(), selectedFuel);
+            viewModel.loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
         } else {
             progressBarSearch.setVisibility(View.GONE);
         }
     }
 
     /**
-     * Actualiza el combustible seleccionado y pide al ViewModel que recalcule las
-     * gasolineras visibles. Si el cambio cruza entre eléctrico y combustión (son
-     * datasets distintos) y estamos en modo radio, recarga desde el repositorio.
+     * Refresca la vista activa reusando los datos ya cargados: si hay una
+     * búsqueda por municipio en curso la re-filtra, si no recalcula las visibles.
      */
-    private void updateDisplayForFuel(FuelType fuel) {
-        FuelType previous = selectedFuel;
-        selectedFuel = fuel != null ? fuel : FuelType.GASOLEO_A;
-
-        boolean fuelTypeChanged = (previous == FuelType.ELECTRICO) != (selectedFuel == FuelType.ELECTRICO);
-        if (fuelTypeChanged && viewModel.getLastSearchQuery() == null && userLocation != null) {
-            MarkerBitmapFactory.clearCache();
-            viewModel.loadByRadius(userLocation.getLatitude(), userLocation.getLongitude(), selectedFuel);
-            return;
+    private void refreshActiveView(String activeSearch) {
+        if (activeSearch != null) {
+            viewModel.filterByMunicipio(activeSearch, userLocation);
+        } else {
+            viewModel.updateVisible();
         }
-
-        viewModel.updateVisible(selectedFuel);
     }
 
     private void showStationsOnMap(int count) {
@@ -674,7 +653,7 @@ public class MainActivity extends BaseActivity {
         final List<Gasolinera> toRender = applyBrandFilter(new ArrayList<>(
                 visible.subList(0, Math.min(count, visible.size()))
         ));
-        final FuelType fuelSnapshot = selectedFuel;
+        final FuelType fuelSnapshot = viewModel.getSelectedFuel();
         final PriceRange rangeSnapshot = viewModel.getCurrentPriceRange();
 
         com.ahorragas.app.data.AppExecutors.io().execute(() -> {
@@ -727,7 +706,8 @@ public class MainActivity extends BaseActivity {
     private void addMarker(Gasolinera gasolinera) {
         if (gasolinera.getLat() == null || gasolinera.getLon() == null) return;
 
-        Double originalPrice = gasolinera.getPrecio(selectedFuel);
+        FuelType fuel = viewModel.getSelectedFuel();
+        Double originalPrice = gasolinera.getPrecio(fuel);
         String priceText;
         PriceLevel priceLevel;
 
@@ -737,7 +717,7 @@ public class MainActivity extends BaseActivity {
             priceText = String.format(java.util.Locale.getDefault(), "%.3f €", discounted);
             priceLevel = GasolineraSorter.getPriceLevel(discounted, viewModel.getCurrentPriceRange());
         } else {
-            priceText = gasolinera.getFormattedPrice(selectedFuel);
+            priceText = gasolinera.getFormattedPrice(fuel);
             priceLevel = gasolinera.getPriceLevel();
         }
 
@@ -748,7 +728,7 @@ public class MainActivity extends BaseActivity {
 
         marker.setIcon(new android.graphics.drawable.BitmapDrawable(
                 getResources(),
-                MarkerBitmapFactory.createMarker(this, gasolinera, selectedFuel)
+                MarkerBitmapFactory.createMarker(this, gasolinera, fuel)
         ));
 
         marker.setOnMarkerClickListener((clickedMarker, ignoredMapView) -> {
@@ -856,7 +836,7 @@ public class MainActivity extends BaseActivity {
      * @param query Nombre de la localidad a buscar.
      */
     private void searchLocalidad(String query) {
-        viewModel.searchCity(query, selectedFuel, userLocation);
+        viewModel.searchCity(query, userLocation);
     }
 
     private void setupFab() {
@@ -870,7 +850,7 @@ public class MainActivity extends BaseActivity {
                 );
                 mapView.getController().animateTo(point);
                 mapView.getController().setZoom(ZOOM_USER);
-                viewModel.loadByRadius(userLocation.getLatitude(), userLocation.getLongitude(), selectedFuel);
+                viewModel.loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
             } else {
                 requestLocationPermission();
             }
