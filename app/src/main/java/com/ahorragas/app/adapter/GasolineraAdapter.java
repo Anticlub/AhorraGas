@@ -72,6 +72,18 @@ public class GasolineraAdapter extends RecyclerView.Adapter<GasolineraAdapter.Vi
     public void updateData(List<Gasolinera> newGasolineras, FuelType fuel, PriceRange priceRange) {
         List<Gasolinera> oldList = this.gasolineras;
         List<Gasolinera> newList = new ArrayList<>(newGasolineras);
+        boolean fuelChanged = this.currentFuel != fuel;
+
+        // Al cambiar de combustible cambia el precio (y su color) de todas las filas.
+        // Como loadFromIntent reutiliza las mismas instancias Gasolinera, el DiffUtil
+        // las vería idénticas y no repintaría nada, así que forzamos un rebind completo.
+        if (fuelChanged) {
+            this.gasolineras = newList;
+            this.currentFuel = fuel;
+            this.currentPriceRange = priceRange != null ? priceRange : new PriceRange(null, null, 0);
+            notifyDataSetChanged();
+            return;
+        }
 
         DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
             @Override
