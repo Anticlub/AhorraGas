@@ -9,41 +9,31 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.core.content.IntentCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.ahorragas.app.adapter.GasolineraAdapter;
-import com.ahorragas.app.data.ElectrolineraRepository;
-import com.ahorragas.app.data.EstacionRepository;
-import com.ahorragas.app.data.GasolineraRepository;
-import com.ahorragas.app.data.remote.RemoteDgtDataSource;
-import com.ahorragas.app.data.RoomElectrolineraDataSource;
-import com.ahorragas.app.data.RoomGasolineraDataSource;
-import com.ahorragas.app.data.local.AppDatabase;
 import com.ahorragas.app.location.LocationHelper;
 import com.ahorragas.app.model.FuelType;
 import com.ahorragas.app.model.Gasolinera;
 import com.ahorragas.app.model.PriceRange;
-import com.ahorragas.app.util.DiscountPrefs;
-import com.ahorragas.app.util.GasolineraSorter;
-import com.ahorragas.app.util.RadiusUtils;
+import com.ahorragas.app.ui.PriceListViewModel;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 public class PriceListActivity extends BaseActivity {
 
-    private EstacionRepository repository;
+    private PriceListViewModel viewModel;
     private GasolineraAdapter adapter;
     private FuelType selectedFuel;
     private LocationHelper locationHelper;
 
     private boolean dataLoaded = false;
     private FuelType lastLoadedFuel = null;
-    private List<Gasolinera> lastLoadedGasolineras = null;
 
     private ProgressBar progressBar;
     private RecyclerView recyclerView;
@@ -51,10 +41,6 @@ public class PriceListActivity extends BaseActivity {
     private TextView tvError;
     private View layoutError;
     private Button btnRetry;
-    private final java.util.concurrent.ExecutorService executor =
-            java.util.concurrent.Executors.newSingleThreadExecutor();
-    private final android.os.Handler mainHandler =
-            new android.os.Handler(android.os.Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,13 +48,7 @@ public class PriceListActivity extends BaseActivity {
         setContentView(R.layout.activity_price_list);
         applySystemBarInsets(R.id.topBar, R.id.bottomNavPrice);
 
-        AppDatabase db = AppDatabase.getInstance(this);
-        RoomGasolineraDataSource roomGasolineraDs = new RoomGasolineraDataSource(db);
-        RoomElectrolineraDataSource roomElectrolineraDs = new RoomElectrolineraDataSource(db);
-        GasolineraRepository gasolineraRepo = GasolineraRepository.getInstance(roomGasolineraDs);
-        ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
-                new RemoteDgtDataSource(), roomElectrolineraDs);
-        repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo);
+        viewModel = new ViewModelProvider(this).get(PriceListViewModel.class);
         locationHelper = new LocationHelper(this);
 
         bindViews();
@@ -78,6 +58,8 @@ public class PriceListActivity extends BaseActivity {
                         .getString("pref_selected_fuel", FuelType.GASOLEO_A.name()));
         setupBottomNav();
         btnRetry.setOnClickListener(v -> loadAndDisplay());
+
+        viewModel.getState().observe(this, this::render);
     }
 
     @Override
@@ -110,7 +92,6 @@ public class PriceListActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         locationHelper.cancel();
-        executor.shutdownNow();
     }
 
     private void bindViews() {
@@ -120,7 +101,6 @@ public class PriceListActivity extends BaseActivity {
         layoutError = findViewById(R.id.layoutErrorPrice);
         tvError = findViewById(R.id.tvErrorPrice);
         btnRetry = findViewById(R.id.btnRetryPrice);
-        TextView tvTitle = findViewById(R.id.tvPriceListTitle);
     }
 
     private void setupRecyclerView() {
@@ -139,149 +119,42 @@ public class PriceListActivity extends BaseActivity {
     }
 
     /**
-     * Carga y muestra las gasolineras. Si vienen en el Intent las usa
-     * directamente, si no las obtiene por GPS y radio.
+     * Pide al ViewModel que cargue las gasolineras. Si vienen en el Intent las
+     * usa directamente; si no, obtiene la ubicación por GPS y carga por radio.
      */
     private void loadAndDisplay() {
         showLoading();
 
-        ArrayList<Gasolinera> fromIntent = IntentCompat.getParcelableArrayListExtra(getIntent(), "gasolineras", Gasolinera.class);
+        ArrayList<Gasolinera> fromIntent = IntentCompat.getParcelableArrayListExtra(
+                getIntent(), "gasolineras", Gasolinera.class);
         if (fromIntent != null && !fromIntent.isEmpty()) {
-            loadFromIntent(fromIntent);
+            viewModel.loadFromIntent(fromIntent, selectedFuel);
         } else {
             locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
                 @Override
                 public void onSuccess(Location location) {
-                    loadWithCoordinates(location.getLatitude(), location.getLongitude());
+                    viewModel.loadByRadius(location.getLatitude(), location.getLongitude(), selectedFuel);
                 }
 
                 @Override
                 public void onError(LocationHelper.LocationError error) {
-                    runOnUiThread(() ->
-                            showError(getString(R.string.error_ubicacion)));
+                    runOnUiThread(() -> {
+                        if (isDestroyed() || isFinishing()) return;
+                        showError(getString(R.string.error_ubicacion));
+                    });
                 }
             });
         }
     }
 
-    /**
-     * Usa las gasolineras recibidas desde el Intent, las ordena por precio descontado.
-     *
-     * @param gasolineras Lista de gasolineras del municipio buscado.
-     */
-    private void loadFromIntent(List<Gasolinera> gasolineras) {
-        executor.execute(() -> {
-            List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
-
-            if (selectedFuel == FuelType.ELECTRICO) {
-                // Electrolineras: ordenar por potencia máxima descendente
-                filtered.sort((a, b) -> {
-                    double potA = getMaxPotencia(a);
-                    double potB = getMaxPotencia(b);
-                    return Double.compare(potB, potA);
-                });
-            } else {
-                filtered.sort(Comparator.comparingDouble(g ->
-                        g.getPrecio(selectedFuel) != null
-                                ? DiscountPrefs.applyAllDiscounts(
-                                PriceListActivity.this, g.getMarca(),
-                                g.getPrecio(selectedFuel))
-                                : Double.MAX_VALUE
-                ));
-                PriceRange range = GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
-                for (Gasolinera g : filtered) {
-                    double discounted = g.getPrecio(selectedFuel) != null
-                            ? DiscountPrefs.applyAllDiscounts(
-                            PriceListActivity.this, g.getMarca(),
-                            g.getPrecio(selectedFuel))
-                            : 0;
-                    g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, range));
-                }
-            }
-
-            final PriceRange finalRange = selectedFuel == FuelType.ELECTRICO
-                    ? new PriceRange(null, null, 0)
-                    : GasolineraSorter.calculatePriceRange(filtered, selectedFuel);
-
-            mainHandler.post(() -> {
-                if (isDestroyed() || isFinishing()) return;
-                if (filtered.isEmpty()) showEmpty();
-                else showData(filtered, finalRange);
-            });
-        });
-    }
-
-    /**
-     * Carga y muestra las gasolineras ordenadas por precio descontado para las coordenadas dadas.
-     *
-     * @param lat Latitud del punto de referencia.
-     * @param lon Longitud del punto de referencia.
-     */
-    private void loadWithCoordinates(double lat, double lon) {
-        executor.execute(() -> {
-            try {
-
-                int radiusKm = RadiusUtils.loadRadiusKm(PriceListActivity.this);
-                double radiusMeters = RadiusUtils.kmToMetersClamped(radiusKm);
-                int maxMarkers = RadiusUtils.loadMarkersCount(PriceListActivity.this);
-
-                List<Gasolinera> gasolineras;
-                if (selectedFuel == FuelType.ELECTRICO) {
-                    gasolineras = new ArrayList<>(
-                            repository.getElectrolinerasByRadius(lat, lon, radiusMeters));
-                } else {
-                    gasolineras = new ArrayList<>(
-                            repository.getGasolinerasByRadius(lat, lon, radiusMeters));
-                }
-
-                List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, selectedFuel);
-
-                List<Gasolinera> inRadius = GasolineraSorter.getWithinRadius(
-                        filtered, lat, lon, radiusMeters, maxMarkers);
-
-                if (selectedFuel == FuelType.ELECTRICO) {
-                    inRadius.sort((a, b) -> {
-                        double potA = getMaxPotencia(a);
-                        double potB = getMaxPotencia(b);
-                        return Double.compare(potB, potA);
-                    });
-                } else {
-                    inRadius.sort(Comparator.comparingDouble(g ->
-                            g.getPrecio(selectedFuel) != null
-                                    ? DiscountPrefs.applyAllDiscounts(
-                                    PriceListActivity.this, g.getMarca(),
-                                    g.getPrecio(selectedFuel))
-                                    : Double.MAX_VALUE
-                    ));
-                    PriceRange range = GasolineraSorter.calculatePriceRange(inRadius, selectedFuel);
-                    for (Gasolinera g : inRadius) {
-                        double discounted = g.getPrecio(selectedFuel) != null
-                                ? DiscountPrefs.applyAllDiscounts(
-                                PriceListActivity.this, g.getMarca(),
-                                g.getPrecio(selectedFuel))
-                                : 0;
-                        g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, range));
-                    }
-                }
-
-                final List<Gasolinera> finalList = inRadius;
-                final PriceRange finalRange = selectedFuel == FuelType.ELECTRICO
-                        ? new PriceRange(null, null, 0)
-                        : GasolineraSorter.calculatePriceRange(inRadius, selectedFuel);
-
-                mainHandler.post(() -> {
-                    if (isDestroyed() || isFinishing()) return;
-                    if (finalList.isEmpty()) showEmpty();
-                    else showData(finalList, finalRange);
-                });
-
-            } catch (Exception e) {
-                mainHandler.post(() -> {
-                    if (isDestroyed() || isFinishing()) return;
-                    showError(getString(R.string.error_cargando_gasolineras));
-                });
-            }
-        });
+    /** Pinta el estado emitido por el ViewModel. */
+    private void render(PriceListViewModel.UiState st) {
+        switch (st.status) {
+            case LOADING: showLoading(); break;
+            case DATA:    showData(st.data, st.priceRange); break;
+            case EMPTY:   showEmpty(); break;
+            case ERROR:   showError(st.errorMessage); break;
+        }
     }
 
     private void showLoading() {
@@ -293,7 +166,6 @@ public class PriceListActivity extends BaseActivity {
 
     private void showData(List<Gasolinera> data, PriceRange priceRange) {
         dataLoaded = true;
-        lastLoadedGasolineras = data;
         progressBar.setVisibility(View.GONE);
         layoutError.setVisibility(View.GONE);
         tvEmpty.setVisibility(View.GONE);
@@ -327,22 +199,4 @@ public class PriceListActivity extends BaseActivity {
         }
         startActivity(intent);
     }
-    /**
-     * Devuelve la potencia máxima en vatios de una electrolinera.
-     * Devuelve 0 si no tiene conectores o no es eléctrica.
-     *
-     * @param g estación a consultar
-     * @return potencia máxima en vatios
-     */
-    private double getMaxPotencia(Gasolinera g) {
-        if (g.getConectores() == null || g.getConectores().isEmpty()) return 0;
-        double max = 0;
-        for (com.ahorragas.app.model.Electrolinera.Conector c : g.getConectores()) {
-            if (c.getPotenciaW() != null && c.getPotenciaW() > max) {
-                max = c.getPotenciaW();
-            }
-        }
-        return max;
-    }
-
 }
