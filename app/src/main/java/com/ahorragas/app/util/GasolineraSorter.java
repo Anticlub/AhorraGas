@@ -8,6 +8,7 @@ import com.ahorragas.app.model.PriceRange;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 public final class GasolineraSorter {
 
@@ -55,6 +56,32 @@ public final class GasolineraSorter {
                 if (g.isElectric()) result.add(g);
             } else {
                 if (!g.isElectric() && g.hasPrice(fuel)) result.add(g);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Filtra por marca: conserva las gasolineras cuya marca contiene la clave
+     * indicada (p. ej. "bp", "repsol"). Con clave nula o vacía ("Todas") devuelve
+     * una copia de la lista completa. Debe aplicarse ANTES de recortar al máximo
+     * de resultados, para no perder estaciones de la marca por el recorte.
+     *
+     * @param gasolineras lista de entrada.
+     * @param brandKey    clave de marca en minúsculas, o null para "todas".
+     * @return lista filtrada (siempre una lista nueva).
+     */
+    public static List<Gasolinera> filterByBrand(List<Gasolinera> gasolineras, String brandKey) {
+        if (gasolineras == null) return new ArrayList<>();
+        if (brandKey == null || brandKey.isEmpty()) return new ArrayList<>(gasolineras);
+
+        String key = brandKey.toLowerCase(Locale.ROOT);
+        List<Gasolinera> result = new ArrayList<>();
+        for (Gasolinera g : gasolineras) {
+            if (g == null) continue;
+            String marca = g.getMarca();
+            if (marca != null && marca.toLowerCase(Locale.ROOT).contains(key)) {
+                result.add(g);
             }
         }
         return result;

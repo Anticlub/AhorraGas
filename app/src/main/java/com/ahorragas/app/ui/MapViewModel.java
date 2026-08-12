@@ -25,6 +25,7 @@ import com.ahorragas.app.data.repository.GeocodingRepository;
 import com.ahorragas.app.model.FuelType;
 import com.ahorragas.app.model.Gasolinera;
 import com.ahorragas.app.model.PriceRange;
+import com.ahorragas.app.util.BrandPrefs;
 import com.ahorragas.app.util.GasolineraSorter;
 import com.ahorragas.app.util.GeoUtils;
 import com.ahorragas.app.util.MunicipioQuery;
@@ -85,6 +86,7 @@ public class MapViewModel extends AndroidViewModel {
     private Location searchLocation = null;
     private PriceRange currentPriceRange = new PriceRange(null, null, 0);
     private FuelType selectedFuel;
+    private String selectedBrand;   // null = todas las marcas
 
     // ── Salidas observables ─────────────────────────────────────────────────
     private final MutableLiveData<Boolean> loading = new MutableLiveData<>(false);
@@ -104,6 +106,7 @@ public class MapViewModel extends AndroidViewModel {
 
         selectedFuel = FuelType.fromString(PreferenceManager.getDefaultSharedPreferences(app)
                 .getString(PREF_SELECTED_FUEL, FuelType.GASOLEO_A.name()));
+        selectedBrand = BrandPrefs.get(app);
     }
 
     // ── Observables ─────────────────────────────────────────────────────────
@@ -120,6 +123,28 @@ public class MapViewModel extends AndroidViewModel {
     public String getLastSearchQuery()               { return lastSearchQuery; }
     public boolean hasStations()                     { return !allGasolineras.isEmpty(); }
     public FuelType getSelectedFuel()                { return selectedFuel; }
+    public String getSelectedBrand()                 { return selectedBrand; }
+
+    /** Fija la marca del filtro (null = todas) y la persiste. */
+    public void setSelectedBrand(String brand) {
+        selectedBrand = brand;
+        BrandPrefs.set(getApplication(), brand);
+    }
+
+    /**
+     * Recarga la vista actual respetando el modo: si hay una búsqueda activa la
+     * re-filtra; si no, recarga por radio (si hay ubicación) o recalcula. Se usa
+     * al cambiar la marca, que requiere volver a filtrar/recortar los datos.
+     */
+    public void reloadForCurrentMode(@Nullable Location userLocation) {
+        if (lastSearchQuery != null) {
+            filterByMunicipio(lastSearchQuery, userLocation);
+        } else if (userLocation != null) {
+            loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
+        } else {
+            updateVisible();
+        }
+    }
 
     /** Fija el combustible sin recargar (el que llama decide qué hacer después). */
     public void setSelectedFuel(FuelType fuel) {
@@ -160,6 +185,7 @@ public class MapViewModel extends AndroidViewModel {
     public void loadByRadius(double lat, double lon) {
         loading.setValue(true);
         final FuelType fuel = selectedFuel;
+        final String brand = selectedBrand;
         Application app = getApplication();
         double radiusMeters = RadiusUtils.kmToMetersClamped(RadiusUtils.loadRadiusKm(app));
 
@@ -177,6 +203,10 @@ public class MapViewModel extends AndroidViewModel {
                 }
                 result.sort(Comparator.comparingDouble(g ->
                         g.getDistanceMeters() == null ? Double.MAX_VALUE : g.getDistanceMeters()));
+
+                // El filtro de marca se aplica ANTES de recortar al máximo de
+                // markers, para quedarnos con las N más cercanas DE LA MARCA.
+                result = GasolineraSorter.filterByBrand(result, brand);
 
                 int maxMarkers = RadiusUtils.loadMarkersCount(app);
                 if (result.size() > maxMarkers) {
@@ -242,6 +272,7 @@ public class MapViewModel extends AndroidViewModel {
         loading.setValue(true);
         lastSearchQuery = query;
         final FuelType fuel = selectedFuel;
+        final String brand = selectedBrand;
         executor.execute(() -> {
             try {
                 double[] coords = GeocodingRepository.getInstance().geocodeCity(query);
@@ -258,7 +289,7 @@ public class MapViewModel extends AndroidViewModel {
                 searchLocation.setLongitude(coords[1]);
                 main.post(() -> centerOnSearch.setValue(new Event<>(new double[]{coords[0], coords[1]})));
 
-                runMunicipioFilter(query, fuel, searchLocation);
+                runMunicipioFilter(query, fuel, brand, searchLocation);
             } catch (Exception e) {
                 main.post(() -> {
                     loading.setValue(false);
@@ -276,12 +307,13 @@ public class MapViewModel extends AndroidViewModel {
         loading.setValue(true);
         lastSearchQuery = query;
         final FuelType fuel = selectedFuel;
+        final String brand = selectedBrand;
         Location ref = searchLocation != null ? searchLocation : userLocation;
-        executor.execute(() -> runMunicipioFilter(query, fuel, ref));
+        executor.execute(() -> runMunicipioFilter(query, fuel, brand, ref));
     }
 
     /** Cuerpo de la búsqueda por municipio; se ejecuta en el hilo del executor. */
-    private void runMunicipioFilter(String query, FuelType fuel, @Nullable Location ref) {
+    private void runMunicipioFilter(String query, FuelType fuel, String brand, @Nullable Location ref) {
         try {
             List<Gasolinera> result = new ArrayList<>();
             if (fuel == FuelType.ELECTRICO) {
@@ -319,7 +351,8 @@ public class MapViewModel extends AndroidViewModel {
                         g.getDistanceMeters() == null ? Double.MAX_VALUE : g.getDistanceMeters()));
             }
 
-            final List<Gasolinera> filtered = GasolineraSorter.filterByFuel(result, fuel);
+            final List<Gasolinera> filtered =
+                    GasolineraSorter.filterByBrand(GasolineraSorter.filterByFuel(result, fuel), brand);
             currentPriceRange = GasolineraSorter.calculatePriceRange(filtered, fuel);
             for (Gasolinera g : filtered) {
                 g.setPriceLevel(GasolineraSorter.getPriceLevel(g.getPrecio(fuel), currentPriceRange));
