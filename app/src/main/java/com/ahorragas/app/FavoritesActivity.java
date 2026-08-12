@@ -24,6 +24,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -34,10 +35,7 @@ import com.ahorragas.app.model.FuelType;
 import com.ahorragas.app.model.Gasolinera;
 import com.ahorragas.app.model.PriceAlert;
 import com.ahorragas.app.model.PriceRange;
-import com.ahorragas.app.util.DiscountPrefs;
-import com.ahorragas.app.util.FavoritesPrefs;
-import com.ahorragas.app.util.GasolineraSorter;
-import com.ahorragas.app.util.GeoUtils;
+import com.ahorragas.app.ui.FavoritesViewModel;
 import com.ahorragas.app.util.PriceAlertPrefs;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -46,6 +44,7 @@ import java.util.List;
 
 public class FavoritesActivity extends BaseActivity {
 
+    private FavoritesViewModel viewModel;
     private GasolineraAdapter adapter;
     private FuelType selectedFuel;
     private LocationHelper locationHelper;
@@ -82,6 +81,7 @@ public class FavoritesActivity extends BaseActivity {
         setContentView(R.layout.activity_favorites);
         applySystemBarInsets(R.id.topBar, R.id.bottomNavFavorites);
 
+        viewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);
         locationHelper = new LocationHelper(this);
 
         bindViews();
@@ -91,12 +91,20 @@ public class FavoritesActivity extends BaseActivity {
                         .getString("pref_selected_fuel", FuelType.GASOLEO_A.name()));
         setupBottomNav();
         btnRetry.setOnClickListener(v -> loadAndDisplay());
+
+        viewModel.getState().observe(this, this::render);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         loadAndDisplay();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        locationHelper.cancel();
     }
 
     private void bindViews() {
@@ -117,6 +125,48 @@ public class FavoritesActivity extends BaseActivity {
         adapter.setOnAlertClickListener(gasolinera -> requestNotificationPermissionIfNeeded(gasolinera));
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
+    }
+
+    /**
+     * Pide al ViewModel que cargue los favoritos. Si el vehículo activo es
+     * eléctrico no hay favoritos disponibles; si no, resuelve la ubicación
+     * (para mostrar distancias) y delega la carga y el procesado en el ViewModel.
+     */
+    private void loadAndDisplay() {
+        showLoading();
+
+        Vehicle activeVehicle = VehiclePrefs.loadActiveVehicle(this);
+        if (activeVehicle != null && activeVehicle.isElectric()) {
+            showEmpty();
+            tvEmpty.setText(getString(R.string.msg_favorites_not_available_electric));
+            return;
+        }
+
+        selectedFuel = FuelType.fromString(
+                PreferenceManager.getDefaultSharedPreferences(this)
+                        .getString("pref_selected_fuel", FuelType.GASOLEO_A.name()));
+
+        locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
+            @Override
+            public void onSuccess(Location location) {
+                viewModel.load(selectedFuel, location.getLatitude(), location.getLongitude());
+            }
+
+            @Override
+            public void onError(LocationHelper.LocationError error) {
+                viewModel.load(selectedFuel, null, null);
+            }
+        });
+    }
+
+    /** Pinta el estado emitido por el ViewModel. */
+    private void render(FavoritesViewModel.UiState st) {
+        switch (st.status) {
+            case LOADING: showLoading(); break;
+            case DATA:    showData(st.data, st.priceRange); break;
+            case EMPTY:   showEmpty(); break;
+            case ERROR:   showError(st.errorMessage); break;
+        }
     }
 
     /**
@@ -258,48 +308,19 @@ public class FavoritesActivity extends BaseActivity {
         layoutError.setVisibility(View.GONE);
     }
 
-    private void showData(List<Gasolinera> data, FuelType fuel) {
-        // Ordenar por precio con descuento aplicado: menor a mayor, N/D al final
-        data.sort((a, b) -> {
-            Double priceA = a.getPrecio(fuel);
-            Double priceB = b.getPrecio(fuel);
-            boolean aHasPrice = priceA != null && priceA > 0;
-            boolean bHasPrice = priceB != null && priceB > 0;
-            if (aHasPrice && bHasPrice) return Double.compare(
-                    DiscountPrefs.applyAllDiscounts(this, a.getMarca(), priceA),
-                    DiscountPrefs.applyAllDiscounts(this, b.getMarca(), priceB));
-            if (aHasPrice) return -1;
-            if (bHasPrice) return 1;
-            return 0;
-        });
-
-        // Calcular rango con precios descontados para que el color sea coherente
-        Double minPrice = null, maxPrice = null;
-        for (Gasolinera g : data) {
-            Double raw = g.getPrecio(fuel);
-            if (raw == null || raw <= 0) continue;
-            double discounted = DiscountPrefs.applyAllDiscounts(this, g.getMarca(), raw);
-            if (minPrice == null || discounted < minPrice) minPrice = discounted;
-            if (maxPrice == null || discounted > maxPrice) maxPrice = discounted;
-        }
-        PriceRange priceRange = new PriceRange(minPrice, maxPrice, data.size());
-        for (Gasolinera g : data) {
-            Double raw = g.getPrecio(fuel);
-            double discounted = raw != null ? DiscountPrefs.applyAllDiscounts(this, g.getMarca(), raw) : 0;
-            g.setPriceLevel(GasolineraSorter.getPriceLevel(discounted, priceRange));
-        }
-
+    private void showData(List<Gasolinera> data, PriceRange priceRange) {
         progressBar.setVisibility(View.GONE);
         layoutError.setVisibility(View.GONE);
         tvEmpty.setVisibility(View.GONE);
         recyclerView.setVisibility(View.VISIBLE);
-        adapter.updateData(data, fuel, priceRange);
+        adapter.updateData(data, selectedFuel, priceRange);
     }
 
     private void showEmpty() {
         progressBar.setVisibility(View.GONE);
         recyclerView.setVisibility(View.GONE);
         layoutError.setVisibility(View.GONE);
+        tvEmpty.setText(getString(R.string.empty_favorites));
         tvEmpty.setVisibility(View.VISIBLE);
     }
 
@@ -309,58 +330,6 @@ public class FavoritesActivity extends BaseActivity {
         tvEmpty.setVisibility(View.GONE);
         tvError.setText(message);
         layoutError.setVisibility(View.VISIBLE);
-    }
-
-    /**
-     * Carga la lista de favoritos desde Room en background, calcula la distancia
-     * a cada gasolinera si la ubicación está disponible, y actualiza el adapter.
-     * Lee el combustible activo en el momento de la carga para evitar
-     * inconsistencias al cambiar de vehículo.
-     */
-    private void loadAndDisplay() {
-        showLoading();
-
-        Vehicle activeVehicle = VehiclePrefs.loadActiveVehicle(this);
-        if (activeVehicle != null && activeVehicle.isElectric()) {
-            showEmpty();
-            tvEmpty.setText(getString(R.string.msg_favorites_not_available_electric));
-            return;
-        }
-
-        com.ahorragas.app.data.AppExecutors.io().execute(() -> {
-            FuelType currentFuel = FuelType.fromString(
-                    PreferenceManager.getDefaultSharedPreferences(this)
-                            .getString("pref_selected_fuel", FuelType.GASOLEO_A.name()));
-            selectedFuel = currentFuel;
-
-            List<Gasolinera> favorites = FavoritesPrefs.loadAll(this);
-
-            if (favorites.isEmpty()) {
-                runOnUiThread(this::showEmpty);
-                return;
-            }
-
-            locationHelper.getUserLocation(new LocationHelper.ResultCallback() {
-                @Override
-                public void onSuccess(Location location) {
-                    for (Gasolinera g : favorites) {
-                        double distance = GeoUtils.distanceMeters(
-                                location.getLatitude(),
-                                location.getLongitude(),
-                                g.getLat(),
-                                g.getLon()
-                        );
-                        g.setDistanceMeters(distance);
-                    }
-                    runOnUiThread(() -> showData(favorites, currentFuel));
-                }
-
-                @Override
-                public void onError(LocationHelper.LocationError error) {
-                    runOnUiThread(() -> showData(favorites, currentFuel));
-                }
-            });
-        });
     }
 
     private void setupBottomNav() {
