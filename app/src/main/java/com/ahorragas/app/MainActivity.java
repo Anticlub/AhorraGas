@@ -29,7 +29,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 
-import com.ahorragas.app.data.DataSourceOrigin;
 import com.ahorragas.app.data.GasolineraRepository;
 import com.ahorragas.app.data.RepoError;
 import com.ahorragas.app.location.LocationHelper;
@@ -43,6 +42,7 @@ import com.ahorragas.app.util.DiscountPrefs;
 import com.ahorragas.app.util.FavoritesPrefs;
 import com.ahorragas.app.util.GasolineraSorter;
 import com.ahorragas.app.util.GeoUtils;
+import com.ahorragas.app.util.MunicipioQuery;
 import com.ahorragas.app.util.PriceAlertScheduler;
 import com.ahorragas.app.util.RadiusUtils;
 import com.ahorragas.app.util.VehiclePrefs;
@@ -71,9 +71,6 @@ public class MainActivity extends BaseActivity {
     private static final GeoPoint SPAIN_CENTER = new GeoPoint(40.4168, -3.7038);
     private static final double ZOOM_SPAIN = 6.0;
     private static final double ZOOM_USER = 14.0;
-    private static final double ZOOM_STATION = 16.0;
-    private static final java.util.regex.Pattern MUNICIPIO_ARTICLE_PATTERN =
-            java.util.regex.Pattern.compile("^(.+?)\\s*\\(([^)]+)\\)$");
 
     private MapView mapView;
     private FloatingActionButton fabMiUbicacion;
@@ -801,14 +798,6 @@ public class MainActivity extends BaseActivity {
         markerMap.clear();
     }
 
-    private void focusOnGasolinera(Gasolinera gasolinera) {
-        if (gasolinera.getLat() == null || gasolinera.getLon() == null) return;
-        mapView.getController().animateTo(
-                new GeoPoint(gasolinera.getLat(), gasolinera.getLon())
-        );
-        mapView.getController().setZoom(ZOOM_STATION);
-    }
-
     /**
      * Crea un bitmap del icono de ubicación teñido con el color indicado.
      *
@@ -832,51 +821,20 @@ public class MainActivity extends BaseActivity {
         return bmp;
     }
 
-    private static final int LOCATION_FILTER_SIZE = 5;
-    private final java.util.ArrayDeque<double[]> locationFilterBuffer = new java.util.ArrayDeque<>();
+    private final com.ahorragas.app.util.LocationSmoother locationSmoother =
+            new com.ahorragas.app.util.LocationSmoother();
 
     private Location getSmoothedLocation(Location raw) {
-        locationFilterBuffer.addLast(new double[]{raw.getLatitude(), raw.getLongitude()});
-        if (locationFilterBuffer.size() > LOCATION_FILTER_SIZE) {
-            locationFilterBuffer.removeFirst();
-        }
-        double avgLat = 0, avgLon = 0;
-        for (double[] point : locationFilterBuffer) {
-            avgLat += point[0];
-            avgLon += point[1];
-        }
-        avgLat /= locationFilterBuffer.size();
-        avgLon /= locationFilterBuffer.size();
+        double[] smoothedCoords = locationSmoother.add(raw.getLatitude(), raw.getLongitude());
         Location smoothed = new Location(raw);
-        smoothed.setLatitude(avgLat);
-        smoothed.setLongitude(avgLon);
+        smoothed.setLatitude(smoothedCoords[0]);
+        smoothed.setLongitude(smoothedCoords[1]);
         return smoothed;
     }
 
     private void showSpainFallback() {
         mapView.getController().setZoom(ZOOM_SPAIN);
         mapView.getController().setCenter(SPAIN_CENTER);
-    }
-
-    private String buildRepoErrorMessage(RepoError error) {
-        switch (error.getType()) {
-            case NETWORK:        return getString(R.string.error_sin_conexion);
-            case TIMEOUT:        return getString(R.string.error_api_timeout);
-            case HTTP:           return "Error HTTP " + error.getHttpCode();
-            case EMPTY_RESPONSE: return getString(R.string.error_respuesta_vacia);
-            case PARSE:
-            default:             return getString(R.string.error_procesar_gasolineras);
-        }
-    }
-
-    private String buildLocationErrorMessage(LocationHelper.LocationError error) {
-        switch (error) {
-            case GPS_DISABLED:   return getString(R.string.status_location_disabled);
-            case NO_PERMISSION:  return getString(R.string.status_location_denied);
-            case TIMEOUT:
-            case TECHNICAL_ERROR:
-            default:             return getString(R.string.status_location_error);
-        }
     }
 
     private String buildLocationToast(LocationHelper.LocationError error) {
@@ -886,16 +844,6 @@ public class MainActivity extends BaseActivity {
             case TIMEOUT:        return getString(R.string.error_ubicacion_timeout);
             case TECHNICAL_ERROR:
             default:             return getString(R.string.error_ubicacion_actual);
-        }
-    }
-
-    private String getOriginLabel(DataSourceOrigin origin) {
-        if (origin == null) return getString(R.string.origin_unknown);
-        switch (origin) {
-            case REMOTE:         return getString(R.string.origin_remote);
-            case CACHE:          return getString(R.string.origin_cache);
-            case LOCAL_FALLBACK:
-            default:             return getString(R.string.origin_fallback);
         }
     }
 
@@ -979,19 +927,6 @@ public class MainActivity extends BaseActivity {
     }
 
     /**
-     * Normaliza un texto eliminando tildes y pasándolo a minúsculas.
-     *
-     * @param text Texto a normalizar.
-     * @return Texto normalizado.
-     */
-    private String normalize(String text) {
-        if (text == null) return "";
-        String normalized = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD);
-        return normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
-                .toLowerCase(java.util.Locale.getDefault());
-    }
-
-    /**
      * Filtra los markers del mapa usando el índice pre-calculado de municipios.
      *
      * @param query Texto a buscar en el municipio.
@@ -1003,17 +938,15 @@ public class MainActivity extends BaseActivity {
 
         executor.execute(() -> {
             try {
-                String normalizedQuery = normalizeMunicipioQuery(query);
-
                 List<Gasolinera> result = new ArrayList<>();
                 if (selectedFuel == FuelType.ELECTRICO) {
                     result.addAll(repository.getElectrolinerasByMunicipio(query));
                     if (result.isEmpty()) {
                         result.addAll(repository.getElectrolinerasByMunicipio(
-                                normalizeMunicipioQuery(query)));
+                                MunicipioQuery.stripLeadingArticle(query)));
                     }
                     if (result.isEmpty()) {
-                        for (String variant : buildInvertedQueries(query)) {
+                        for (String variant : MunicipioQuery.invertedVariants(query)) {
                             result.addAll(repository.getElectrolinerasByMunicipio(variant));
                             if (!result.isEmpty()) break;
                         }
@@ -1022,10 +955,10 @@ public class MainActivity extends BaseActivity {
                     result.addAll(repository.getGasolinerasByMunicipio(query));
                     if (result.isEmpty()) {
                         result.addAll(repository.getGasolinerasByMunicipio(
-                                normalizeMunicipioQuery(query)));
+                                MunicipioQuery.stripLeadingArticle(query)));
                     }
                     if (result.isEmpty()) {
-                        for (String variant : buildInvertedQueries(query)) {
+                        for (String variant : MunicipioQuery.invertedVariants(query)) {
                             result.addAll(repository.getGasolinerasByMunicipio(variant));
                             if (!result.isEmpty()) break;
                         }
@@ -1120,46 +1053,6 @@ public class MainActivity extends BaseActivity {
 
     private int dp(int dp) {
         return Math.round(getResources().getDisplayMetrics().density * dp);
-    }
-
-    /**
-     * Normaliza el nombre de un municipio para la búsqueda en Room.
-     *
-     * @param query texto introducido por el usuario
-     * @return palabra principal del municipio para buscar en Room
-     */
-    private String normalizeMunicipioQuery(String query) {
-        if (query == null) return "";
-        String[] articles = {"el ", "la ", "los ", "las ", "de ", "del "};
-        String lower = query.trim().toLowerCase(java.util.Locale.getDefault());
-        for (String article : articles) {
-            if (lower.startsWith(article)) {
-                return query.trim().substring(article.length()).trim();
-            }
-        }
-        return query.trim();
-    }
-
-    /**
-     * Genera variantes invertidas de un municipio con artículo para buscar en Room.
-     *
-     * @param query texto introducido por el usuario
-     * @return lista de variantes o lista vacía si no empieza por artículo
-     */
-    private List<String> buildInvertedQueries(String query) {
-        List<String> variants = new ArrayList<>();
-        if (query == null) return variants;
-        String[] articles = {"El ", "La ", "Los ", "Las ", "A "};
-        String trimmed = query.trim();
-        for (String article : articles) {
-            if (trimmed.startsWith(article)) {
-                String rest = trimmed.substring(article.length()).trim();
-                variants.add(rest + " (" + article.trim() + ")");
-                variants.add(rest + ", " + article.trim());
-                return variants;
-            }
-        }
-        return variants;
     }
 
     private void setupBrandFilter() {
