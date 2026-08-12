@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.preference.PreferenceManager;
 
 import com.ahorragas.app.R;
 import com.ahorragas.app.data.ElectrolineraRepository;
@@ -70,6 +71,8 @@ public class MapViewModel extends AndroidViewModel {
         }
     }
 
+    private static final String PREF_SELECTED_FUEL = "pref_selected_fuel";
+
     private final EstacionRepository repository;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -81,6 +84,7 @@ public class MapViewModel extends AndroidViewModel {
     private String lastSearchQuery = null;
     private Location searchLocation = null;
     private PriceRange currentPriceRange = new PriceRange(null, null, 0);
+    private FuelType selectedFuel;
 
     // ── Salidas observables ─────────────────────────────────────────────────
     private final MutableLiveData<Boolean> loading = new MutableLiveData<>(false);
@@ -97,6 +101,9 @@ public class MapViewModel extends AndroidViewModel {
         ElectrolineraRepository electrolineraRepo = ElectrolineraRepository.getInstance(
                 new RemoteDgtDataSource(), new RoomElectrolineraDataSource(db));
         repository = EstacionRepository.getInstance(gasolineraRepo, electrolineraRepo);
+
+        selectedFuel = FuelType.fromString(PreferenceManager.getDefaultSharedPreferences(app)
+                .getString(PREF_SELECTED_FUEL, FuelType.GASOLEO_A.name()));
     }
 
     // ── Observables ─────────────────────────────────────────────────────────
@@ -112,6 +119,29 @@ public class MapViewModel extends AndroidViewModel {
     public List<Gasolinera> getSearchGasolineras()   { return searchGasolineras; }
     public String getLastSearchQuery()               { return lastSearchQuery; }
     public boolean hasStations()                     { return !allGasolineras.isEmpty(); }
+    public FuelType getSelectedFuel()                { return selectedFuel; }
+
+    /** Fija el combustible sin recargar (el que llama decide qué hacer después). */
+    public void setSelectedFuel(FuelType fuel) {
+        selectedFuel = fuel != null ? fuel : FuelType.GASOLEO_A;
+    }
+
+    /**
+     * Cambia el combustible y refresca la vista. Si el cambio cruza entre
+     * eléctrico y combustión (son datasets distintos) y estamos en modo radio,
+     * recarga desde el repositorio; en caso contrario recalcula las visibles.
+     */
+    public void changeFuel(@Nullable FuelType fuel, @Nullable Location userLocation) {
+        FuelType previous = selectedFuel;
+        selectedFuel = fuel != null ? fuel : FuelType.GASOLEO_A;
+
+        boolean fuelTypeChanged = (previous == FuelType.ELECTRICO) != (selectedFuel == FuelType.ELECTRICO);
+        if (fuelTypeChanged && lastSearchQuery == null && userLocation != null) {
+            loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
+            return;
+        }
+        updateVisible();
+    }
 
     /** Olvida la búsqueda activa (al pulsar "mi ubicación"). */
     public void clearSearch() {
@@ -127,8 +157,9 @@ public class MapViewModel extends AndroidViewModel {
      * distancia, ordena por cercanía y recorta al máximo de markers. Al terminar
      * recalcula las visibles para el combustible y emite el resultado.
      */
-    public void loadByRadius(double lat, double lon, FuelType fuel) {
+    public void loadByRadius(double lat, double lon) {
         loading.setValue(true);
+        final FuelType fuel = selectedFuel;
         Application app = getApplication();
         double radiusMeters = RadiusUtils.kmToMetersClamped(RadiusUtils.loadRadiusKm(app));
 
@@ -170,8 +201,8 @@ public class MapViewModel extends AndroidViewModel {
      * ya cargadas y emite el resultado (para cambios de combustible, descuentos o
      * favoritos que no requieren volver a consultar el repositorio).
      */
-    public void updateVisible(FuelType fuel) {
-        emitVisible(fuel);
+    public void updateVisible() {
+        emitVisible(selectedFuel);
     }
 
     private void emitVisible(FuelType fuel) {
@@ -207,9 +238,10 @@ public class MapViewModel extends AndroidViewModel {
      * Geocodifica la localidad, centra el mapa (emitiendo su posición) y filtra
      * las gasolineras por municipio.
      */
-    public void searchCity(String query, FuelType fuel, @Nullable Location userLocation) {
+    public void searchCity(String query, @Nullable Location userLocation) {
         loading.setValue(true);
         lastSearchQuery = query;
+        final FuelType fuel = selectedFuel;
         executor.execute(() -> {
             try {
                 double[] coords = GeocodingRepository.getInstance().geocodeCity(query);
@@ -240,9 +272,10 @@ public class MapViewModel extends AndroidViewModel {
      * Re-filtra por el municipio indicado sin geocodificar (para refrescar la
      * búsqueda activa cuando cambian radio, descuentos o favoritos).
      */
-    public void filterByMunicipio(String query, FuelType fuel, @Nullable Location userLocation) {
+    public void filterByMunicipio(String query, @Nullable Location userLocation) {
         loading.setValue(true);
         lastSearchQuery = query;
+        final FuelType fuel = selectedFuel;
         Location ref = searchLocation != null ? searchLocation : userLocation;
         executor.execute(() -> runMunicipioFilter(query, fuel, ref));
     }
