@@ -16,17 +16,29 @@ App Android nativa (Java) que muestra en un mapa las estaciones de servicio de E
 
 ## 📱 Capturas
 
+**Combustible** — mapa de precios, listas ordenadas, detalle con el ahorro real e histórico:
+
 <p align="center">
-  <img src="docs/img/mapa.png"         width="200" alt="Mapa con precios"/>&nbsp;
-  <img src="docs/img/por-precio.png"   width="200" alt="Estaciones por precio"/>&nbsp;
-  <img src="docs/img/detalle.png"      width="200" alt="Detalle de estación"/>
-</p>
-<p align="center">
-  <img src="docs/img/historico.png"    width="200" alt="Histórico de precios"/>&nbsp;
-  <img src="docs/img/preferencias.png" width="200" alt="Preferencias y vehículos"/>
+  <img src="docs/img/mapa.png"       width="185" alt="Mapa con precios"/>&nbsp;
+  <img src="docs/img/por-precio.png" width="185" alt="Estaciones por precio"/>&nbsp;
+  <img src="docs/img/detalle.png"    width="185" alt="Detalle de estación"/>&nbsp;
+  <img src="docs/img/historico.png"  width="185" alt="Histórico de precios"/>
 </p>
 
-<p align="center"><sub>Mapa por precio · Lista ordenada · Detalle con ahorro · Histórico (30 días) · Vehículos y radio</sub></p>
+**Ahorro y comunidad** — vehículos y radio, promociones por marca y opiniones (Google Maps):
+
+<p align="center">
+  <img src="docs/img/preferencias.png" width="185" alt="Preferencias y vehículos"/>&nbsp;
+  <img src="docs/img/promociones.png"  width="185" alt="Promociones por marca"/>&nbsp;
+  <img src="docs/img/opiniones.png"    width="185" alt="Opiniones de la estación"/>
+</p>
+
+**Modo eléctrico** — electrolineras por potencia y tiempo de recarga estimado para tu coche:
+
+<p align="center">
+  <img src="docs/img/mapa-electrico.png"    width="185" alt="Mapa de electrolineras por potencia"/>&nbsp;
+  <img src="docs/img/detalle-electrico.png" width="185" alt="Detalle de electrolinera con tiempo de recarga"/>
+</p>
 
 ---
 
@@ -36,10 +48,10 @@ App Android nativa (Java) que muestra en un mapa las estaciones de servicio de E
 - 🔎 **Búsqueda por localidad** (geocodificación con Nominatim) y **filtro por marca**.
 - 💲 **Ordenación por precio** o 📍 **por distancia**, con el precio ya **descontado** por marca.
 - ⛽ **Perfiles de vehículo**: combustible, consumo, depósito (y potencia de carga para eléctricos). La app calcula el **coste real de llenado** y el **coste de llegada** hasta la estación.
-- 🔋 **Coches eléctricos**: muestra electrolineras (datos de la DGT) y las ordena por potencia.
+- 🔋 **Modo eléctrico**: muestra electrolineras (datos de la DGT) ordenadas por potencia y **estima el tiempo de recarga** (20 % → 80 %) según la potencia de tu coche y la de la estación.
 - 🔔 **Alertas de precio**: notifica en segundo plano cuando una estación baja del umbral que fijes (WorkManager).
 - 📈 **Histórico de precios** por estación y combustible (7 / 15 / 30 días) con gráficas.
-- ⭐ **Favoritas** y 🎁 **promociones** por marca.
+- ⭐ **Favoritas**, 🎁 **promociones** por marca y ⭐ **opiniones** (valoración de Google Maps).
 - 🌙 Datos **cacheados en local**: la app funciona aunque falle la red.
 
 ---
