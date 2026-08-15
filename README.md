@@ -166,4 +166,4 @@ TFG entregado y calificado con **10/10**. Actualmente en fase de *hardening* par
 Proyecto de fin de grado de **2º DAM** (Desarrollo de Aplicaciones Multiplataforma). Desarrollado originalmente en equipo y mantenido en solitario en su fase de pulido.
 
 - GitHub: [@Anticlub](https://github.com/Anticlub)
-<!-- Añade aquí tu LinkedIn / portfolio -->
+- LinkedIn: [Cristofer Fernández Fernández](https://www.linkedin.com/in/cristofer-fern%C3%A1ndez-fern%C3%A1ndez-897106202/)
