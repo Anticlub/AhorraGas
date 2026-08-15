@@ -161,9 +161,10 @@ TFG entregado y calificado con **10/10**. Actualmente en fase de *hardening* par
 
 ---
 
-## 👤 Autor
+## 👤 Autores
 
-Proyecto de fin de grado de **2º DAM** (Desarrollo de Aplicaciones Multiplataforma). Desarrollado originalmente en equipo y mantenido en solitario en su fase de pulido.
+Proyecto de Fin de Grado de **2º DAM** (Desarrollo de Aplicaciones Multiplataforma), desarrollado por:
 
-- GitHub: [@Anticlub](https://github.com/Anticlub)
-- LinkedIn: [Cristofer Fernández Fernández](https://www.linkedin.com/in/cristofer-fern%C3%A1ndez-fern%C3%A1ndez-897106202/)
+- **Cristofer Fernández Fernández** — [GitHub @Anticlub](https://github.com/Anticlub) · [LinkedIn](https://www.linkedin.com/in/cristofer-fern%C3%A1ndez-fern%C3%A1ndez-897106202/)
+- **Marco** — [GitHub @markitoelgamer970-design](https://github.com/markitoelgamer970-design)
+- **Raúl González-Gallego López-Menchero** — [GitHub @RaulGonz11](https://github.com/RaulGonz11)
