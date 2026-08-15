@@ -1,26 +1,21 @@
 package com.ahorragas.app;
 
 import com.ahorragas.app.data.local.AppDatabase;
+import com.ahorragas.app.databinding.ActivityMainBinding;
 import com.ahorragas.app.detail.StationDetailActivity;
 import android.Manifest;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
-import android.text.InputType;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.style.ForegroundColorSpan;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
@@ -32,6 +27,8 @@ import com.ahorragas.app.model.Gasolinera;
 import com.ahorragas.app.model.PriceLevel;
 import com.ahorragas.app.model.PriceRange;
 import com.ahorragas.app.model.Vehicle;
+import com.ahorragas.app.ui.BrandFilterDialog;
+import com.ahorragas.app.ui.FirstVehicleDialog;
 import com.ahorragas.app.ui.MapViewModel;
 import com.ahorragas.app.util.DiscountPrefs;
 import com.ahorragas.app.util.FavoritesPrefs;
@@ -60,7 +57,6 @@ import java.util.Map;
 public class MainActivity extends BaseActivity {
 
     private static final String PREF_SELECTED_FUEL = "pref_selected_fuel";
-    private static final String BRAND_ALL_FILTER_KEY = "__all__";
     private static final GeoPoint SPAIN_CENTER = new GeoPoint(40.4168, -3.7038);
     private static final double ZOOM_SPAIN = 6.0;
     private static final double ZOOM_USER = 14.0;
@@ -81,6 +77,7 @@ public class MainActivity extends BaseActivity {
     private final Map<Integer, Marker> markerMap = new HashMap<>();
     private Marker myLocationMarker;
 
+    private ActivityMainBinding binding;
     private MapViewModel viewModel;
     private LocationHelper locationHelper;
 
@@ -113,7 +110,8 @@ public class MainActivity extends BaseActivity {
 
         // osmdroid se inicializa (User-Agent incluido) en AhorraGasApp.
 
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
         applySystemBarInsets(R.id.topBar, R.id.bottomNav);
 
         viewModel = new ViewModelProvider(this).get(MapViewModel.class);
@@ -134,15 +132,13 @@ public class MainActivity extends BaseActivity {
                 .metadataDao()
                 .observe("last_sync_gasolineras")
                 .observe(this, timestamp -> {
-                    TextView tvLastSync = findViewById(R.id.tvLastSync);
-                    if (tvLastSync == null) return;
                     if (timestamp == null) {
-                        tvLastSync.setText(getString(R.string.last_sync_never));
+                        binding.tvLastSync.setText(getString(R.string.last_sync_never));
                     } else {
                         long millis = Long.parseLong(timestamp);
                         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
                                 "dd/MM/yyyy HH:mm", java.util.Locale.getDefault());
-                        tvLastSync.setText(getString(R.string.last_sync_format, sdf.format(new java.util.Date(millis))));
+                        binding.tvLastSync.setText(getString(R.string.last_sync_format, sdf.format(new java.util.Date(millis))));
                         loadGasolineras();
                     }
                 });
@@ -310,192 +306,12 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    // ─── MÉTODO AUXILIAR ─────────────────────────────────────────────────────
-
-    /**
-     * Aplica color rojo al último carácter de un string (el asterisco *)
-     * para indicar que el campo es obligatorio.
-     *
-     * @param text Texto del label que termina en *
-     * @return SpannableString con el asterisco en rojo
-     */
-    private SpannableString makeRequiredLabel(String text) {
-        SpannableString span = new SpannableString(text);
-        span.setSpan(
-                new ForegroundColorSpan(ContextCompat.getColor(this, R.color.error_red)),
-                span.length() - 1,
-                span.length(),
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-        );
-        return span;
-    }
-
     // ─── DIÁLOGO PRIMER VEHÍCULO ─────────────────────────────────────────────
 
     private void showFirstVehicleDialog() {
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(dp(20), dp(12), dp(20), dp(4));
-
-        TextView labelName = new TextView(this);
-        labelName.setText(makeRequiredLabel(getString(R.string.label_vehicle_name)));
-        labelName.setTextColor(ContextCompat.getColor(this, R.color.text_dark));
-        labelName.setTextSize(13);
-        layout.addView(labelName);
-
-        EditText etName = new EditText(this);
-        etName.setHint(getString(R.string.dialogo_vehiculo_nombre_hint));
-        etName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
-        layout.addView(etName);
-
-        TextView labelCons = new TextView(this);
-        labelCons.setText(getString(R.string.dialogo_vehiculo_consumo));
-        labelCons.setTextColor(ContextCompat.getColor(this, R.color.text_dark));
-        labelCons.setTextSize(13);
-        labelCons.setPadding(0, dp(12), 0, 0);
-        layout.addView(labelCons);
-
-        EditText etCons = new EditText(this);
-        etCons.setHint(getString(R.string.dialogo_vehiculo_consumo_hint));
-        etCons.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        layout.addView(etCons);
-
-        TextView labelTank = new TextView(this);
-        labelTank.setText(getString(R.string.label_tank_capacity));
-        labelTank.setTextColor(ContextCompat.getColor(this, R.color.text_dark));
-        labelTank.setTextSize(13);
-        labelTank.setPadding(0, dp(12), 0, 0);
-        layout.addView(labelTank);
-
-        EditText etTank = new EditText(this);
-        etTank.setHint(getString(R.string.hint_tank_capacity));
-        etTank.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        layout.addView(etTank);
-
-        TextView labelCharging = new TextView(this);
-        labelCharging.setText(getString(R.string.label_charging_power));
-        labelCharging.setTextColor(ContextCompat.getColor(this, R.color.text_dark));
-        labelCharging.setTextSize(13);
-        labelCharging.setPadding(0, dp(12), 0, 0);
-        labelCharging.setVisibility(View.GONE);
-        layout.addView(labelCharging);
-
-        EditText etCharging = new EditText(this);
-        etCharging.setHint(getString(R.string.hint_charging_power));
-        etCharging.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        etCharging.setVisibility(View.GONE);
-        layout.addView(etCharging);
-
-        TextView labelFuel = new TextView(this);
-        labelFuel.setText(makeRequiredLabel(getString(R.string.label_fuel_type)));
-        labelFuel.setTextColor(ContextCompat.getColor(this, R.color.text_dark));
-        labelFuel.setTextSize(13);
-        labelFuel.setPadding(0, dp(12), 0, 0);
-        layout.addView(labelFuel);
-
-        FuelType[] fuels = FuelType.values();
-        String[] fuelNames = new String[fuels.length];
-        for (int i = 0; i < fuels.length; i++) fuelNames[i] = fuels[i].displayName();
-
-        final FuelType[] selectedFuelLocal = {FuelType.GASOLEO_A};
-
-        TextView tvFuelSelector = new TextView(this);
-        tvFuelSelector.setText(selectedFuelLocal[0].displayName());
-        tvFuelSelector.setTextColor(ContextCompat.getColor(this, R.color.black));
-        tvFuelSelector.setBackgroundColor(ContextCompat.getColor(this, R.color.input_light));
-        tvFuelSelector.setPadding(dp(12), dp(10), dp(12), dp(10));
-        tvFuelSelector.setTextSize(14);
-        tvFuelSelector.setClickable(true);
-        tvFuelSelector.setFocusable(true);
-        tvFuelSelector.setOnClickListener(v -> {
-            int checked = 0;
-            for (int i = 0; i < fuels.length; i++) {
-                if (fuels[i] == selectedFuelLocal[0]) { checked = i; break; }
-            }
-            new AlertDialog.Builder(this)
-                    .setTitle(getString(R.string.dialogo_vehiculo_combustible_titulo))
-                    .setSingleChoiceItems(fuelNames, checked, (d, which) -> {
-                        selectedFuelLocal[0] = fuels[which];
-                        tvFuelSelector.setText(selectedFuelLocal[0].displayName());
-                        boolean isEv = (selectedFuelLocal[0] == FuelType.ELECTRICO);
-                        labelCons.setText(isEv
-                                ? getString(R.string.label_consumption_ev)
-                                : getString(R.string.dialogo_vehiculo_consumo));
-                        etCons.setHint(isEv
-                                ? getString(R.string.hint_consumption_ev)
-                                : getString(R.string.dialogo_vehiculo_consumo_hint));
-                        labelTank.setText(isEv
-                                ? getString(R.string.label_battery_capacity)
-                                : getString(R.string.label_tank_capacity));
-                        etTank.setHint(isEv
-                                ? getString(R.string.hint_battery_capacity)
-                                : getString(R.string.hint_tank_capacity));
-                        labelCharging.setVisibility(isEv ? View.VISIBLE : View.GONE);
-                        etCharging.setVisibility(isEv ? View.VISIBLE : View.GONE);
-                        d.dismiss();
-                    })
-                    .setNegativeButton(getString(R.string.dialogo_vehiculo_cancelar), null)
-                    .show();
-        });
-        layout.addView(tvFuelSelector);
-
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(getString(R.string.dialogo_vehiculo_titulo))
-                .setView(layout)
-                .setCancelable(false)
-                .setPositiveButton(getString(R.string.dialogo_vehiculo_guardar), null)
-                .create();
-
-        dialog.show();
-
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String name = etName.getText().toString().trim();
-            String consStr = etCons.getText().toString().trim().replace(",", ".");
-            String tankStr = etTank.getText().toString().trim().replace(",", ".");
-            String chargingStr = etCharging.getText().toString().trim().replace(",", ".");
-
-            if (name.isEmpty()) {
-                Toast.makeText(this, getString(R.string.dialogo_vehiculo_nombre_vacio), Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            double cons = 0.0;
-            if (!consStr.isEmpty()) {
-                try {
-                    cons = Double.parseDouble(consStr);
-                    if (cons <= 0 || cons > 100) throw new NumberFormatException();
-                } catch (Exception e) {
-                    Toast.makeText(this, getString(R.string.dialogo_vehiculo_consumo_invalido), Toast.LENGTH_SHORT).show();
-                    return;
-                }
-            }
-
-            double tank = 0.0;
-            if (!tankStr.isEmpty()) {
-                try {
-                    tank = Double.parseDouble(tankStr);
-                    if (tank <= 0 || tank > 200) throw new NumberFormatException();
-                } catch (Exception e) {
-                    Toast.makeText(this, getString(R.string.msg_invalid_tank_capacity), Toast.LENGTH_SHORT).show();
-                    return;
-                }
-            }
-
-            double charging = 0.0;
-            if (!chargingStr.isEmpty()) {
-                try {
-                    charging = Double.parseDouble(chargingStr);
-                    if (charging <= 0 || charging > 500) throw new NumberFormatException();
-                } catch (Exception e) {
-                    Toast.makeText(this, getString(R.string.msg_invalid_charging_power), Toast.LENGTH_SHORT).show();
-                    return;
-                }
-            }
-
-            Vehicle vehicle = new Vehicle(name, selectedFuelLocal[0], cons, tank, charging);
+        FirstVehicleDialog.show(this, vehicle -> {
             VehiclePrefs.addVehicle(this, vehicle);
-
-            viewModel.setSelectedFuel(selectedFuelLocal[0]);
+            viewModel.setSelectedFuel(vehicle.getFuelType());
             MarkerBitmapFactory.clearCache();
             if (userLocation != null) {
                 viewModel.loadByRadius(userLocation.getLatitude(), userLocation.getLongitude());
@@ -503,19 +319,18 @@ public class MainActivity extends BaseActivity {
                 viewModel.updateVisible();
             }
             vehicleDialogShown = false;
-            dialog.dismiss();
         });
     }
 
     // ─── VIEWS ───────────────────────────────────────────────────────────────
 
     private void initViews() {
-        mapView = findViewById(R.id.mapView);
-        fabMiUbicacion = findViewById(R.id.fabMiUbicacion);
-        tvLastSync = findViewById(R.id.tvLastSync);
-        progressBarSearch = findViewById(R.id.progressBarSearch);
-        bottomNav = findViewById(R.id.bottomNav);
-        etSearch = findViewById(R.id.etSearch);
+        mapView = binding.mapView;
+        fabMiUbicacion = binding.fabMiUbicacion;
+        tvLastSync = binding.tvLastSync;
+        progressBarSearch = binding.progressBarSearch;
+        bottomNav = binding.bottomNav;
+        etSearch = binding.etSearch;
         loadLastSync();
     }
 
@@ -884,69 +699,31 @@ public class MainActivity extends BaseActivity {
     }
 
     private void setupBrandFilter() {
-        View button = findViewById(R.id.brandFilterButton);
-        if (button == null) return;
+        if (binding.brandFilterButton == null) return;
         updateBrandFilterButton();
-        button.setOnClickListener(v -> showBrandFilterDialog());
+        binding.brandFilterButton.setOnClickListener(v -> showBrandFilterDialog());
     }
 
     private void updateBrandFilterButton() {
         String selectedBrand = viewModel.getSelectedBrand();
-        TextView label = findViewById(R.id.tvBrandFilterLabel);
-        android.widget.ImageView icon = findViewById(R.id.ivBrandFilterIcon);
-        if (label != null) {
-            label.setText(getString(R.string.brand_filter_label, displayBrandName(selectedBrand)));
+        binding.tvBrandFilterLabel.setText(
+                getString(R.string.brand_filter_label, BrandFilterDialog.displayName(this, selectedBrand)));
+        if (selectedBrand == null) {
+            binding.ivBrandFilterIcon.setVisibility(View.GONE);
+        } else {
+            binding.ivBrandFilterIcon.setImageResource(
+                    com.ahorragas.app.map.BrandLogoProvider.getLogoResId(selectedBrand));
+            binding.ivBrandFilterIcon.setVisibility(View.VISIBLE);
         }
-        if (icon != null) {
-            if (selectedBrand == null) {
-                icon.setVisibility(View.GONE);
-            } else {
-                icon.setImageResource(
-                        com.ahorragas.app.map.BrandLogoProvider.getLogoResId(selectedBrand));
-                icon.setVisibility(View.VISIBLE);
-            }
-        }
-    }
-
-    private String displayBrandName(String brandKey) {
-        if (brandKey == null || BRAND_ALL_FILTER_KEY.equals(brandKey)) {
-            return getString(R.string.brand_all);
-        }
-        if ("bp".equalsIgnoreCase(brandKey)) return "BP";
-        if ("glp".equalsIgnoreCase(brandKey)) return "GLP";
-        return Character.toUpperCase(brandKey.charAt(0)) + brandKey.substring(1).toLowerCase();
     }
 
     private void showBrandFilterDialog() {
-        String selectedBrand = viewModel.getSelectedBrand();
-        java.util.List<String> keys = new ArrayList<>();
-        keys.add(BRAND_ALL_FILTER_KEY);
-        keys.addAll(com.ahorragas.app.map.BrandLogoProvider.FILTER_BRANDS);
-
-        String[] labels = new String[keys.size()];
-        int currentIndex = 0;
-        for (int i = 0; i < keys.size(); i++) {
-            String key = keys.get(i);
-            labels[i] = displayBrandName(key);
-            if ((BRAND_ALL_FILTER_KEY.equals(key) && selectedBrand == null)
-                    || (selectedBrand != null && key.equalsIgnoreCase(selectedBrand))) {
-                currentIndex = i;
-            }
-        }
-
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.brand_filter_dialog_title)
-                .setSingleChoiceItems(labels, currentIndex, (dialog, which) -> {
-                    String selectedKey = keys.get(which);
-                    String newBrand = BRAND_ALL_FILTER_KEY.equals(selectedKey) ? null : selectedKey;
-                    viewModel.setSelectedBrand(newBrand);
-                    updateBrandFilterButton();
-                    // Cambiar de marca requiere volver a filtrar/recortar los datos
-                    // (el filtro se aplica antes del recorte al máximo de markers).
-                    viewModel.reloadForCurrentMode(userLocation);
-                    dialog.dismiss();
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .show();
+        BrandFilterDialog.show(this, viewModel.getSelectedBrand(), newBrand -> {
+            viewModel.setSelectedBrand(newBrand);
+            updateBrandFilterButton();
+            // Cambiar de marca requiere volver a filtrar/recortar los datos
+            // (el filtro se aplica antes del recorte al máximo de markers).
+            viewModel.reloadForCurrentMode(userLocation);
+        });
     }
 }
