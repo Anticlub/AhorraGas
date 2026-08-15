@@ -74,6 +74,46 @@ public class GasolineraSorterTest {
                 Collections.singletonList(bad), FuelType.GASOLEO_A).isEmpty());
     }
 
+    // ── filterByBrand ───────────────────────────────────────────────────────
+
+    private static Gasolinera conMarca(int id, String marca) {
+        Gasolinera g = new Gasolinera();
+        g.setId(id);
+        g.setMarca(marca);
+        return g;
+    }
+
+    @Test
+    public void filterByBrand_null_returnsEmpty() {
+        assertTrue(GasolineraSorter.filterByBrand(null, "bp").isEmpty());
+    }
+
+    @Test
+    public void filterByBrand_nullBrand_returnsAll() {
+        List<Gasolinera> list = Arrays.asList(conMarca(1, "Repsol"), conMarca(2, "BP OIL"));
+        assertEquals(2, GasolineraSorter.filterByBrand(list, null).size());
+    }
+
+    @Test
+    public void filterByBrand_keepsOnlyMatchingBrandCaseInsensitive() {
+        List<Gasolinera> list = Arrays.asList(
+                conMarca(1, "BP OIL ESPAÑA"), conMarca(2, "Repsol"), conMarca(3, "bp local"));
+
+        List<Gasolinera> result = GasolineraSorter.filterByBrand(list, "bp");
+
+        assertEquals(2, result.size());
+        assertEquals(1, result.get(0).getId());
+        assertEquals(3, result.get(1).getId());
+    }
+
+    @Test
+    public void filterByBrand_ignoresNullMarca() {
+        List<Gasolinera> list = Arrays.asList(conMarca(1, null), conMarca(2, "Repsol"));
+        List<Gasolinera> result = GasolineraSorter.filterByBrand(list, "repsol");
+        assertEquals(1, result.size());
+        assertEquals(2, result.get(0).getId());
+    }
+
     // ── calculatePriceRange ─────────────────────────────────────────────────
 
     @Test

@@ -77,7 +77,6 @@ public class MainActivity extends BaseActivity {
     private int lastFavoritesVersion = -1;
     private boolean vehicleDialogShown = false;
 
-    private String selectedBrand = null;
     private Location userLocation;
     private final Map<Integer, Marker> markerMap = new HashMap<>();
     private Marker myLocationMarker;
@@ -116,11 +115,11 @@ public class MainActivity extends BaseActivity {
 
         setContentView(R.layout.activity_main);
         applySystemBarInsets(R.id.topBar, R.id.bottomNav);
-        setupBrandFilter();
 
         viewModel = new ViewModelProvider(this).get(MapViewModel.class);
         locationHelper = new LocationHelper(this);
         observeViewModel();
+        setupBrandFilter();
 
         initViews();
         setupMap();
@@ -649,10 +648,11 @@ public class MainActivity extends BaseActivity {
         // mapa (mover, zoom, filtrar) reutiliza los bitmaps en vez de recrearlos.
         // Los cambios de combustible/descuentos/favoritos ya invalidan en onResume.
         clearMapMarkers();
+        // El filtro de marca ya viene aplicado en los datos (MapViewModel), aquí
+        // solo se recorta al máximo de markers para pintar.
         final List<Gasolinera> visible = viewModel.getVisibleGasolineras();
-        final List<Gasolinera> toRender = applyBrandFilter(new ArrayList<>(
-                visible.subList(0, Math.min(count, visible.size()))
-        ));
+        final List<Gasolinera> toRender = new ArrayList<>(
+                visible.subList(0, Math.min(count, visible.size())));
         final FuelType fuelSnapshot = viewModel.getSelectedFuel();
         final PriceRange rangeSnapshot = viewModel.getCurrentPriceRange();
 
@@ -886,12 +886,12 @@ public class MainActivity extends BaseActivity {
     private void setupBrandFilter() {
         View button = findViewById(R.id.brandFilterButton);
         if (button == null) return;
-        selectedBrand = com.ahorragas.app.util.BrandPrefs.get(this);
         updateBrandFilterButton();
         button.setOnClickListener(v -> showBrandFilterDialog());
     }
 
     private void updateBrandFilterButton() {
+        String selectedBrand = viewModel.getSelectedBrand();
         TextView label = findViewById(R.id.tvBrandFilterLabel);
         android.widget.ImageView icon = findViewById(R.id.ivBrandFilterIcon);
         if (label != null) {
@@ -918,6 +918,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void showBrandFilterDialog() {
+        String selectedBrand = viewModel.getSelectedBrand();
         java.util.List<String> keys = new ArrayList<>();
         keys.add(BRAND_ALL_FILTER_KEY);
         keys.addAll(com.ahorragas.app.map.BrandLogoProvider.FILTER_BRANDS);
@@ -938,25 +939,14 @@ public class MainActivity extends BaseActivity {
                 .setSingleChoiceItems(labels, currentIndex, (dialog, which) -> {
                     String selectedKey = keys.get(which);
                     String newBrand = BRAND_ALL_FILTER_KEY.equals(selectedKey) ? null : selectedKey;
-                    selectedBrand = newBrand;
-                    com.ahorragas.app.util.BrandPrefs.set(this, newBrand);
+                    viewModel.setSelectedBrand(newBrand);
                     updateBrandFilterButton();
-                    showStationsOnMap(lastMarkersCount);
+                    // Cambiar de marca requiere volver a filtrar/recortar los datos
+                    // (el filtro se aplica antes del recorte al máximo de markers).
+                    viewModel.reloadForCurrentMode(userLocation);
                     dialog.dismiss();
                 })
                 .setNegativeButton(R.string.cancel, null)
                 .show();
-    }
-
-    private List<Gasolinera> applyBrandFilter(List<Gasolinera> input) {
-        if (selectedBrand == null || BRAND_ALL_FILTER_KEY.equals(selectedBrand)) return input;
-        List<Gasolinera> out = new ArrayList<>();
-        for (Gasolinera g : input) {
-            String marca = g.getMarca();
-            if (marca != null && marca.toLowerCase().contains(selectedBrand)) {
-                out.add(g);
-            }
-        }
-        return out;
     }
 }

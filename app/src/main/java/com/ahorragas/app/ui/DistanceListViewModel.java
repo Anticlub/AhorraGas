@@ -18,6 +18,7 @@ import com.ahorragas.app.data.remote.RemoteDgtDataSource;
 import com.ahorragas.app.model.FuelType;
 import com.ahorragas.app.model.Gasolinera;
 import com.ahorragas.app.model.PriceRange;
+import com.ahorragas.app.util.BrandPrefs;
 import com.ahorragas.app.util.DiscountPrefs;
 import com.ahorragas.app.util.GasolineraSorter;
 import com.ahorragas.app.util.RadiusUtils;
@@ -81,7 +82,9 @@ public class DistanceListViewModel extends AndroidViewModel {
     public void loadFromIntent(List<Gasolinera> gasolineras, FuelType fuel) {
         state.setValue(UiState.loading());
         executor.execute(() -> {
-            List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, fuel);
+            List<Gasolinera> filtered = GasolineraSorter.filterByBrand(
+                    GasolineraSorter.filterByFuel(gasolineras, fuel),
+                    BrandPrefs.get(getApplication()));
             PriceRange range = applyPriceLevels(filtered, fuel);
             state.postValue(filtered.isEmpty() ? UiState.empty() : UiState.data(filtered, range));
         });
@@ -100,7 +103,8 @@ public class DistanceListViewModel extends AndroidViewModel {
                         ? new ArrayList<>(repository.getElectrolinerasByRadius(lat, lon, radiusMeters))
                         : new ArrayList<>(repository.getGasolinerasByRadius(lat, lon, radiusMeters));
 
-                List<Gasolinera> filtered = GasolineraSorter.filterByFuel(gasolineras, fuel);
+                List<Gasolinera> filtered = GasolineraSorter.filterByBrand(
+                        GasolineraSorter.filterByFuel(gasolineras, fuel), BrandPrefs.get(app));
                 List<Gasolinera> sorted = GasolineraSorter.getWithinRadius(
                         filtered, lat, lon, radiusMeters, maxMarkers);
 
