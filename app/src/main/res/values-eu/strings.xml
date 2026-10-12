@@ -53,6 +53,8 @@
     <string name="error_ubicacion_actual">Ezin izan da uneko kokapena lortu.</string>
     <string name="dialogo_vehiculo_nombre_vacio">Idatzi izen bat.</string>
     <string name="dialogo_vehiculo_consumo_invalido">Kontsumoa ez da baliozkoa (adib: 6.5).</string>
+
+    <!-- Estados UI listas -->
     <string name="loading_gasolineras">Geltokiak kargatzen…</string>
     <string name="reintentar">Berriro saiatu</string>
     <string name="error_red">Sareko errorea. Egiaztatu konexioa.</string>
@@ -60,11 +62,15 @@
     <string name="empty_distance_list">Ez dago geltokiik zure uneko erradioaren barruan.</string>
     <string name="empty_favorites">Oraindik ez duzu gasolindegi gogokoririk.\nSakatu ❤️ gasolindegi baten xehetasunetan gehitzeko.</string>
     <string name="error_favorites">Ezin izan dira gogokoak kargatu.</string>
+
+    <!-- Promociones -->
     <string name="promo_cargando">Promozioak kargatzen…</string>
     <string name="promo_sin_resultados">Ez dago promozioak une honetan.</string>
     <string name="promo_error_red">Ezin izan dira promozioak kargatu.\nEgiaztatu konexioa.</string>
     <string name="promo_ver_mas">Gehiago ikusi</string>
     <string name="promo_ver_menos">Gutxiago ikusi</string>
+
+    <!-- Main -->
     <string name="last_sync_never">EESS: eguneratu gabe</string>
     <string name="last_sync_format">EESS eguneratuta: %1$s</string>
     <string name="title_preferences">Hobespenak</string>
@@ -94,6 +100,8 @@
     <string name="label_range_15_days">15 egun</string>
     <string name="label_range_30_days">30 egun</string>
     <string name="msg_loading_reviews">Iritziak kargatzen...</string>
+
+    <!-- PreferencesActivity -->
     <string name="msg_add_vehicle_required">Gehitu gutxienez ibilgailu bat jarraitzeko.</string>
     <string name="label_by_power">Potentziaren arabera</string>
     <string name="label_by_price">Prezioaren arabera</string>
@@ -144,6 +152,8 @@
     <string name="title_delete_discount">Deskontua ezabatu</string>
     <string name="msg_no_alerts_configured">Ez duzu alertarik konfiguratuta.</string>
     <string name="msg_checking_prices">🔔 Prezioak egiaztatzen…</string>
+
+    <!-- GeneralFragment -->
     <string name="label_max_power">Gehienezko potentzia</string>
     <string name="label_charge_time">Estimatutako karga denbora</string>
     <string name="label_energy_cost">Energia gastua geltokiraino</string>
@@ -159,6 +169,8 @@
     <string name="msg_power_unavailable">N/E</string>
     <string name="btn_remove_from_favorites">❤️ Gogokoetatik kendu</string>
     <string name="msg_no_available">Ez dago erabilgarri</string>
+
+    <!-- MainActivity -->
     <string name="msg_location_not_found">Ezin izan da herria aurkitu</string>
     <string name="msg_error_searching_location">Errorea herria bilatzerakoan</string>
     <string name="msg_no_stations_in_location">Ez dago geltokiik herri horretan</string>
@@ -168,16 +180,16 @@
     <string name="label_last_sync_format">Azken eguneraketa: %1$s</string>
     <string name="label_last_sync_never">Azken eguneraketa: --</string>
     <string name="msg_por_potencia">Potentziaren arabera</string>
+
+    <!-- FavoritesActivity -->
     <string name="msg_no_notification_permission">Jakinarazpen baimenik gabe ezin izango dizugu abisatu. Aktibatu ezarpenetan.</string>
-    <string name="title_background_alerts">Atzeko planoan alertak aktibatu</string>
-    <string name="msg_background_alerts">Prezioen jakinarazpenak jasotzeko app itxita dagoenean ere, bateria murrizketarik gabe funtzionatzea baimendu behar duzu.\n\nEz kezkatu: 4 ororo bakarrik egiaztatzen ditu prezioak eta baterian eragina minimoa da.\n\n</string>
-    <string name="btn_configure">Konfiguratu</string>
-    <string name="btn_not_now">Orain ez</string>
     <string name="msg_alert_deleted">Alerta ezabatuta</string>
     <string name="msg_max_alerts">Dagoeneko 5 alerta dituzu. Ezabatu bat beste bat gehitu aurretik.</string>
     <string name="hint_alert_price">Adib: 1.450</string>
     <string name="msg_invalid_price">Prezioa ez da baliozkoa.</string>
     <string name="msg_alert_saved">✅ Alerta gordeta</string>
+
+    <!-- Tabs de detalle de estación -->
     <string name="tab_general">Orokorra</string>
     <string name="tab_location">Kokapena</string>
     <string name="tab_prices">Prezioak</string>
@@ -186,23 +198,30 @@
     <string name="tab_promotions">Promozioak</string>
     <string name="tab_reviews">Iritziak</string>
     <string name="fmt_alert_fuel_mismatch">⚠️ Zure alerta %1$s-rena zen. Aldatu zure erregaia hobespenetan prezio ikusteko.</string>
+
+    <!-- Formatos de texto dinámico -->
     <string name="fmt_energy_to_arrive">%.2f kWh iristeko</string>
     <string name="fmt_charge_time_minutes">~%d min (20%% → 80%%)</string>
     <string name="fmt_charge_time_hours_minutes">~%dh %dmin (20%% → 80%%)</string>
     <string name="fmt_discount_label">Prezioa deskontuarekin %1$s (%2$s)</string>
     <string name="fmt_fill_with_discount">Betetze deskontuarekin: %.2f €</string>
     <string name="fmt_history_title">%1$s — %2$s</string>
+
+    <!-- Mensajes de estado -->
     <string name="msg_history_not_available_electric">Historia ez dago erabilgarri ibilgailu elektrikoetarako</string>
     <string name="msg_history_not_available_station">Historia ez dago erabilgarri geltoki honetarako</string>
     <string name="msg_history_unavailable">Prezioen historia ez dago erabilgarri une honetan</string>
     <string name="msg_no_data">Daturik gabe</string>
     <string name="msg_no_connector_data">Konektore daturik gabe</string>
+
+    <!-- Etiquetas -->
     <string name="label_charge_type_fast">Azkarra (DC)</string>
     <string name="label_charge_type_normal">Normala (AC)</string>
     <string name="label_not_available_short">N/E</string>
     <string name="label_gas_station">Gasolindegia</string>
+
+    <!-- Chooser -->
     <string name="chooser_navigate_with">Nabigatzerakoan…</string>
-    <string name="msg_favorites_not_available_electric">Laster electrolindegia gogokoen gehitu eta jakinarazpenak kudeatu ahal izango dituzu</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_map">Mapa</string>
@@ -210,8 +229,9 @@
     <string name="nav_distance">Distantziaren arabera</string>
     <string name="nav_favorites">Gogokoak</string>
     <string name="nav_preferences">Hobespenak</string>
+    <string name="msg_favorites_not_available_electric">Laster electrolindegia gogokoen gehitu eta jakinarazpenak kudeatu ahal izango dituzu</string>
 
-    <!-- Markaren iragazkia -->
+    <!-- Filtro de marca -->
     <string name="brand_filter_default">Marka: Guztiak</string>
     <string name="brand_filter_label">Marka: %1$s</string>
     <string name="brand_filter_dialog_title">Marka</string>

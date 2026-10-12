@@ -63,7 +63,7 @@
     <string name="empty_favorites">Aínda non tes gasolineiras favoritas.\nPreme ❤️ no detalle dunha gasolineira para engadila.</string>
     <string name="error_favorites">Non se puideron cargar os favoritos.</string>
 
-    <!-- Promocións -->
+    <!-- Promociones -->
     <string name="promo_cargando">Cargando promocións…</string>
     <string name="promo_sin_resultados">Non hai promocións dispoñibles neste momento.</string>
     <string name="promo_error_red">Non se puideron cargar as promocións.\nComproba a túa conexión.</string>
@@ -183,10 +183,6 @@
 
     <!-- FavoritesActivity -->
     <string name="msg_no_notification_permission">Sen permiso de notificacións non poderemos avisarte. Podes activalo en Axustes.</string>
-    <string name="title_background_alerts">Activar avisos en segundo plano</string>
-    <string name="msg_background_alerts">Para recibir notificacións de prezo aínda que a app estea pechada, necesitas permitir que funcione sen restricións de batería.\n\nNon te preocupes: só comproba os prezos cada 4 horas e o impacto na batería é mínimo.\n\n</string>
-    <string name="btn_configure">Configurar</string>
-    <string name="btn_not_now">Agora non</string>
     <string name="msg_alert_deleted">Aviso eliminado</string>
     <string name="msg_max_alerts">Xa tes 5 avisos. Elimina un antes de engadir outro.</string>
     <string name="hint_alert_price">Ex: 1.450</string>
@@ -211,7 +207,7 @@
     <string name="fmt_fill_with_discount">Enchido con desconto: %.2f €</string>
     <string name="fmt_history_title">%1$s — %2$s</string>
 
-    <!-- Mensaxes de estado -->
+    <!-- Mensajes de estado -->
     <string name="msg_history_not_available_electric">Histórico non dispoñible para vehículos eléctricos</string>
     <string name="msg_history_not_available_station">Histórico non dispoñible para esta estación</string>
     <string name="msg_history_unavailable">O histórico de prezos non está dispoñible neste momento</string>
@@ -233,7 +229,6 @@
     <string name="nav_distance">Por distancia</string>
     <string name="nav_favorites">Favoritas</string>
     <string name="nav_preferences">Preferencias</string>
-
     <string name="msg_favorites_not_available_electric">Proximamente poderás engadir electrolineiras a favoritas e xestionar notificacións</string>
 
     <!-- Filtro de marca -->

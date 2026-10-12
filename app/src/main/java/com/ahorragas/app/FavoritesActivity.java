@@ -6,11 +6,8 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.PowerManager;
-import android.provider.Settings;
 import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
@@ -191,31 +188,6 @@ public class FavoritesActivity extends BaseActivity {
     }
 
     /**
-     * Muestra un diálogo explicativo y lleva al usuario a la pantalla del sistema
-     * para eximir la app de la optimización de batería, si aún no está eximida.
-     */
-    private void requestBatteryOptimizationExemptionIfNeeded() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return;
-
-        PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
-        if (pm == null) return;
-        if (pm.isIgnoringBatteryOptimizations(getPackageName())) return;
-
-        new AlertDialog.Builder(this)
-                .setTitle(getString(R.string.title_background_alerts))
-                .setMessage(getString(R.string.msg_background_alerts))
-                .setPositiveButton(getString(R.string.btn_configure), (d, w) -> {
-                    Intent intent = new Intent(
-                            Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                            Uri.parse("package:" + getPackageName())
-                    );
-                    startActivity(intent);
-                })
-                .setNegativeButton(getString(R.string.btn_not_now), null)
-                .show();
-    }
-
-    /**
      * Muestra un diálogo para que el usuario introduzca el precio umbral
      * de la alerta para la gasolinera y combustible seleccionados.
      *
@@ -290,7 +262,6 @@ public class FavoritesActivity extends BaseActivity {
                     boolean saved = PriceAlertPrefs.add(this, alert);
                     if (saved) {
                         Toast.makeText(this, getString(R.string.msg_alert_saved), Toast.LENGTH_SHORT).show();
-                        requestBatteryOptimizationExemptionIfNeeded();
                         int pos = adapter.getPositionOf(gasolinera);
                         if (pos >= 0) adapter.notifyItemChanged(pos);
                     } else {
