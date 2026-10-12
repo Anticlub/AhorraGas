@@ -30,3 +30,13 @@
 # ── osmdroid / MPAndroidChart (usan recursos y algo de reflexión) ────────────
 -dontwarn org.osmdroid.**
 -dontwarn com.github.mikephil.charting.**
+
+# ── Logs de depuración ──────────────────────────────────────────────────────
+# En release se eliminan las llamadas a Log.v/d/i: son trazas de depuración y no
+# deben quedar en la versión publicada. Log.w/e se mantienen para diagnosticar
+# fallos (y Crashlytics). Solo funciona con el fichero "-optimize" de R8.
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+}
