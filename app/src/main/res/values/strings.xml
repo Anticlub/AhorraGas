@@ -216,6 +216,7 @@
     <string name="label_charge_type_normal">Normal (AC)</string>
     <string name="label_not_available_short">N/D</string>
     <string name="label_gas_station">Gasolinera</string>
+    <string name="osm_attribution" translatable="false">© OpenStreetMap</string>
 
     <!-- Chooser -->
     <string name="chooser_navigate_with">Navegar con…</string>

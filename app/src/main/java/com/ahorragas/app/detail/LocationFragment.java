@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.ahorragas.app.R;
+import com.ahorragas.app.map.OsmAttribution;
 import com.ahorragas.app.model.Gasolinera;
 
 import com.ahorragas.app.map.OsmTiles;
@@ -80,6 +81,7 @@ public class LocationFragment extends Fragment {
         stationPoint = new GeoPoint(lat, lon);
 
         mapContainer = view.findViewById(R.id.mapContainer);
+        OsmAttribution.bind(view.findViewById(R.id.osmAttribution));
 
         Button btnNavigate = view.findViewById(R.id.btnNavigate);
         btnNavigate.setOnClickListener(v -> {

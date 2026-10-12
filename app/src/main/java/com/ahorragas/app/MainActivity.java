@@ -22,6 +22,7 @@ import androidx.preference.PreferenceManager;
 
 import com.ahorragas.app.location.LocationHelper;
 import com.ahorragas.app.map.MarkerBitmapFactory;
+import com.ahorragas.app.map.OsmAttribution;
 import com.ahorragas.app.model.FuelType;
 import com.ahorragas.app.model.Gasolinera;
 import com.ahorragas.app.model.PriceLevel;
@@ -360,6 +361,8 @@ public class MainActivity extends BaseActivity {
         showSpainFallback();
 
         mapView.setOnTouchListener((v, event) -> false);
+
+        OsmAttribution.bind(binding.osmAttribution.getRoot());
     }
 
     private void setupBottomNav() {

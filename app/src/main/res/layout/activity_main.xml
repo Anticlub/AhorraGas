@@ -62,6 +62,10 @@
             android:layout_height="match_parent"
             android:clickable="true" />
 
+        <include
+            android:id="@+id/osmAttribution"
+            layout="@layout/view_osm_attribution" />
+
         <ProgressBar
             android:id="@+id/progressBarSearch"
             android:layout_width="wrap_content"
