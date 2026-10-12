@@ -84,7 +84,6 @@
     <string name="label_my_discounts">Nire deskontuak</string>
     <string name="btn_add">+ Gehitu</string>
     <string name="label_my_price_alerts">Nire prezio alertak</string>
-    <string name="btn_test_notifications">🔔 Jakinarazpenak probatu</string>
     <string name="label_markers_range_hint">Mapan erakutsitako gasolindegia kopurua (1–150).</string>
     <string name="hint_search_by_location">Bilatu herriaren arabera...</string>
     <string name="title_distance_list">Geltokiak distantziaren arabera</string>
@@ -150,8 +149,6 @@
     <string name="error_max_discounts">Deskontu gehienezko kopurura iritsi zara.</string>
     <string name="title_delete_vehicle">Ibilgailua ezabatu</string>
     <string name="title_delete_discount">Deskontua ezabatu</string>
-    <string name="msg_no_alerts_configured">Ez duzu alertarik konfiguratuta.</string>
-    <string name="msg_checking_prices">🔔 Prezioak egiaztatzen…</string>
 
     <!-- GeneralFragment -->
     <string name="label_max_power">Gehienezko potentzia</string>

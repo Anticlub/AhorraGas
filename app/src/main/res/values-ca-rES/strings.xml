@@ -84,7 +84,6 @@
     <string name="label_my_discounts">Els meus descomptes</string>
     <string name="btn_add">+ Afegir</string>
     <string name="label_my_price_alerts">Les meves alertes de preu</string>
-    <string name="btn_test_notifications">🔔 Provar notificacions</string>
     <string name="label_markers_range_hint">Nombre de gasolineres mostrades al mapa (1–150).</string>
     <string name="hint_search_by_location">Cercar per localitat...</string>
     <string name="title_distance_list">Estacions per distància</string>
@@ -150,8 +149,6 @@
     <string name="error_max_discounts">Has assolit el màxim de descomptes.</string>
     <string name="title_delete_vehicle">Eliminar vehicle</string>
     <string name="title_delete_discount">Eliminar descompte</string>
-    <string name="msg_no_alerts_configured">No tens alertes configurades.</string>
-    <string name="msg_checking_prices">🔔 Comprovant preus…</string>
 
     <!-- GeneralFragment -->
     <string name="label_max_power">Potència màxima</string>

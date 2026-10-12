@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 
 public class PriceAlertWorker extends Worker {
 
-    public static final String  KEY_IS_TEST      = "is_test";
     public static final String  EXTRA_ALERT_FUEL = "extra_alert_fuel";
     private static final String CHANNEL_ID       = "price_alerts";
     private static final long   MIN_INTERVAL_MS  = TimeUnit.HOURS.toMillis(24);
@@ -45,14 +44,12 @@ public class PriceAlertWorker extends Worker {
 
         createNotificationChannel(ctx);
 
-        boolean isTest = getInputData().getBoolean(KEY_IS_TEST, false);
-
         List<Gasolinera> gasolineras = fetchGasolineras(ctx);
         if (gasolineras == null) return Result.retry();
 
         for (PriceAlert alert : alerts) {
             try {
-                checkAlert(ctx, gasolineras, alert, isTest);
+                checkAlert(ctx, gasolineras, alert);
             } catch (Exception e) {
                 android.util.Log.e("PriceAlertWorker",
                         "Error comprobando alerta " + alert.getKey(), e);
@@ -96,7 +93,7 @@ public class PriceAlertWorker extends Worker {
         }
     }
 
-    private void checkAlert(Context ctx, List<Gasolinera> gasolineras, PriceAlert alert, boolean isTest) {
+    private void checkAlert(Context ctx, List<Gasolinera> gasolineras, PriceAlert alert) {
         Gasolinera target = null;
         for (Gasolinera g : gasolineras) {
             if (g.getId() == alert.getGasolineraId()) {
@@ -110,14 +107,12 @@ public class PriceAlertWorker extends Worker {
         if (currentPrice == null) return;
 
         boolean priceBelowThreshold = currentPrice <= alert.getTargetPrice();
-        boolean cooldownPassed = isTest || (System.currentTimeMillis() - alert.getLastNotifiedAt())
+        boolean cooldownPassed = System.currentTimeMillis() - alert.getLastNotifiedAt()
                 >= MIN_INTERVAL_MS;
 
         if (priceBelowThreshold && cooldownPassed) {
             sendNotification(ctx, alert, currentPrice, target);
-            if (!isTest) {
-                PriceAlertPrefs.updateLastNotified(ctx, alert.getKey(), System.currentTimeMillis());
-            }
+            PriceAlertPrefs.updateLastNotified(ctx, alert.getKey(), System.currentTimeMillis());
         }
     }
 

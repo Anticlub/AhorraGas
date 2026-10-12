@@ -15,9 +15,6 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
-import androidx.work.Data;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkManager;
 
 import com.ahorragas.app.model.Discount;
 import com.ahorragas.app.model.FuelType;
@@ -81,7 +78,6 @@ public class PreferencesActivity extends BaseActivity {
         setupBottomNav();
         setupBackPress();
         setupMarkersSelector();
-        setupAlertTestButton();
         setupEasterEgg();
         refreshVehicleList();
         refreshDiscountList();
@@ -210,36 +206,6 @@ public class PreferencesActivity extends BaseActivity {
                 }
             }
         });
-    }
-
-    // ─── Test de notificaciones ───────────────────────────────────────────────
-
-    private void setupAlertTestButton() {
-        findViewById(R.id.btnTestAlerts).setOnClickListener(v -> runAlertTest());
-    }
-
-    /**
-     * Lanza el worker de alertas de precio en modo prueba, ignorando el cooldown
-     * de 24 horas, para verificar que las notificaciones funcionan correctamente.
-     */
-    private void runAlertTest() {
-        List<PriceAlert> alerts = PriceAlertPrefs.loadAll(this);
-        if (alerts.isEmpty()) {
-            Toast.makeText(this, getString(R.string.msg_no_alerts_configured), Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        Data inputData = new Data.Builder()
-                .putBoolean(PriceAlertWorker.KEY_IS_TEST, true)
-                .build();
-
-        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(PriceAlertWorker.class)
-                .setInputData(inputData)
-                .setExpedited(androidx.work.OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                .build();
-
-        WorkManager.getInstance(this).enqueue(request);
-        Toast.makeText(this, getString(R.string.msg_checking_prices), Toast.LENGTH_LONG).show();
     }
 
     // ─── UI Alertas ───────────────────────────────────────────────────────────
