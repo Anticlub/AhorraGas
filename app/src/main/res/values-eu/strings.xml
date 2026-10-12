@@ -169,10 +169,6 @@
     <string name="label_last_sync_never">Azken eguneraketa: --</string>
     <string name="msg_por_potencia">Potentziaren arabera</string>
     <string name="msg_no_notification_permission">Jakinarazpen baimenik gabe ezin izango dizugu abisatu. Aktibatu ezarpenetan.</string>
-    <string name="title_background_alerts">Atzeko planoan alertak aktibatu</string>
-    <string name="msg_background_alerts">Prezioen jakinarazpenak jasotzeko app itxita dagoenean ere, bateria murrizketarik gabe funtzionatzea baimendu behar duzu.\n\nEz kezkatu: 4 ororo bakarrik egiaztatzen ditu prezioak eta baterian eragina minimoa da.\n\n</string>
-    <string name="btn_configure">Konfiguratu</string>
-    <string name="btn_not_now">Orain ez</string>
     <string name="msg_alert_deleted">Alerta ezabatuta</string>
     <string name="msg_max_alerts">Dagoeneko 5 alerta dituzu. Ezabatu bat beste bat gehitu aurretik.</string>
     <string name="hint_alert_price">Adib: 1.450</string>

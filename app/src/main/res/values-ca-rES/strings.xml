@@ -169,10 +169,6 @@
     <string name="label_last_sync_never">Última actualització: --</string>
     <string name="msg_por_potencia">Per potència</string>
     <string name="msg_no_notification_permission">Sense permís de notificacions no podrem avisar-te. Pots activar-lo a Ajustos.</string>
-    <string name="title_background_alerts">Activar alertes en segon pla</string>
-    <string name="msg_background_alerts">Per rebre notificacions de preu encara que l\'app estigui tancada, has de permetre que funcioni sense restriccions de bateria.\n\nNo et preocupis: només comprova els preus cada 4 hores i l\'impacte a la bateria és mínim.\n\n</string>
-    <string name="btn_configure">Configurar</string>
-    <string name="btn_not_now">Ara no</string>
     <string name="msg_alert_deleted">Alerta eliminada</string>
     <string name="msg_max_alerts">Ja tens 5 alertes. Elimina\'n una abans d\'afegir-ne una altra.</string>
     <string name="hint_alert_price">Ex: 1.450</string>

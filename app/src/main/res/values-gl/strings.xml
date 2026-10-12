@@ -183,10 +183,6 @@
 
     <!-- FavoritesActivity -->
     <string name="msg_no_notification_permission">Sen permiso de notificacións non poderemos avisarte. Podes activalo en Axustes.</string>
-    <string name="title_background_alerts">Activar avisos en segundo plano</string>
-    <string name="msg_background_alerts">Para recibir notificacións de prezo aínda que a app estea pechada, necesitas permitir que funcione sen restricións de batería.\n\nNon te preocupes: só comproba os prezos cada 4 horas e o impacto na batería é mínimo.\n\n</string>
-    <string name="btn_configure">Configurar</string>
-    <string name="btn_not_now">Agora non</string>
     <string name="msg_alert_deleted">Aviso eliminado</string>
     <string name="msg_max_alerts">Xa tes 5 avisos. Elimina un antes de engadir outro.</string>
     <string name="hint_alert_price">Ex: 1.450</string>
