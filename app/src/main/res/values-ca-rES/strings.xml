@@ -53,6 +53,8 @@
     <string name="error_ubicacion_actual">No s\'ha pogut obtenir la ubicació actual.</string>
     <string name="dialogo_vehiculo_nombre_vacio">Escriu un nom.</string>
     <string name="dialogo_vehiculo_consumo_invalido">Consum no vàlid (ex: 6.5).</string>
+
+    <!-- Estados UI listas -->
     <string name="loading_gasolineras">Carregant estacions…</string>
     <string name="reintentar">Tornar a intentar</string>
     <string name="error_red">Error de xarxa. Comprova la connexió.</string>
@@ -60,11 +62,15 @@
     <string name="empty_distance_list">No hi ha estacions al teu radi actual.</string>
     <string name="empty_favorites">Encara no tens gasolineres favorites.\nPrem ❤️ al detall d\'una gasolinera per afegir-la.</string>
     <string name="error_favorites">No s\'han pogut carregar els favorits.</string>
+
+    <!-- Promociones -->
     <string name="promo_cargando">Carregant promocions…</string>
     <string name="promo_sin_resultados">No hi ha promocions disponibles en aquest moment.</string>
     <string name="promo_error_red">No s\'han pogut carregar les promocions.\nComprova la connexió.</string>
     <string name="promo_ver_mas">Veure més</string>
     <string name="promo_ver_menos">Veure menys</string>
+
+    <!-- Main -->
     <string name="last_sync_never">EESS: sense actualitzar</string>
     <string name="last_sync_format">EESS actualitzades a: %1$s</string>
     <string name="title_preferences">Preferències</string>
@@ -94,6 +100,8 @@
     <string name="label_range_15_days">15 dies</string>
     <string name="label_range_30_days">30 dies</string>
     <string name="msg_loading_reviews">Carregant opinions...</string>
+
+    <!-- PreferencesActivity -->
     <string name="msg_add_vehicle_required">Afegeix almenys un vehicle per continuar.</string>
     <string name="label_by_power">Per potència</string>
     <string name="label_by_price">Per preu</string>
@@ -144,6 +152,8 @@
     <string name="title_delete_discount">Eliminar descompte</string>
     <string name="msg_no_alerts_configured">No tens alertes configurades.</string>
     <string name="msg_checking_prices">🔔 Comprovant preus…</string>
+
+    <!-- GeneralFragment -->
     <string name="label_max_power">Potència màxima</string>
     <string name="label_charge_time">Temps de càrrega estimat</string>
     <string name="label_energy_cost">Despesa energètica fins a l\'estació</string>
@@ -159,6 +169,8 @@
     <string name="msg_power_unavailable">N/D</string>
     <string name="btn_remove_from_favorites">❤️ Treure de favorites</string>
     <string name="msg_no_available">No disponible</string>
+
+    <!-- MainActivity -->
     <string name="msg_location_not_found">No s\'ha trobat la localitat</string>
     <string name="msg_error_searching_location">Error en cercar la localitat</string>
     <string name="msg_no_stations_in_location">No hi ha estacions en aquesta localitat</string>
@@ -168,12 +180,16 @@
     <string name="label_last_sync_format">Última actualització: %1$s</string>
     <string name="label_last_sync_never">Última actualització: --</string>
     <string name="msg_por_potencia">Per potència</string>
+
+    <!-- FavoritesActivity -->
     <string name="msg_no_notification_permission">Sense permís de notificacions no podrem avisar-te. Pots activar-lo a Ajustos.</string>
     <string name="msg_alert_deleted">Alerta eliminada</string>
     <string name="msg_max_alerts">Ja tens 5 alertes. Elimina\'n una abans d\'afegir-ne una altra.</string>
     <string name="hint_alert_price">Ex: 1.450</string>
     <string name="msg_invalid_price">Preu no vàlid.</string>
     <string name="msg_alert_saved">✅ Alerta desada</string>
+
+    <!-- Tabs de detalle de estación -->
     <string name="tab_general">General</string>
     <string name="tab_location">Ubicació</string>
     <string name="tab_prices">Preus</string>
@@ -182,23 +198,30 @@
     <string name="tab_promotions">Promocions</string>
     <string name="tab_reviews">Opinions</string>
     <string name="fmt_alert_fuel_mismatch">⚠️ La teva alerta era de %1$s. Canvia el teu combustible a preferències per veure\'n el preu.</string>
+
+    <!-- Formatos de texto dinámico -->
     <string name="fmt_energy_to_arrive">%.2f kWh per arribar</string>
     <string name="fmt_charge_time_minutes">~%d min (20%% → 80%%)</string>
     <string name="fmt_charge_time_hours_minutes">~%dh %dmin (20%% → 80%%)</string>
     <string name="fmt_discount_label">Preu amb descompte %1$s (%2$s)</string>
     <string name="fmt_fill_with_discount">Ompliment amb descompte: %.2f €</string>
     <string name="fmt_history_title">%1$s — %2$s</string>
+
+    <!-- Mensajes de estado -->
     <string name="msg_history_not_available_electric">Historial no disponible per a vehicles elèctrics</string>
     <string name="msg_history_not_available_station">Historial no disponible per a aquesta estació</string>
     <string name="msg_history_unavailable">L\'historial de preus no està disponible en aquest moment</string>
     <string name="msg_no_data">Sense dades</string>
     <string name="msg_no_connector_data">Sense dades de connectors</string>
+
+    <!-- Etiquetas -->
     <string name="label_charge_type_fast">Ràpida (DC)</string>
     <string name="label_charge_type_normal">Normal (AC)</string>
     <string name="label_not_available_short">N/D</string>
     <string name="label_gas_station">Gasolinera</string>
+
+    <!-- Chooser -->
     <string name="chooser_navigate_with">Navegar amb…</string>
-    <string name="msg_favorites_not_available_electric">Pròximament podràs afegir electrolineres a favorites i gestionar notificacions</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_map">Mapa</string>
@@ -206,8 +229,9 @@
     <string name="nav_distance">Per distància</string>
     <string name="nav_favorites">Favorites</string>
     <string name="nav_preferences">Preferències</string>
+    <string name="msg_favorites_not_available_electric">Pròximament podràs afegir electrolineres a favorites i gestionar notificacions</string>
 
-    <!-- Filtre de marca -->
+    <!-- Filtro de marca -->
     <string name="brand_filter_default">Marca: Totes</string>
     <string name="brand_filter_label">Marca: %1$s</string>
     <string name="brand_filter_dialog_title">Marca</string>

@@ -100,6 +100,7 @@
     <string name="label_range_15_days">15 días</string>
     <string name="label_range_30_days">30 días</string>
     <string name="msg_loading_reviews">Cargando opiniones...</string>
+
     <!-- PreferencesActivity -->
     <string name="msg_add_vehicle_required">Añade al menos un vehículo para continuar.</string>
     <string name="label_by_power">Por potencia</string>
@@ -151,6 +152,7 @@
     <string name="title_delete_discount">Eliminar descuento</string>
     <string name="msg_no_alerts_configured">No tienes alertas configuradas.</string>
     <string name="msg_checking_prices">🔔 Comprobando precios…</string>
+
     <!-- GeneralFragment -->
     <string name="label_max_power">Potencia máxima</string>
     <string name="label_charge_time">Tiempo de carga estimado</string>
@@ -167,6 +169,7 @@
     <string name="msg_power_unavailable">N/D</string>
     <string name="btn_remove_from_favorites">❤️ Quitar de favoritos</string>
     <string name="msg_no_available">No disponible</string>
+
     <!-- MainActivity -->
     <string name="msg_location_not_found">No se encontró la localidad</string>
     <string name="msg_error_searching_location">Error al buscar la localidad</string>
@@ -177,6 +180,7 @@
     <string name="label_last_sync_format">Última actualización: %1$s</string>
     <string name="label_last_sync_never">Última actualización: --</string>
     <string name="msg_por_potencia">Por potencia</string>
+
     <!-- FavoritesActivity -->
     <string name="msg_no_notification_permission">Sin permiso de notificaciones no podremos avisarte. Puedes activarlo en Ajustes.</string>
     <string name="msg_alert_deleted">Alerta eliminada</string>
@@ -225,7 +229,6 @@
     <string name="nav_distance">Por distancia</string>
     <string name="nav_favorites">Favoritas</string>
     <string name="nav_preferences">Preferencias</string>
-
     <string name="msg_favorites_not_available_electric"> Próximamente podrás añadir electrolineras a favoritos y gestionar notificaciones</string>
 
     <!-- Filtro de marca -->
@@ -234,8 +237,6 @@
     <string name="brand_filter_dialog_title">Marca</string>
     <string name="brand_all">Todas</string>
     <string name="cancel">Cancelar</string>
-
-
     <string name="pref_contact_title">¿Has encontrado un error? Repórtalo aquí:</string>
     <string name="pref_contact_email">ahorragas.soporte@gmail.com</string>
     <string name="easter_egg_message" translatable="false">🤑 MRK was here</string>

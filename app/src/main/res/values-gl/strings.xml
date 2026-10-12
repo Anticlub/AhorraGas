@@ -63,7 +63,7 @@
     <string name="empty_favorites">Aínda non tes gasolineiras favoritas.\nPreme ❤️ no detalle dunha gasolineira para engadila.</string>
     <string name="error_favorites">Non se puideron cargar os favoritos.</string>
 
-    <!-- Promocións -->
+    <!-- Promociones -->
     <string name="promo_cargando">Cargando promocións…</string>
     <string name="promo_sin_resultados">Non hai promocións dispoñibles neste momento.</string>
     <string name="promo_error_red">Non se puideron cargar as promocións.\nComproba a túa conexión.</string>
@@ -207,7 +207,7 @@
     <string name="fmt_fill_with_discount">Enchido con desconto: %.2f €</string>
     <string name="fmt_history_title">%1$s — %2$s</string>
 
-    <!-- Mensaxes de estado -->
+    <!-- Mensajes de estado -->
     <string name="msg_history_not_available_electric">Histórico non dispoñible para vehículos eléctricos</string>
     <string name="msg_history_not_available_station">Histórico non dispoñible para esta estación</string>
     <string name="msg_history_unavailable">O histórico de prezos non está dispoñible neste momento</string>
@@ -229,7 +229,6 @@
     <string name="nav_distance">Por distancia</string>
     <string name="nav_favorites">Favoritas</string>
     <string name="nav_preferences">Preferencias</string>
-
     <string name="msg_favorites_not_available_electric">Proximamente poderás engadir electrolineiras a favoritas e xestionar notificacións</string>
 
     <!-- Filtro de marca -->
