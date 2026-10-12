@@ -50,11 +50,6 @@
             </intent-filter>
         </activity>
 
-        <service
-            android:name="androidx.work.impl.foreground.SystemForegroundService"
-            android:foregroundServiceType="shortService"
-            tools:node="merge" />
-
     </application>
 
 </manifest>

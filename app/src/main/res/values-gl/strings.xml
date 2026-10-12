@@ -84,7 +84,6 @@
     <string name="label_my_discounts">Os meus descontos</string>
     <string name="btn_add">+ Engadir</string>
     <string name="label_my_price_alerts">Os meus avisos de prezo</string>
-    <string name="btn_test_notifications">🔔 Probar notificacións</string>
     <string name="label_markers_range_hint">Número de gasolineiras mostradas no mapa (1–150).</string>
     <string name="hint_search_by_location">Buscar por localidade...</string>
     <string name="title_distance_list">Estacións por distancia</string>
@@ -150,8 +149,6 @@
     <string name="error_max_discounts">Alcanzaches o máximo de descontos.</string>
     <string name="title_delete_vehicle">Eliminar vehículo</string>
     <string name="title_delete_discount">Eliminar desconto</string>
-    <string name="msg_no_alerts_configured">Non tes avisos configurados.</string>
-    <string name="msg_checking_prices">🔔 Comprobando prezos…</string>
 
     <!-- GeneralFragment -->
     <string name="label_max_power">Potencia máxima</string>
