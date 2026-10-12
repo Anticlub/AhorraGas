@@ -166,5 +166,5 @@ TFG entregado y calificado con **10/10**. Actualmente en fase de *hardening* par
 Proyecto de Fin de Grado de **2º DAM** (Desarrollo de Aplicaciones Multiplataforma), desarrollado por:
 
 - **Cristofer Fernández Fernández** — [GitHub @Anticlub](https://github.com/Anticlub) · [LinkedIn](https://www.linkedin.com/in/cristofer-fern%C3%A1ndez-fern%C3%A1ndez-897106202/)
-- **Marco** — [GitHub @markitoelgamer970-design](https://github.com/markitoelgamer970-design)
+- **Marco Calvo Méndez** — [GitHub @markitoelgamer970-design](https://github.com/markitoelgamer970-design)
 - **Raúl González-Gallego López-Menchero** — [GitHub @RaulGonz11](https://github.com/RaulGonz11)
