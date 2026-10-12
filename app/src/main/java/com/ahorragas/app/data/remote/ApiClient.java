@@ -1,5 +1,7 @@
 package com.ahorragas.app.data.remote;
 
+import com.ahorragas.app.BuildConfig;
+
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
@@ -12,8 +14,8 @@ import retrofit2.converter.scalars.ScalarsConverterFactory;
  * Singleton que proporciona la instancia de OkHttpClient y
  * las interfaces Retrofit para cada API del proyecto.
  *
- * Centraliza timeouts, interceptores, logging y User-Agent
- * en un único punto de configuración.
+ * Centraliza timeouts, interceptores, logging (solo en debug) y
+ * User-Agent en un único punto de configuración.
  */
 public final class ApiClient {
 
@@ -26,18 +28,23 @@ public final class ApiClient {
     private final OkHttpClient okHttpClient;
 
     private ApiClient() {
-        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        logging.setLevel(HttpLoggingInterceptor.Level.BASIC);
-
-        okHttpClient = new OkHttpClient.Builder()
+        var builder = new OkHttpClient.Builder()
                 .connectTimeout(CONNECT_TIMEOUT_S, TimeUnit.SECONDS)
                 .readTimeout(READ_TIMEOUT_S, TimeUnit.SECONDS)
                 .addInterceptor(chain -> chain.proceed(
                         chain.request().newBuilder()
                                 .header("User-Agent", USER_AGENT)
-                                .build()))
-                .addInterceptor(logging)
-                .build();
+                                .build()));
+
+        // El log de peticiones (método, URL y código) solo en debug: en la
+        // versión publicada no debe quedar rastro de las búsquedas del usuario.
+        if (BuildConfig.DEBUG) {
+            var logging = new HttpLoggingInterceptor();
+            logging.setLevel(HttpLoggingInterceptor.Level.BASIC);
+            builder.addInterceptor(logging);
+        }
+
+        okHttpClient = builder.build();
     }
 
     /**
