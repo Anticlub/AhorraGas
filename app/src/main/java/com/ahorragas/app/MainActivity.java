@@ -277,14 +277,8 @@ public class MainActivity extends BaseActivity {
 
     /** Pinta los markers de una búsqueda por municipio. */
     private void renderSearch(boolean empty) {
-        clearMapMarkers();
         List<Gasolinera> stations = viewModel.getSearchGasolineras();
-        if (stations != null) {
-            for (Gasolinera g : stations) {
-                addMarker(g);
-            }
-        }
-        mapView.invalidate();
+        renderStations(stations != null ? stations : new ArrayList<>());
         if (empty) {
             Toast.makeText(this,
                     getString(R.string.msg_no_stations_in_location), Toast.LENGTH_SHORT).show();
@@ -458,16 +452,23 @@ public class MainActivity extends BaseActivity {
     }
 
     private void showStationsOnMap(int count) {
+        // El filtro de marca ya viene aplicado en los datos (MapViewModel), aquí
+        // solo se recorta al máximo de markers para pintar.
+        final List<Gasolinera> visible = viewModel.getVisibleGasolineras();
+        renderStations(visible.subList(0, Math.min(count, visible.size())));
+    }
+
+    /**
+     * Único camino para pintar estaciones en el mapa (carga por radio y búsqueda
+     * por municipio): aplica los descuentos y genera los bitmaps en segundo plano.
+     */
+    private void renderStations(List<Gasolinera> stations) {
         // No se limpia la caché aquí a propósito: la clave del bitmap ya incluye
         // marca, nivel, precio (con descuento) y favorito, así que re-renderizar el
         // mapa (mover, zoom, filtrar) reutiliza los bitmaps en vez de recrearlos.
         // Los cambios de combustible/descuentos/favoritos ya invalidan en onResume.
         clearMapMarkers();
-        // El filtro de marca ya viene aplicado en los datos (MapViewModel), aquí
-        // solo se recorta al máximo de markers para pintar.
-        final List<Gasolinera> visible = viewModel.getVisibleGasolineras();
-        final List<Gasolinera> toRender = new ArrayList<>(
-                visible.subList(0, Math.min(count, visible.size())));
+        final List<Gasolinera> toRender = new ArrayList<>(stations);
         final FuelType fuelSnapshot = viewModel.getSelectedFuel();
         final PriceRange rangeSnapshot = viewModel.getCurrentPriceRange();
 
@@ -516,45 +517,6 @@ public class MainActivity extends BaseActivity {
                 mapView.invalidate();
             });
         });
-    }
-
-    private void addMarker(Gasolinera gasolinera) {
-        if (gasolinera.getLat() == null || gasolinera.getLon() == null) return;
-
-        FuelType fuel = viewModel.getSelectedFuel();
-        Double originalPrice = gasolinera.getPrecio(fuel);
-        String priceText;
-        PriceLevel priceLevel;
-
-        if (originalPrice != null && originalPrice > 0) {
-            double discounted = DiscountPrefs.applyAllDiscounts(
-                    this, gasolinera.getMarca(), originalPrice);
-            priceText = String.format(java.util.Locale.getDefault(), "%.3f €", discounted);
-            priceLevel = GasolineraSorter.getPriceLevel(discounted, viewModel.getCurrentPriceRange());
-        } else {
-            priceText = gasolinera.getFormattedPrice(fuel);
-            priceLevel = gasolinera.getPriceLevel();
-        }
-
-        Marker marker = new Marker(mapView);
-        marker.setPosition(new GeoPoint(gasolinera.getLat(), gasolinera.getLon()));
-        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        marker.setInfoWindow(null);
-
-        marker.setIcon(new android.graphics.drawable.BitmapDrawable(
-                getResources(),
-                MarkerBitmapFactory.createMarker(this, gasolinera, fuel)
-        ));
-
-        marker.setOnMarkerClickListener((clickedMarker, ignoredMapView) -> {
-            Intent intent = new Intent(this, StationDetailActivity.class);
-            intent.putExtra(StationDetailActivity.EXTRA_GASOLINERA, gasolinera);
-            startActivity(intent);
-            return true;
-        });
-
-        mapView.getOverlays().add(marker);
-        markerMap.put(gasolinera.getId(), marker);
     }
 
     private void clearMapMarkers() {
