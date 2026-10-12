@@ -4,12 +4,21 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <!-- Mini mapa -->
+    <!-- Mini mapa + atribución de OSM -->
     <FrameLayout
-        android:id="@+id/mapContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1">
+
+        <FrameLayout
+            android:id="@+id/mapContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <include
+            android:id="@+id/osmAttribution"
+            layout="@layout/view_osm_attribution" />
+    </FrameLayout>
 
     <!-- Botón navegar -->
     <Button

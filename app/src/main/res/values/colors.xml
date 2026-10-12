@@ -33,4 +33,7 @@
     <color name="pref_input">#2C2C3A</color>
     <color name="pref_separator">#444455</color>
     <color name="pref_label">#CCCCCC</color>
+
+    <!-- Atribución de OpenStreetMap sobre los mapas -->
+    <color name="osm_attribution_bg">#B3FFFFFF</color>
 </resources>
