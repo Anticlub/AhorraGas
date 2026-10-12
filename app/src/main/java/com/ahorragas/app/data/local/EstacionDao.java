@@ -42,7 +42,7 @@ public interface EstacionDao {
             "AND UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(" +
             "municipio,'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'Ñ','N')) " +
             "= UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(" +
-            ":municipio,'Á','A'),'É','E'),'Í','E'),'Ó','O'),'Ú','U'),'Ñ','N'))")
+            ":municipio,'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'Ñ','N'))")
     List<EstacionEntity> getElectrolinerasByMunicipio(String municipio);
 
     @Query("SELECT DISTINCT municipio FROM gasolineras " +
