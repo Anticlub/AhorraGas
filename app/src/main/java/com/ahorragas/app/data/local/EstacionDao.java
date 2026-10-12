@@ -31,18 +31,30 @@ public interface EstacionDao {
     List<EstacionEntity> getElectrolinerasByBoundingBox(
             double minLat, double maxLat, double minLon, double maxLon);
 
-    @Query("SELECT * FROM gasolineras WHERE es_electrica = 0 " +
-            "AND UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(" +
-            "municipio,'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'Ñ','N')) " +
-            "= UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(" +
-            ":municipio,'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'Ñ','N'))")
+    @Query("SELECT * FROM gasolineras WHERE es_electrica = 0 AND " +
+            "UPPER(" +
+            "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(" +
+            "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(municipio," +
+            "'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'Ñ','N')," +
+            "'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u'),'ñ','n'),'ü','u'))" +
+            " = UPPER(" +
+            "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(" +
+            "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(:municipio," +
+            "'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'Ñ','N')," +
+            "'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u'),'ñ','n'),'ü','u'))")
     List<EstacionEntity> getGasolinerasByMunicipio(String municipio);
 
-    @Query("SELECT * FROM gasolineras WHERE es_electrica = 1 " +
-            "AND UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(" +
-            "municipio,'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'Ñ','N')) " +
-            "= UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(" +
-            ":municipio,'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'Ñ','N'))")
+    @Query("SELECT * FROM gasolineras WHERE es_electrica = 1 AND " +
+            "UPPER(" +
+            "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(" +
+            "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(municipio," +
+            "'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'Ñ','N')," +
+            "'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u'),'ñ','n'),'ü','u'))" +
+            " = UPPER(" +
+            "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(" +
+            "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(:municipio," +
+            "'Á','A'),'É','E'),'Í','I'),'Ó','O'),'Ú','U'),'Ñ','N')," +
+            "'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u'),'ñ','n'),'ü','u'))")
     List<EstacionEntity> getElectrolinerasByMunicipio(String municipio);
 
     @Query("SELECT DISTINCT municipio FROM gasolineras " +
