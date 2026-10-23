@@ -1,5 +1,8 @@
 package com.ahorragas.app;
 
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.Spannable;
@@ -79,6 +82,7 @@ public class PreferencesActivity extends BaseActivity {
         setupBackPress();
         setupMarkersSelector();
         setupEasterEgg();
+        setupPrivacyPolicyLink();
         refreshVehicleList();
         refreshDiscountList();
         refreshAlertList();
@@ -96,6 +100,18 @@ public class PreferencesActivity extends BaseActivity {
             if (easterEggTapCount == 7) {
                 easterEggTapCount = 0;
                 Toast.makeText(this, getString(R.string.easter_egg_message), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    /** Abre la política de privacidad publicada (GitHub Pages) en el navegador. */
+    private void setupPrivacyPolicyLink() {
+        findViewById(R.id.tvPrivacyPolicy).setOnClickListener(v -> {
+            var uri = Uri.parse(getString(R.string.privacy_policy_url));
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, uri));
+            } catch (ActivityNotFoundException ignored) {
+                // Sin navegador instalado: no hay nada que abrir.
             }
         });
     }

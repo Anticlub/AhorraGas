@@ -237,5 +237,8 @@
     <string name="cancel">Cancelar</string>
     <string name="pref_contact_title">¿Has encontrado un error? Repórtalo aquí:</string>
     <string name="pref_contact_email">ahorragas.soporte@gmail.com</string>
+    <string name="pref_privacy_title">Privacidad</string>
+    <string name="pref_privacy_policy">Política de privacidad</string>
+    <string name="privacy_policy_url" translatable="false">https://anticlub.github.io/AhorraGas/privacy-policy</string>
     <string name="easter_egg_message" translatable="false">🤑 MRK was here</string>
 </resources>

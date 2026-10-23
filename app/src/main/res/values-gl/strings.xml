@@ -236,4 +236,6 @@
     <string name="cancel">Cancelar</string>
     <string name="pref_contact_title">Atopaches un erro? Repórtao aquí:</string>
     <string name="pref_contact_email">ahorragas.soporte@gmail.com</string>
+    <string name="pref_privacy_title">Privacidade</string>
+    <string name="pref_privacy_policy">Política de privacidade</string>
 </resources>
