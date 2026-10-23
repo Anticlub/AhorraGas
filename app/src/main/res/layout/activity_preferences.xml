@@ -341,6 +341,37 @@
                     android:focusable="true"
                     android:drawablePadding="8dp" />
 
+                <!-- ══════════════════════════════════════════════════ -->
+                <!-- SECCIÓN: Privacidad                               -->
+                <!-- ══════════════════════════════════════════════════ -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/pref_privacy_title"
+                    android:textColor="@color/teal_accent"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="10dp"
+                    android:background="@color/pref_card" />
+
+                <TextView
+                    android:id="@+id/tvPrivacyPolicy"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:gravity="center_vertical"
+                    android:text="@string/pref_privacy_policy"
+                    android:textColor="@color/pref_label"
+                    android:textSize="14sp"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp"
+                    android:background="@color/pref_input"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true" />
+
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 
