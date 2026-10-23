@@ -3,6 +3,7 @@ package com.ahorragas.app;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.Spannable;
@@ -78,10 +79,36 @@ public class PreferencesActivity extends BaseActivity {
         setupBottomNav();
         setupBackPress();
         setupMarkersSelector();
+        setupContactEmail();
         setupPrivacyPolicyLink();
         refreshVehicleList();
         refreshDiscountList();
         refreshAlertList();
+    }
+
+    // ─── Contacto ─────────────────────────────────────────────────────────────
+
+    /**
+     * Abre la app de correo para reportar un error, con el destinatario, el asunto
+     * y los datos de la app y del dispositivo ya rellenados.
+     */
+    private void setupContactEmail() {
+        findViewById(R.id.tvContactEmail).setOnClickListener(v -> {
+            var body = getString(R.string.contact_email_body,
+                    BuildConfig.VERSION_NAME,
+                    Build.VERSION.RELEASE,
+                    Build.MANUFACTURER + " " + Build.MODEL);
+
+            var intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
+                    .putExtra(Intent.EXTRA_EMAIL, new String[]{getString(R.string.pref_contact_email)})
+                    .putExtra(Intent.EXTRA_SUBJECT, getString(R.string.contact_email_subject))
+                    .putExtra(Intent.EXTRA_TEXT, body);
+            try {
+                startActivity(intent);
+            } catch (ActivityNotFoundException e) {
+                Toast.makeText(this, R.string.msg_no_email_app, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     // ─── Privacidad ───────────────────────────────────────────────────────────

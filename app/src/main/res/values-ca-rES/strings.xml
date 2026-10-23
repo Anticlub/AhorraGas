@@ -234,8 +234,11 @@
     <string name="brand_filter_dialog_title">Marca</string>
     <string name="brand_all">Totes</string>
     <string name="cancel">Cancel·lar</string>
-    <string name="pref_contact_title">Has trobat un error? Repòrta\'l aquí:</string>
+    <string name="pref_contact_title">Contacte</string>
     <string name="pref_contact_email">ahorragas.soporte@gmail.com</string>
+    <string name="contact_email_subject">AhorraGas: errors i suggeriments</string>
+    <string name="contact_email_body">Explica\'ns què ha passat o què t\'agradaria millorar:\n\n\n---\nVersió de l\'app: %1$s\nAndroid: %2$s\nDispositiu: %3$s</string>
+    <string name="msg_no_email_app">No hi ha cap app de correu instal·lada</string>
     <string name="pref_privacy_title">Privadesa</string>
     <string name="pref_privacy_policy">Política de privadesa</string>
 </resources>

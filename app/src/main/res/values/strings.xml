@@ -235,8 +235,11 @@
     <string name="brand_filter_dialog_title">Marca</string>
     <string name="brand_all">Todas</string>
     <string name="cancel">Cancelar</string>
-    <string name="pref_contact_title">¿Has encontrado un error? Repórtalo aquí:</string>
+    <string name="pref_contact_title">Contacto</string>
     <string name="pref_contact_email">ahorragas.soporte@gmail.com</string>
+    <string name="contact_email_subject">AhorraGas: errores y sugerencias</string>
+    <string name="contact_email_body">Cuéntanos qué ha pasado o qué te gustaría mejorar:\n\n\n---\nVersión de la app: %1$s\nAndroid: %2$s\nDispositivo: %3$s</string>
+    <string name="msg_no_email_app">No hay ninguna app de correo instalada</string>
     <string name="pref_privacy_title">Privacidad</string>
     <string name="pref_privacy_policy">Política de privacidad</string>
     <string name="privacy_policy_url" translatable="false">https://anticlub.github.io/AhorraGas/privacy-policy</string>
