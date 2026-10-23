@@ -375,6 +375,28 @@
                     android:clickable="true"
                     android:focusable="true" />
 
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchAnalytics"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:text="@string/pref_analytics_switch"
+                    android:textColor="@color/pref_label"
+                    android:textSize="14sp"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="8dp"
+                    android:background="@color/pref_input" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/pref_analytics_summary"
+                    android:textColor="@color/text_muted"
+                    android:textSize="12sp"
+                    android:paddingHorizontal="16dp"
+                    android:paddingBottom="12dp"
+                    android:background="@color/pref_input" />
+
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 

@@ -24,11 +24,13 @@ import com.ahorragas.app.model.Discount;
 import com.ahorragas.app.model.FuelType;
 import com.ahorragas.app.model.PriceAlert;
 import com.ahorragas.app.model.Vehicle;
+import com.ahorragas.app.util.AnalyticsConsent;
 import com.ahorragas.app.util.DiscountPrefs;
 import com.ahorragas.app.util.PriceAlertPrefs;
 import com.ahorragas.app.util.RadiusUtils;
 import com.ahorragas.app.util.VehiclePrefs;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.util.List;
 import java.util.Locale;
@@ -81,6 +83,7 @@ public class PreferencesActivity extends BaseActivity {
         setupMarkersSelector();
         setupContactEmail();
         setupPrivacyPolicyLink();
+        setupAnalyticsSwitch();
         refreshVehicleList();
         refreshDiscountList();
         refreshAlertList();
@@ -123,6 +126,14 @@ public class PreferencesActivity extends BaseActivity {
                 // Sin navegador instalado: no hay nada que abrir.
             }
         });
+    }
+
+    /** Interruptor para dar o retirar el consentimiento de Analytics. */
+    private void setupAnalyticsSwitch() {
+        SwitchMaterial switchAnalytics = findViewById(R.id.switchAnalytics);
+        switchAnalytics.setChecked(AnalyticsConsent.isGranted(this));
+        switchAnalytics.setOnCheckedChangeListener((button, isChecked) ->
+                AnalyticsConsent.set(this, isChecked));
     }
 
     // ─── Marcadores ───────────────────────────────────────────────────────────

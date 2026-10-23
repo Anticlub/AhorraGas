@@ -241,4 +241,6 @@
     <string name="msg_no_email_app">Ez dago posta-aplikaziorik instalatuta</string>
     <string name="pref_privacy_title">Pribatutasuna</string>
     <string name="pref_privacy_policy">Pribatutasun-politika</string>
+    <string name="pref_analytics_switch">Erabilera-estatistikak partekatu</string>
+    <string name="pref_analytics_summary">Aplikazioa hobetzen laguntzen digu: bisitatzen dituzun pantailak, erabilera-denbora eta mugikorraren modeloa. Ez ditu zure kokapena eta aplikazioan gordetzen duzuna barne hartzen.</string>
 </resources>

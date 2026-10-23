@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 
 import androidx.preference.PreferenceManager;
 
+import com.ahorragas.app.util.AnalyticsConsent;
+
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.modules.SqlTileWriter;
 
@@ -48,6 +50,9 @@ public class AhorraGasApp extends Application {
         Configuration.getInstance().setUserAgentValue(OSM_USER_AGENT);
 
         purgeStaleTileCacheOnce(prefs);
+
+        // Analytics solo recoge datos si el usuario ha dado su consentimiento.
+        AnalyticsConsent.apply(this);
     }
 
     /**

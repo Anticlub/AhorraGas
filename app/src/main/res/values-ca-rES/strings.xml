@@ -241,4 +241,6 @@
     <string name="msg_no_email_app">No hi ha cap app de correu instal·lada</string>
     <string name="pref_privacy_title">Privadesa</string>
     <string name="pref_privacy_policy">Política de privadesa</string>
+    <string name="pref_analytics_switch">Compartir estadístiques d\'ús</string>
+    <string name="pref_analytics_summary">Ens ajuda a millorar l\'app: pantalles que visites, temps d\'ús i model del mòbil. No inclou la teva ubicació ni el que guardes a l\'app.</string>
 </resources>
