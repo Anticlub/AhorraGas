@@ -1,6 +1,6 @@
 # Política de Privacidad de AhorraGas
 
-**Última actualización:** 23 de octubre de 2026
+**Última actualización:** 24 de octubre de 2026
 
 Esta Política de Privacidad describe cómo la aplicación **AhorraGas** (en adelante, "la App") trata la información cuando la utilizas. Nos tomamos en serio tu privacidad y hemos diseñado la App para recoger los **mínimos datos necesarios** para funcionar.
 
@@ -16,6 +16,7 @@ Esta Política de Privacidad describe cómo la aplicación **AhorraGas** (en ade
 - Usamos servicios de terceros (Google Firebase, Google Places, OpenStreetMap) que pueden tratar ciertos datos técnicos, como se explica abajo.
 - **No vendemos tus datos** a nadie.
 - **No usamos el identificador de publicidad** de tu dispositivo ni mostramos anuncios.
+- **Solo recogemos estadísticas de uso si nos das permiso**, y puedes retirarlo cuando quieras.
 
 ---
 
@@ -35,7 +36,7 @@ Esta Política de Privacidad describe cómo la aplicación **AhorraGas** (en ade
 - Si configuras una alerta de precio, la App comprueba los precios **en tu dispositivo** en segundo plano y te envía una notificación local cuando se cumple tu condición. No requiere cuenta ni envía tus alertas a ningún servidor.
 
 ### 2.4. Datos de uso y diagnóstico (Firebase Analytics)
-- La App incluye **Google Firebase Analytics**, que puede recoger de forma automática datos técnicos y de uso: modelo de dispositivo, versión de Android, identificador de instalación de la App, eventos de uso y región aproximada (derivada de tu dirección IP).
+- La App incluye **Google Firebase Analytics**, que **solo se activa si das tu consentimiento** (te lo preguntamos la primera vez que abres la App y puedes cambiarlo en Preferencias → Privacidad). Si aceptas, recoge datos técnicos y de uso: modelo de dispositivo, versión de Android, identificador de instalación de la App, eventos de uso y región aproximada (derivada de tu dirección IP). Si no aceptas, no recoge nada.
 - **Para qué:** entender de forma agregada cómo se usa la App y mejorarla.
 - **No se recoge el identificador de publicidad** del dispositivo: la App lo tiene desactivado y no declara el permiso necesario para leerlo.
 
@@ -64,17 +65,17 @@ La App se apoya en servicios externos que tratan datos conforme a sus propias po
 
 ## 4. Base legal del tratamiento (RGPD)
 
-- **Consentimiento** (art. 6.1.a RGPD): para el acceso a la ubicación y el envío de notificaciones, que autorizas mediante los permisos del sistema.
-- **Interés legítimo** (art. 6.1.f RGPD): para la analítica de uso agregada y los informes de fallos, con el fin de mantener y mejorar la App.
+- **Consentimiento** (art. 6.1.a RGPD): para el acceso a la ubicación y el envío de notificaciones, que autorizas mediante los permisos del sistema, y para las **estadísticas de uso** (Firebase Analytics), que autorizas en la propia App. Puedes retirarlo en cualquier momento.
+- **Interés legítimo** (art. 6.1.f RGPD): para los informes de fallos (Firebase Crashlytics), con el fin de mantener la App funcionando correctamente.
 
 ---
 
 ## 5. Permisos y cómo controlarlos
 
-Puedes revocar los permisos en cualquier momento desde los **Ajustes de Android**:
-
+Puedes revocar los permisos en cualquier momento desde los **Ajustes de Android** o desde la propia App:
 - **Ubicación:** Ajustes → Aplicaciones → AhorraGas → Permisos → Ubicación.
 - **Notificaciones:** Ajustes → Aplicaciones → AhorraGas → Notificaciones.
+- **Estadísticas de uso:** Preferencias → Privacidad → Compartir estadísticas de uso. Al desactivarlo, se borran también los datos de Analytics guardados en tu dispositivo.
 - **Copia de seguridad:** Ajustes → Google → Copia de seguridad (para incluir o no los datos de la App en la copia de tu cuenta de Google).
 
 Para **eliminar todos los datos locales** de la App, borra sus datos (Ajustes → Aplicaciones → AhorraGas → Almacenamiento → Borrar datos) o desinstálala.
