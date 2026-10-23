@@ -1,21 +1,21 @@
 # Política de Privacidad de AhorraGas
 
-**Última actualización:** 8 de septiembre de 2026
+**Última actualización:** 23 de octubre de 2026
 
 Esta Política de Privacidad describe cómo la aplicación **AhorraGas** (en adelante, "la App") trata la información cuando la utilizas. Nos tomamos en serio tu privacidad y hemos diseñado la App para recoger los **mínimos datos necesarios** para funcionar.
 
 > **Responsables del tratamiento:** Cristofer Fernández Fernández, Marco Calvo Méndez y Raúl González-Gallego López-Menchero (autores de AhorraGas)
-> **Contacto:** cristofdzfdz@gmail.com
-
+> **Contacto:** ahorragas.soporte@gmail.com
 ---
 
 ## 1. Resumen rápido
 
 - **No necesitas registrarte ni crear una cuenta** para usar la App.
-- Tus **favoritos, vehículos, descuentos y preferencias se guardan solo en tu dispositivo**; no se envían a ningún servidor nuestro (de hecho, la App no tiene servidores propios).
+- Tus **favoritos, vehículos, descuentos, alertas y preferencias se guardan en tu dispositivo**; la App no tiene servidores propios. Si tienes activada la copia de seguridad de Android, el sistema puede incluirlos en la copia cifrada de tu cuenta de Google.
 - Usamos tu **ubicación** únicamente para mostrarte las gasolineras cercanas y calcular distancias.
 - Usamos servicios de terceros (Google Firebase, Google Places, OpenStreetMap) que pueden tratar ciertos datos técnicos, como se explica abajo.
 - **No vendemos tus datos** a nadie.
+- **No usamos el identificador de publicidad** de tu dispositivo ni mostramos anuncios.
 
 ---
 
@@ -27,7 +27,9 @@ Esta Política de Privacidad describe cómo la aplicación **AhorraGas** (en ade
 - La App **no** utiliza ubicación en segundo plano.
 
 ### 2.2. Datos que guardas tú (favoritos, vehículos, descuentos, alertas)
-- Se almacenan **exclusivamente en tu dispositivo** (almacenamiento local de la App). No salen de él y se eliminan al desinstalar la App o borrar sus datos.
+- Se almacenan en el **almacenamiento local de la App** en tu dispositivo y no se envían a ningún servidor nuestro.
+- Si tienes activada la **copia de seguridad de Android** (Ajustes → Google → Copia de seguridad), el sistema puede incluir estos datos en la copia cifrada de tu cuenta de Google, para restaurarlos si cambias de móvil. Esta copia la gestiona Google y la controlas tú desde los ajustes del dispositivo.
+- Se eliminan al borrar los datos de la App o desinstalarla.
 
 ### 2.3. Notificaciones (alertas de precio)
 - Si configuras una alerta de precio, la App comprueba los precios **en tu dispositivo** en segundo plano y te envía una notificación local cuando se cumple tu condición. No requiere cuenta ni envía tus alertas a ningún servidor.
@@ -35,6 +37,7 @@ Esta Política de Privacidad describe cómo la aplicación **AhorraGas** (en ade
 ### 2.4. Datos de uso y diagnóstico (Firebase Analytics)
 - La App incluye **Google Firebase Analytics**, que puede recoger de forma automática datos técnicos y de uso: modelo de dispositivo, versión de Android, identificador de instalación de la App, eventos de uso y región aproximada (derivada de tu dirección IP).
 - **Para qué:** entender de forma agregada cómo se usa la App y mejorarla.
+- **No se recoge el identificador de publicidad** del dispositivo: la App lo tiene desactivado y no declara el permiso necesario para leerlo.
 
 ### 2.5. Informes de fallos (Firebase Crashlytics)
 - La App incluye **Google Firebase Crashlytics**, que registra informes cuando la App se cierra de forma inesperada: traza del error, estado y modelo del dispositivo y versión de la App.
@@ -51,7 +54,9 @@ La App se apoya en servicios externos que tratan datos conforme a sus propias po
 | **Google Firebase** (Analytics y Crashlytics) | Identificadores del dispositivo/instalación, datos de uso y de diagnóstico, IP | [Privacidad de Google](https://policies.google.com/privacy) · [Firebase](https://firebase.google.com/support/privacy) |
 | **Google Places API** | Al abrir la pestaña de opiniones de una estación, se envía a Google la **ubicación de esa estación** y una consulta genérica para obtener su valoración y reseñas públicas de Google Maps | [Privacidad de Google](https://policies.google.com/privacy) |
 | **OpenStreetMap** (teselas de mapa y geocodificación Nominatim) | Al usar el mapa o buscar una localidad, se envían coordenadas/consultas de mapa y tu dirección IP a sus servidores | [OSMF Privacy Policy](https://wiki.osmfoundation.org/wiki/Privacy_Policy) |
-| **Datos oficiales de carburantes** (Ministerio) | Fuente pública de precios; **no** se le envían datos personales tuyos | — |
+| **Ministerio para la Transición Ecológica** (precios de carburantes y promociones) | Fuente pública de datos; **no** se le envían datos personales tuyos, solo tu dirección IP como en cualquier conexión | — |
+| **DGT** (datos abiertos de puntos de recarga eléctrica) | Fuente pública de datos; **no** se le envían datos personales tuyos, solo tu dirección IP | — |
+| **Precioil** (histórico de precios) | Al abrir la pestaña Histórico se envía el **identificador de la estación** y el rango de fechas, además de tu dirección IP | [precioil.es](https://precioil.es) |
 
 **No vendemos ni cedemos tus datos personales** a terceros con fines comerciales.
 
@@ -70,7 +75,7 @@ Puedes revocar los permisos en cualquier momento desde los **Ajustes de Android*
 
 - **Ubicación:** Ajustes → Aplicaciones → AhorraGas → Permisos → Ubicación.
 - **Notificaciones:** Ajustes → Aplicaciones → AhorraGas → Notificaciones.
-- **Restablecer/limitar la publicidad y analítica:** Ajustes → Google → Anuncios (puedes restablecer o eliminar tu identificador de publicidad).
+- **Copia de seguridad:** Ajustes → Google → Copia de seguridad (para incluir o no los datos de la App en la copia de tu cuenta de Google).
 
 Para **eliminar todos los datos locales** de la App, borra sus datos (Ajustes → Aplicaciones → AhorraGas → Almacenamiento → Borrar datos) o desinstálala.
 
@@ -98,7 +103,7 @@ Dado que la App no crea cuentas ni almacena tus datos en servidores propios:
 
 - Para los datos **locales**, puedes ejercer la supresión borrando los datos de la App o desinstalándola.
 - Para los datos tratados por **Google Firebase**, puedes gestionarlos a través de tu cuenta de Google y de los ajustes de tu dispositivo.
-- Para cualquier consulta sobre tus derechos, escríbenos a cristofdzfdz@gmail.com.
+- Para cualquier consulta sobre tus derechos, escríbenos a ahorragas.soporte@gmail.com.
 
 También puedes presentar una reclamación ante la **Agencia Española de Protección de Datos** ([www.aepd.es](https://www.aepd.es)).
 
@@ -113,4 +118,4 @@ Podemos actualizar esta Política de Privacidad. Publicaremos la versión vigent
 ## 10. Contacto
 
 Si tienes cualquier duda sobre esta Política de Privacidad, contáctanos en:
-**cristofdzfdz@gmail.com**
+**ahorragas.soporte@gmail.com**
