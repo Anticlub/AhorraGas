@@ -8,6 +8,20 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    
+    <!-- Firebase Analytics añade estos permisos de publicidad por su cuenta.
+         La app no usa el ID de publicidad, así que se eliminan del manifest final
+         (si no, hay que declararlo en Google Play). -->
+    <uses-permission
+        android:name="com.google.android.gms.permission.AD_ID"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.ACCESS_ADSERVICES_AD_ID"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION"
+        tools:node="remove" />
+
     <application
         android:name=".AhorraGasApp"
         android:networkSecurityConfig="@xml/network_security_config"
@@ -21,6 +35,10 @@
         android:theme="@style/Theme.AhorraGas"
         tools:targetApi="31">
 
+        <!-- Analytics sigue recogiendo los eventos automáticos, pero sin el ID de publicidad. -->
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            android:value="false" />
         <activity
             android:name=".FavoritesActivity"
             android:exported="false" />
