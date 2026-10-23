@@ -54,9 +54,6 @@ public class PreferencesActivity extends BaseActivity {
     private SeekBar seekBarMarkers;
     private TextView tvMarkersValue;
 
-    // ── Easter egg ────────────────────────────────────────────────────────────
-    private int easterEggTapCount = 0;
-
     // ── Marcas disponibles ────────────────────────────────────────────────────
     private static final String[] BRANDS = {
             "Repsol", "Cepsa", "Moeve", "BP", "Shell", "Galp",
@@ -81,28 +78,13 @@ public class PreferencesActivity extends BaseActivity {
         setupBottomNav();
         setupBackPress();
         setupMarkersSelector();
-        setupEasterEgg();
         setupPrivacyPolicyLink();
         refreshVehicleList();
         refreshDiscountList();
         refreshAlertList();
     }
 
-    // ─── Easter egg ───────────────────────────────────────────────────────────
-
-    /**
-     * Activa un easter egg al pulsar 7 veces seguidas el título de la cabecera.
-     * Muestra un AlertDialog con la firma del desarrollador.
-     */
-    private void setupEasterEgg() {
-        findViewById(R.id.topBar).setOnClickListener(v -> {
-            easterEggTapCount++;
-            if (easterEggTapCount == 7) {
-                easterEggTapCount = 0;
-                Toast.makeText(this, getString(R.string.easter_egg_message), Toast.LENGTH_LONG).show();
-            }
-        });
-    }
+    // ─── Privacidad ───────────────────────────────────────────────────────────
 
     /** Abre la política de privacidad publicada (GitHub Pages) en el navegador. */
     private void setupPrivacyPolicyLink() {
