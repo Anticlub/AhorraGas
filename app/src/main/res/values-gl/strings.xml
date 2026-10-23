@@ -234,8 +234,11 @@
     <string name="brand_filter_dialog_title">Marca</string>
     <string name="brand_all">Todas</string>
     <string name="cancel">Cancelar</string>
-    <string name="pref_contact_title">Atopaches un erro? Repórtao aquí:</string>
+    <string name="pref_contact_title">Contacto</string>
     <string name="pref_contact_email">ahorragas.soporte@gmail.com</string>
+    <string name="contact_email_subject">AhorraGas: erros e suxestións</string>
+    <string name="contact_email_body">Cóntanos que pasou ou que che gustaría mellorar:\n\n\n---\nVersión da app: %1$s\nAndroid: %2$s\nDispositivo: %3$s</string>
+    <string name="msg_no_email_app">Non hai ningunha app de correo instalada</string>
     <string name="pref_privacy_title">Privacidade</string>
     <string name="pref_privacy_policy">Política de privacidade</string>
 </resources>
