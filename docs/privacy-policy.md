@@ -56,7 +56,7 @@ La App se apoya en servicios externos que tratan datos conforme a sus propias po
 | **OpenStreetMap** (teselas de mapa y geocodificación Nominatim) | Al usar el mapa o buscar una localidad, se envían coordenadas/consultas de mapa y tu dirección IP a sus servidores | [OSMF Privacy Policy](https://wiki.osmfoundation.org/wiki/Privacy_Policy) |
 | **Ministerio para la Transición Ecológica** (precios de carburantes y promociones) | Fuente pública de datos; **no** se le envían datos personales tuyos, solo tu dirección IP como en cualquier conexión | — |
 | **DGT** (datos abiertos de puntos de recarga eléctrica) | Fuente pública de datos; **no** se le envían datos personales tuyos, solo tu dirección IP | — |
-| **Precioil** (histórico de precios) | Al abrir la pestaña Histórico se envía el **identificador de la estación** y el rango de fechas, además de tu dirección IP | [precioil.es](https://precioil.es) |
+| **Precioil** (histórico de precios) | Al abrir la pestaña Histórico se envía el **identificador de la estación** y el rango de fechas, además de tu dirección IP | [Política de privacidad de Precioil](https://precioil.es/politica-privacidad.php) |
 
 **No vendemos ni cedemos tus datos personales** a terceros con fines comerciales.
 
