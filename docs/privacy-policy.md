@@ -54,8 +54,8 @@ La App se apoya en servicios externos que tratan datos conforme a sus propias po
 | **Google Firebase** (Analytics y Crashlytics) | Identificadores del dispositivo/instalación, datos de uso y de diagnóstico, IP | [Privacidad de Google](https://policies.google.com/privacy) · [Firebase](https://firebase.google.com/support/privacy) |
 | **Google Places API** | Al abrir la pestaña de opiniones de una estación, se envía a Google la **ubicación de esa estación** y una consulta genérica para obtener su valoración y reseñas públicas de Google Maps | [Privacidad de Google](https://policies.google.com/privacy) |
 | **OpenStreetMap** (teselas de mapa y geocodificación Nominatim) | Al usar el mapa o buscar una localidad, se envían coordenadas/consultas de mapa y tu dirección IP a sus servidores | [OSMF Privacy Policy](https://wiki.osmfoundation.org/wiki/Privacy_Policy) |
-| **Ministerio para la Transición Ecológica** (precios de carburantes y promociones) | Fuente pública de datos; **no** se le envían datos personales tuyos, solo tu dirección IP como en cualquier conexión | — |
-| **DGT** (datos abiertos de puntos de recarga eléctrica) | Fuente pública de datos; **no** se le envían datos personales tuyos, solo tu dirección IP | — |
+| **Ministerio para la Transición Ecológica** (precios de carburantes y promociones) | Fuente pública de datos; **no** se le envían datos personales tuyos, solo tu dirección IP como en cualquier conexión | [Protección de datos del MITECO](https://www.miteco.gob.es/es/ministerio/proteccion-datos-personales.html) |
+| **DGT** (datos abiertos de puntos de recarga eléctrica) | Fuente pública de datos; **no** se le envían datos personales tuyos, solo tu dirección IP | [Política de privacidad de la DGT](https://www.dgt.es/contenido/proteccion-de-datos/) |
 | **Precioil** (histórico de precios) | Al abrir la pestaña Histórico se envía el **identificador de la estación** y el rango de fechas, además de tu dirección IP | [Política de privacidad de Precioil](https://precioil.es/politica-privacidad.php) |
 
 **No vendemos ni cedemos tus datos personales** a terceros con fines comerciales.
