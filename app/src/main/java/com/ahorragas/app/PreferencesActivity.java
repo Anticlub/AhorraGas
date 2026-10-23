@@ -29,6 +29,7 @@ import com.ahorragas.app.util.DiscountPrefs;
 import com.ahorragas.app.util.PriceAlertPrefs;
 import com.ahorragas.app.util.RadiusUtils;
 import com.ahorragas.app.util.VehiclePrefs;
+import com.ahorragas.app.util.WebLinks;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
@@ -118,14 +119,8 @@ public class PreferencesActivity extends BaseActivity {
 
     /** Abre la política de privacidad publicada (GitHub Pages) en el navegador. */
     private void setupPrivacyPolicyLink() {
-        findViewById(R.id.tvPrivacyPolicy).setOnClickListener(v -> {
-            var uri = Uri.parse(getString(R.string.privacy_policy_url));
-            try {
-                startActivity(new Intent(Intent.ACTION_VIEW, uri));
-            } catch (ActivityNotFoundException ignored) {
-                // Sin navegador instalado: no hay nada que abrir.
-            }
-        });
+        findViewById(R.id.tvPrivacyPolicy).setOnClickListener(v ->
+                WebLinks.open(this, getString(R.string.privacy_policy_url)));
     }
 
     /** Interruptor para dar o retirar el consentimiento de Analytics. */

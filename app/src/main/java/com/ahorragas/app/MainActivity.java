@@ -28,9 +28,11 @@ import com.ahorragas.app.model.Gasolinera;
 import com.ahorragas.app.model.PriceLevel;
 import com.ahorragas.app.model.PriceRange;
 import com.ahorragas.app.model.Vehicle;
+import com.ahorragas.app.ui.AnalyticsConsentDialog;
 import com.ahorragas.app.ui.BrandFilterDialog;
 import com.ahorragas.app.ui.FirstVehicleDialog;
 import com.ahorragas.app.ui.MapViewModel;
+import com.ahorragas.app.util.AnalyticsConsent;
 import com.ahorragas.app.util.DiscountPrefs;
 import com.ahorragas.app.util.FavoritesPrefs;
 import com.ahorragas.app.util.GasolineraSorter;
@@ -73,6 +75,7 @@ public class MainActivity extends BaseActivity {
     private int lastDiscountsVersion = -1;
     private int lastFavoritesVersion = -1;
     private boolean vehicleDialogShown = false;
+    private boolean consentDialogShown = false;
 
     private Location userLocation;
     private final Map<Integer, Marker> markerMap = new HashMap<>();
@@ -103,6 +106,8 @@ public class MainActivity extends BaseActivity {
                                     Toast.LENGTH_LONG
                             ).show();
                         }
+                        // Primera apertura: el alta del vehículo va después del permiso.
+                        showFirstVehicleDialogIfNeeded();
                     });
 
     @Override
@@ -126,7 +131,10 @@ public class MainActivity extends BaseActivity {
         setupSearch();
         setupBottomNav();
         loadGasolineras();
-        requestLocationPermission();
+        // La primera vez, la ubicación se pide después del diálogo de consentimiento.
+        if (AnalyticsConsent.get(this) != AnalyticsConsent.State.UNKNOWN) {
+            requestLocationPermission();
+        }
         PriceAlertScheduler.schedule(this);
         SyncWorker.schedule(this);
         AppDatabase.getInstance(this)
@@ -162,9 +170,15 @@ public class MainActivity extends BaseActivity {
             bottomNav.setSelectedItemId(R.id.nav_map);
         }
 
-        if (!VehiclePrefs.hasVehicles(this) && !vehicleDialogShown) {
-            vehicleDialogShown = true;
-            showFirstVehicleDialog();
+        if (AnalyticsConsent.get(this) == AnalyticsConsent.State.UNKNOWN) {
+            if (!consentDialogShown) {
+                consentDialogShown = true;
+                showAnalyticsConsentDialog();
+            }
+            return;
+        }
+
+        if (showFirstVehicleDialogIfNeeded()) {
             return;
         }
 
@@ -301,7 +315,41 @@ public class MainActivity extends BaseActivity {
         }
     }
 
+    // ─── DIÁLOGO CONSENTIMIENTO ANALYTICS ────────────────────────────────────
+
+    /**
+     * Primera apertura: pide el consentimiento de Analytics y, después, continúa
+     * con el permiso de ubicación y, al responderlo, con el alta del primer vehículo.
+     */
+    private void showAnalyticsConsentDialog() {
+        AnalyticsConsentDialog.show(this, granted -> {
+            AnalyticsConsent.set(this, granted);
+            if (locationHelper.hasLocationPermission()) {
+                // Ya hay permiso: no sale el diálogo del sistema, se sigue con el vehículo.
+                requestLocationPermission();
+                showFirstVehicleDialogIfNeeded();
+            } else {
+                // El diálogo del vehículo se muestra al responder al de ubicación
+                // (ver permissionLauncher), para que no se solapen.
+                requestLocationPermission();
+            }
+        });
+    }
+
     // ─── DIÁLOGO PRIMER VEHÍCULO ─────────────────────────────────────────────
+
+    /**
+     * Muestra el alta del primer vehículo si el usuario aún no tiene ninguno y no
+     * se ha mostrado ya en esta pantalla.
+     *
+     * @return true si se ha mostrado el diálogo
+     */
+    private boolean showFirstVehicleDialogIfNeeded() {
+        if (VehiclePrefs.hasVehicles(this) || vehicleDialogShown) return false;
+        vehicleDialogShown = true;
+        showFirstVehicleDialog();
+        return true;
+    }
 
     private void showFirstVehicleDialog() {
         FirstVehicleDialog.show(this, vehicle -> {

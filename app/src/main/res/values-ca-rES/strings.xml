@@ -243,4 +243,8 @@
     <string name="pref_privacy_policy">Política de privadesa</string>
     <string name="pref_analytics_switch">Compartir estadístiques d\'ús</string>
     <string name="pref_analytics_summary">Ens ajuda a millorar l\'app: pantalles que visites, temps d\'ús i model del mòbil. No inclou la teva ubicació ni el que guardes a l\'app.</string>
+    <string name="consent_dialog_title">Ajuda\'ns a millorar AhorraGas</string>
+    <string name="consent_dialog_message">Ens deixes recollir estadístiques d\'ús? Són les pantalles que visites, el temps d\'ús i el model del mòbil. No inclouen la teva ubicació ni el que guardes a l\'app.\n\nPots canviar-ho quan vulguis a Preferències → Privadesa.</string>
+    <string name="consent_dialog_accept">Acceptar</string>
+    <string name="consent_dialog_decline">No, gràcies</string>
 </resources>

@@ -243,4 +243,8 @@
     <string name="pref_privacy_policy">Pribatutasun-politika</string>
     <string name="pref_analytics_switch">Erabilera-estatistikak partekatu</string>
     <string name="pref_analytics_summary">Aplikazioa hobetzen laguntzen digu: bisitatzen dituzun pantailak, erabilera-denbora eta mugikorraren modeloa. Ez ditu zure kokapena eta aplikazioan gordetzen duzuna barne hartzen.</string>
+    <string name="consent_dialog_title">Lagun gaitzazu AhorraGas hobetzen</string>
+    <string name="consent_dialog_message">Erabilera-estatistikak biltzen uzten diguzu? Bisitatzen dituzun pantailak, erabilera-denbora eta mugikorraren modeloa dira. Ez dute zure kokapena eta aplikazioan gordetzen duzuna barne hartzen.\n\nNahi duzunean alda dezakezu Hobespenak → Pribatutasuna atalean.</string>
+    <string name="consent_dialog_accept">Onartu</string>
+    <string name="consent_dialog_decline">Ez, eskerrik asko</string>
 </resources>
